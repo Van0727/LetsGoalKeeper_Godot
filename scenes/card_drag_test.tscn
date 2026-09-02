@@ -1,0 +1,154 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_drag_test.gd" id="1_test"]
+[ext_resource type="Script" path="res://scripts/draggable_card.gd" id="2_card"]
+
+[node name="CardDragTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.11, 0.08, 1)
+mouse_filter = 2
+
+[node name="PitchLines" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 78.0
+offset_right = -12.0
+offset_bottom = -230.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.3, 0.18, 1)
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 76.0
+offset_top = 15.0
+offset_right = -12.0
+offset_bottom = 57.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
+theme_override_font_sizes/font_size = 23
+text = "卡牌拖拽输入测试"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayZone" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.12
+anchor_top = 0.16
+anchor_right = 0.88
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ZoneLabel" type="Label" parent="PlayZone"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.95, 0.86, 1)
+theme_override_font_sizes/font_size = 20
+text = "出 牌 区\n拖到这里后释放"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InstructionLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 12
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -220.0
+offset_right = -12.0
+offset_bottom = -188.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.82, 0.88, 0.92, 1)
+theme_override_font_sizes/font_size = 16
+text = "用鼠标或单指把卡牌拖入出牌区"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DraggableCard" type="PanelContainer" parent="." node_paths=PackedStringArray("play_zone")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(130, 170)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -65.0
+offset_top = -180.0
+offset_right = 65.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_default_cursor_shape = 6
+script = ExtResource("2_card")
+play_zone = NodePath("../PlayZone")
+
+[node name="CardMargin" type="MarginContainer" parent="DraggableCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="CardContent" type="VBoxContainer" parent="DraggableCard/CardMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Name" type="Label" parent="DraggableCard/CardMargin/CardContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.12, 0.16, 0.22, 1)
+theme_override_font_sizes/font_size = 20
+text = "直球"
+horizontal_alignment = 1
+
+[node name="Ball" type="Label" parent="DraggableCard/CardMargin/CardContent"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.12, 0.16, 0.22, 1)
+theme_override_font_sizes/font_size = 42
+text = "⚽"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Description" type="Label" parent="DraggableCard/CardMargin/CardContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.12, 0.16, 0.22, 1)
+theme_override_font_sizes/font_size = 14
+text = "造成 6 点伤害"
+horizontal_alignment = 1
+
+[node name="BackButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 70.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 16
+text = "返回"
+
+[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]

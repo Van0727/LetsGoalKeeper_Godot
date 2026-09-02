@@ -1,0 +1,65 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/character_display.gd" id="1_display"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="2_portrait"]
+
+[node name="CharacterDisplay" type="PanelContainer"]
+custom_minimum_size = Vector2(150, 260)
+script = ExtResource("1_display")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="NameLabel" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
+text = "角色"
+horizontal_alignment = 1
+
+[node name="Portrait" type="TextureRect" parent="Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 110)
+layout_mode = 2
+texture = ExtResource("2_portrait")
+expand_mode = 3
+stretch_mode = 5
+
+[node name="FeedbackLabel" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = " "
+horizontal_alignment = 1
+
+[node name="HealthBar" type="ProgressBar" parent="Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+value = 100.0
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.82, 1)
+theme_override_font_sizes/font_size = 15
+text = "100 / 100"
+horizontal_alignment = 1
+
+[node name="ShieldLabel" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "护盾  0"
+horizontal_alignment = 1

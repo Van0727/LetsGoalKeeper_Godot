@@ -30,37 +30,58 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Menu" type="VBoxContainer" parent="CenterContainer"]
-custom_minimum_size = Vector2(420, 0)
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
-theme_override_constants/separation = 32
+theme_override_constants/separation = 18
 alignment = 1
 
 [node name="Title" type="Label" parent="CenterContainer/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
-theme_override_font_sizes/font_size = 52
+theme_override_font_sizes/font_size = 30
 text = "LET'S GOAL KEEPER"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="CenterContainer/Menu"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.84, 0.92, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "足球 Roguelike 卡牌游戏"
 horizontal_alignment = 1
 
 [node name="StartButton" type="Button" parent="CenterContainer/Menu"]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "开始游戏"
+theme_override_font_sizes/font_size = 20
+text = "牌堆逻辑测试"
+
+[node name="BattleLogicButton" type="Button" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "战斗逻辑测试"
+
+[node name="CharacterFeedbackButton" type="Button" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "角色反馈测试"
+
+[node name="CardDragButton" type="Button" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "卡牌拖拽测试"
 
 [node name="StatusLabel" type="Label" parent="CenterContainer/Menu"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.62, 0.72, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 15
 text = "迁移测试版"
 horizontal_alignment = 1
 
 [connection signal="pressed" from="CenterContainer/Menu/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="CenterContainer/Menu/BattleLogicButton" to="." method="_on_battle_logic_button_pressed"]
+[connection signal="pressed" from="CenterContainer/Menu/CharacterFeedbackButton" to="." method="_on_character_feedback_button_pressed"]
+[connection signal="pressed" from="CenterContainer/Menu/CardDragButton" to="." method="_on_card_drag_button_pressed"]

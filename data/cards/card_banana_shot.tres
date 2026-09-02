@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+
+[sub_resource type="Resource" id="Effect_damage"]
+script = ExtResource("2_effect")
+effect_type = 0
+target = 1
+amount = 6
+hits = 1
+
+[resource]
+script = ExtResource("1_card")
+card_id = "card_banana_shot"
+display_name = "香蕉球"
+description = "造成6点伤害"
+cost = 1
+card_type = 0
+shot_type = 2
+rarity = 0
+effects = Array[Resource]([SubResource("Effect_damage")])

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+
+[sub_resource type="Resource" id="Effect_shield"]
+script = ExtResource("2_effect")
+effect_type = 1
+target = 0
+amount = 6
+hits = 1
+
+[resource]
+script = ExtResource("1_card")
+card_id = "card_gloves"
+display_name = "手套"
+description = "获得6点护盾"
+cost = 1
+card_type = 1
+shot_type = 0
+rarity = 0
+effects = Array[Resource]([SubResource("Effect_shield")])
