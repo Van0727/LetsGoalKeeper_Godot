@@ -1,5 +1,6 @@
-[gd_scene format=3 uid="uid://bsito3158tbmm"]
+[gd_scene load_steps=2 format=3]
 
-[node name="Boot" type="Control" unique_id=51983273]
-layout_mode = 3
-anchors_preset = 0
+[ext_resource type="Script" path="res://scripts/boot.gd" id="1_boot"]
+
+[node name="Boot" type="Node"]
+script = ExtResource("1_boot")
