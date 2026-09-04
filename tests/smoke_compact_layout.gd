@@ -8,6 +8,7 @@ const TEST_SCENES := [
 	"res://scenes/character_feedback_test.tscn",
 	"res://scenes/battle_logic_test.tscn",
 	"res://scenes/deck_logic_test.tscn",
+	"res://scenes/battle.tscn",
 ]
 
 var _failed := false

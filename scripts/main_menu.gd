@@ -5,12 +5,19 @@ const CARD_DRAG_TEST_SCENE := preload("res://scenes/card_drag_test.tscn")
 const CHARACTER_FEEDBACK_TEST_SCENE := preload("res://scenes/character_feedback_test.tscn")
 const BATTLE_LOGIC_TEST_SCENE := preload("res://scenes/battle_logic_test.tscn")
 const DECK_LOGIC_TEST_SCENE := preload("res://scenes/deck_logic_test.tscn")
+const BATTLE_SCENE := preload("res://scenes/battle.tscn")
 
 @onready var status_label: Label = %StatusLabel
 
 
-# 进入牌堆逻辑测试；正式“开始游戏”流程将在后续 RunState 阶段替换。
+# 进入阶段 3 的单场可玩战斗；完整新游戏流程将在后续 RunState 阶段替换。
 func _on_start_button_pressed() -> void:
+	status_label.text = "正在进入可玩战斗……"
+	get_tree().change_scene_to_packed(BATTLE_SCENE)
+
+
+# 保留阶段 2 的牌堆逻辑测试入口，方便后续回归抽弃牌规则。
+func _on_deck_logic_button_pressed() -> void:
 	status_label.text = "正在进入牌堆逻辑测试……"
 	get_tree().change_scene_to_packed(DECK_LOGIC_TEST_SCENE)
 

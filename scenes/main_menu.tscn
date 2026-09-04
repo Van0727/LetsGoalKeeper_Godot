@@ -53,6 +53,12 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
+text = "开始战斗"
+
+[node name="DeckLogicButton" type="Button" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "牌堆逻辑测试"
 
 [node name="BattleLogicButton" type="Button" parent="CenterContainer/Menu"]
@@ -82,6 +88,7 @@ text = "迁移测试版"
 horizontal_alignment = 1
 
 [connection signal="pressed" from="CenterContainer/Menu/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="CenterContainer/Menu/DeckLogicButton" to="." method="_on_deck_logic_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/BattleLogicButton" to="." method="_on_battle_logic_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/CharacterFeedbackButton" to="." method="_on_character_feedback_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/CardDragButton" to="." method="_on_card_drag_button_pressed"]

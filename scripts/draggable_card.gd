@@ -2,7 +2,9 @@
 class_name DraggableCard
 extends PanelContainer
 
-# 只有在有效出牌区释放时才发送成功信号。
+# 拖拽生命周期供战斗界面高亮出牌区；只有在有效区域释放才发送成功信号。
+signal drag_started(card: DraggableCard)
+signal drag_finished(card: DraggableCard, valid_drop: bool)
 signal card_played(card: DraggableCard)
 
 @export var play_zone: Control
@@ -12,6 +14,7 @@ var _pointer_id := -1
 var _drag_offset := Vector2.ZERO
 var _home_global_position := Vector2.ZERO
 var _return_tween: Tween
+var _interaction_enabled := true
 
 
 # 缓存场景中的出牌区，并在布局稳定后记录卡牌初始位置。
@@ -22,6 +25,8 @@ func _ready() -> void:
 
 # 触摸事件由全局输入处理，以便手指移出卡牌矩形后仍能继续拖拽和释放。
 func _input(event: InputEvent) -> void:
+	if not _interaction_enabled:
+		return
 	if not _dragging:
 		if event is InputEventScreenTouch and event.pressed:
 			if get_global_rect().has_point(event.position):
@@ -42,6 +47,8 @@ func _input(event: InputEvent) -> void:
 
 # 鼠标按键由控件输入处理，避免点到卡牌外部时错误起拖。
 func _on_gui_input(event: InputEvent) -> void:
+	if not _interaction_enabled:
+		return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			_start_drag(-1, get_global_mouse_position())
@@ -55,7 +62,7 @@ func _remember_home_position() -> void:
 
 # 开始一次指定指针的拖拽，并取消尚未完成的回弹动画。
 func _start_drag(pointer_id: int, pointer_position: Vector2) -> void:
-	if _dragging:
+	if _dragging or not _interaction_enabled:
 		return
 	if _return_tween and _return_tween.is_running():
 		_return_tween.kill()
@@ -64,6 +71,7 @@ func _start_drag(pointer_id: int, pointer_position: Vector2) -> void:
 	_pointer_id = pointer_id
 	_drag_offset = pointer_position - global_position
 	z_index = 10
+	drag_started.emit(self)
 
 
 # 保持按下点与卡牌左上角的偏移，避免起拖时发生跳动。
@@ -77,11 +85,31 @@ func _finish_drag(pointer_position: Vector2) -> void:
 	_pointer_id = -1
 	z_index = 0
 
-	if play_zone and play_zone.get_global_rect().has_point(pointer_position):
+	var valid_drop := play_zone != null and play_zone.get_global_rect().has_point(pointer_position)
+	drag_finished.emit(self, valid_drop)
+	if valid_drop:
 		print("card_played")
 		card_played.emit(self)
+	else:
+		_return_to_home()
 
+
+# 结算期间关闭鼠标和触摸输入；若正在拖拽则安全回到手牌位置。
+func set_interaction_enabled(enabled: bool) -> void:
+	_interaction_enabled = enabled
+	mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
+	if enabled or not _dragging:
+		return
+	_dragging = false
+	_pointer_id = -1
+	z_index = 0
+	drag_finished.emit(self, false)
 	_return_to_home()
+
+
+# 供战斗界面判断卡牌是否可操作，不暴露内部拖拽状态。
+func is_interaction_enabled() -> bool:
+	return _interaction_enabled
 
 
 # 使用短 Tween 平滑回到手牌位置。

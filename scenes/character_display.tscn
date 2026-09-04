@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://icon.svg" id="2_portrait"]
 
 [node name="CharacterDisplay" type="PanelContainer"]
-custom_minimum_size = Vector2(150, 260)
+custom_minimum_size = Vector2(145, 185)
 script = ExtResource("1_display")
 
 [node name="Margin" type="MarginContainer" parent="."]
@@ -27,7 +27,7 @@ horizontal_alignment = 1
 
 [node name="Portrait" type="TextureRect" parent="Margin/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(110, 110)
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
 texture = ExtResource("2_portrait")
 expand_mode = 3

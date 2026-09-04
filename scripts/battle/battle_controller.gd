@@ -5,6 +5,8 @@ extends Node
 # 表现层通过信号读取日志和刷新状态，核心结算不等待动画回调。
 signal log_added(message: String)
 signal state_changed
+# 表现层逐条消费结构化事件；核心结算不会等待颜色闪烁或足球占位反馈。
+signal effect_resolved(event: Dictionary)
 signal battle_finished(victory: bool)
 
 const COMBATANT_STATE := preload("res://scripts/battle/combatant_state.gd")
@@ -100,6 +102,7 @@ func play_card(card: Resource) -> bool:
 	var events := _effect_resolver.resolve_card(card, player, enemy, _rng)
 	for event in events:
 		_log_effect_event(event)
+		effect_resolved.emit(event)
 
 	if enemy.is_dead():
 		_finish_battle(true)
@@ -171,6 +174,14 @@ func _execute_enemy_turn() -> void:
 		result.absorbed,
 		result.health_damage,
 	])
+	effect_resolved.emit({
+		"type": "damage",
+		"amount": final_damage,
+		"absorbed": result.absorbed,
+		"health_damage": result.health_damage,
+		"target": player,
+		"source": enemy,
+	})
 	_advance_strength_status(enemy)
 	if player.is_dead():
 		_finish_battle(false)

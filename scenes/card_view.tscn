@@ -1,0 +1,101 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/battle/card_view.gd" id="1_card"]
+
+[sub_resource type="StyleBoxFlat" id="Style_card"]
+bg_color = Color(0.94, 0.95, 0.88, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.13, 0.2, 0.25, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="Style_cost"]
+bg_color = Color(0.12, 0.43, 0.76, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_shot"]
+bg_color = Color(0.12, 0.18, 0.22, 0.12)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="CardView" type="PanelContainer"]
+custom_minimum_size = Vector2(104, 146)
+mouse_default_cursor_shape = 6
+theme_override_styles/panel = SubResource("Style_card")
+script = ExtResource("1_card")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Header" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="CostLabel" type="Label" parent="Margin/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_cost")
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="Margin/Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.08, 0.12, 0.16, 1)
+theme_override_font_sizes/font_size = 15
+text = "射门"
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="TypeLabel" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.38, 0.43, 1)
+theme_override_font_sizes/font_size = 11
+text = "攻击"
+horizontal_alignment = 1
+
+[node name="ShotLabel" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.1, 0.25, 0.33, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("Style_shot")
+text = "直球"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescriptionLabel" type="Label" parent="Margin/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.12, 0.16, 0.19, 1)
+theme_override_font_sizes/font_size = 11
+text = "造成6点伤害"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
