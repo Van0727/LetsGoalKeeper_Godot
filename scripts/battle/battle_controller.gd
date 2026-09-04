@@ -36,6 +36,7 @@ var phase := Phase.NOT_STARTED
 var turn_number := 0
 var enemy_intent_damage := 0
 var battle_seed := 0
+var damage_modifiers: Dictionary = {}
 # 敌人定义与当前行动只在本场战斗中引用，行动序号不会写回 Resource。
 var current_enemy_definition: Resource
 var current_enemy_action: Resource
@@ -48,9 +49,10 @@ var _enemy_action_index := 0
 
 
 # 用指定种子和可选敌人定义重置战斗；不传定义时保留阶段 1 的企鹅测试行为。
-func setup(seed_value := 20260902, enemy_definition: Resource = null) -> void:
+func setup(seed_value := 20260902, enemy_definition: Resource = null, run_damage_modifiers: Dictionary = {}) -> void:
 	battle_seed = seed_value
 	_rng.seed = battle_seed
+	damage_modifiers = run_damage_modifiers.duplicate()
 	player = COMBATANT_STATE.new("玩家", PLAYER_MAX_HEALTH, PLAYER_MAX_ENERGY)
 	current_enemy_definition = enemy_definition
 	if current_enemy_definition == null:
@@ -101,6 +103,17 @@ func player_attack(base_damage := 6, damage_tag := "card") -> bool:
 	return true
 
 
+# GM 跳关直接结束当前敌人，不经过伤害、护盾或受击被动，但复用正常胜利信号。
+func debug_force_victory() -> bool:
+	if phase == Phase.NOT_STARTED or phase == Phase.FINISHED:
+		return false
+	enemy.health = 0
+	enemy.shield = 0
+	_log("GM跳过：立即消灭%s" % enemy.display_name)
+	_finish_battle(true)
+	return true
+
+
 # 早期测试保留的直接防御接口。
 func player_guard(amount := 6) -> bool:
 	if not _can_player_act():
@@ -133,7 +146,7 @@ func play_card(card: Resource) -> bool:
 		return false
 
 	_log("打出 %s，支付 %d 能量" % [card.display_name, card.cost])
-	var events := _effect_resolver.resolve_card(card, player, enemy, _rng)
+	var events := _effect_resolver.resolve_card(card, player, enemy, _rng, damage_modifiers)
 	for event in events:
 		_log_effect_event(event)
 		effect_resolved.emit(event)

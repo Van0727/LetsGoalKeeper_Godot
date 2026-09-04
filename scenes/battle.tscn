@@ -81,22 +81,30 @@ custom_minimum_size = Vector2(58, 40)
 layout_mode = 2
 text = "返回"
 
+[node name="GMSkipButton" type="Button" parent="Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 40)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "GM跳过"
+
 [node name="TurnLabel" type="Label" parent="Header"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 14
 text = "第 1 回合 · 玩家行动"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="IntentLabel" type="Label" parent="Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(92, 0)
+custom_minimum_size = Vector2(82, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.66, 0.55, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 11
 text = "敌人意图：8"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -303,6 +311,7 @@ text = "守住球门，完成本场测试！"
 horizontal_alignment = 1
 
 [node name="RestartButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
@@ -315,6 +324,7 @@ theme_override_font_sizes/font_size = 16
 text = "返回主菜单"
 
 [connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="Header/GMSkipButton" to="." method="_on_gm_skip_pressed"]
 [connection signal="pressed" from="Footer/SkillButton" to="." method="_on_skill_pressed"]
 [connection signal="pressed" from="Footer/EndTurnButton" to="." method="_on_end_turn_pressed"]
 [connection signal="pressed" from="ResultOverlay/ResultCenter/ResultPanel/ResultContent/RestartButton" to="." method="_on_restart_pressed"]

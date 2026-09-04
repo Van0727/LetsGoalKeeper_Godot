@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+item_id = "item_number_10"
+display_name = "阿根廷10号"
+description = "香蕉球伤害+1"
+rarity = 1
+modifier_type = 2
+amount = 1

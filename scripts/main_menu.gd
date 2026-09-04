@@ -13,6 +13,7 @@ const BATTLE_SCENE := preload("res://scenes/battle.tscn")
 # 进入阶段 3 的单场可玩战斗；完整新游戏流程将在后续 RunState 阶段替换。
 func _on_start_button_pressed() -> void:
 	status_label.text = "正在进入可玩战斗……"
+	get_node("/root/RunState").start_new_run(20260904)
 	get_tree().change_scene_to_packed(BATTLE_SCENE)
 
 

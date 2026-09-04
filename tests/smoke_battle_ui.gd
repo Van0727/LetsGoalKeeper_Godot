@@ -36,9 +36,14 @@ func _run() -> void:
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "新回合重新抽三张")
 	_assert_equal(battle_screen.controller.player.energy, 3, "新回合回满能量")
 
-	battle_screen.controller.player_attack(999)
+	# GM跳过绕过乌龟反伤，直接复用正常胜利与奖励入口。
+	battle_screen.controller.player.health = 1
+	battle_screen._on_gm_skip_pressed()
+	_assert_equal(battle_screen.controller.enemy.health, 0, "GM跳过立即消灭敌人")
+	_assert_equal(battle_screen.controller.player.health, 1, "GM跳过不触发乌龟反伤")
 	_assert_true(battle_screen.result_overlay.visible, "胜利后显示结果层")
 	_assert_true(battle_screen.end_turn_button.disabled, "胜利后锁定结束回合")
+	_assert_true(battle_screen.gm_skip_button.disabled, "胜利后锁定GM跳过")
 
 	# 重开后把玩家置于濒死状态，验证敌方行动可进入失败结果且不会再抽牌。
 	battle_screen.start_new_battle()

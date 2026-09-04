@@ -3,11 +3,9 @@ extends Control
 
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
+const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
+const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
-const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
-const GLOVES := preload("res://data/cards/card_gloves.tres")
-const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
-const TOWEL := preload("res://data/cards/card_towel.tres")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const BEAR := preload("res://data/enemies/enemy_bear.tres")
 const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
@@ -36,14 +34,19 @@ const CARD_GAP := 6.0
 @onready var pile_label: Label = %PileLabel
 @onready var skill_button: Button = %SkillButton
 @onready var end_turn_button: Button = %EndTurnButton
+@onready var gm_skip_button: Button = %GMSkipButton
 @onready var result_overlay: ColorRect = %ResultOverlay
 @onready var result_title: Label = %ResultTitle
 @onready var result_detail: Label = %ResultDetail
+@onready var result_action_button: Button = %RestartButton
 
 var deck_state := DECK_STATE.new()
 var _input_locked := false
 var _enemy_index := 0
 var _enemy_sequence: Array[Resource] = [TURTLE, BEAR, TRAINING_BOSS]
+var _last_victory := false
+var _reward_service := REWARD_SERVICE.new()
+var run_state: Node
 var _skills_by_type := {
 	0: SUPER_ATTACK,
 	1: SUPER_DEFENSE,
@@ -53,6 +56,11 @@ var _skills_by_type := {
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
 func _ready() -> void:
+	run_state = get_node_or_null("/root/RunState")
+	# 独立场景测试没有 Autoload 时创建局部状态，正式游戏始终使用全局实例。
+	if run_state == null:
+		run_state = RUN_STATE_SCRIPT.new()
+		add_child(run_state)
 	controller.log_added.connect(_on_log_added)
 	controller.state_changed.connect(_refresh_all)
 	controller.effect_resolved.connect(_on_effect_resolved)
@@ -68,15 +76,20 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	shot_type_label.hide()
 	status_label.text = "拖动卡牌到绿色区域出牌"
 	_input_locked = true
-	var starting_deck: Array[Resource] = [
-		STRAIGHT_SHOT, STRAIGHT_SHOT, STRAIGHT_SHOT, STRAIGHT_SHOT,
-		GLOVES, GLOVES, SPORTS_DRINK, TOWEL,
-	]
+	var starting_deck: Array[Resource] = []
+	for card_id in run_state.deck_card_ids:
+		var card := _reward_service.get_card_by_id(card_id)
+		if card != null:
+			starting_deck.append(card)
 	var selected_enemy := enemy_definition
 	if selected_enemy == null:
+		_enemy_index = run_state.battles_won % _enemy_sequence.size()
 		selected_enemy = _enemy_sequence[_enemy_index]
-	deck_state.setup(starting_deck, BATTLE_SEED)
-	controller.setup(BATTLE_SEED, selected_enemy)
+	var current_seed: int = run_state.seed + run_state.battles_won * 101
+	deck_state.setup(starting_deck, current_seed)
+	controller.setup(current_seed, selected_enemy, run_state.damage_modifiers)
+	controller.player.max_health = run_state.max_hp
+	controller.player.health = clampi(run_state.player_hp, 1, run_state.max_hp)
 	player_display.configure(controller.player.display_name, controller.player.max_health, Color(0.45, 0.75, 1.0))
 	enemy_display.configure(controller.enemy.display_name, controller.enemy.max_health, Color(1.0, 0.55, 0.42))
 	deck_state.draw_cards(STARTING_HAND_SIZE)
@@ -159,6 +172,17 @@ func _on_skill_pressed() -> void:
 	call_deferred("_finish_resolution")
 
 
+# GM 调试按钮立即结束当前关卡；控制器负责绕过护盾和反伤并广播正常胜利。
+func _on_gm_skip_pressed() -> void:
+	if _input_locked:
+		return
+	_input_locked = true
+	_update_input_state()
+	if not controller.debug_force_victory():
+		_input_locked = false
+		_update_input_state()
+
+
 # 核心结算后的下一帧才恢复输入，确保一次指针释放最多触发一张牌。
 func _finish_resolution() -> void:
 	_rebuild_hand()
@@ -205,6 +229,7 @@ func _refresh_all() -> void:
 func _update_input_state() -> void:
 	var can_act := not _input_locked and controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN
 	end_turn_button.disabled = not can_act
+	gm_skip_button.disabled = _input_locked or controller.phase == BATTLE_CONTROLLER.Phase.FINISHED
 	var current_skill := _get_current_skill()
 	var combo_count: int = controller.combo_state.count
 	if current_skill == null:
@@ -270,15 +295,26 @@ func _on_log_added(message: String) -> void:
 # 胜负确定后锁定输入并显示独立结果层，避免重复出牌或结束回合。
 func _on_battle_finished(victory: bool) -> void:
 	_input_locked = true
+	_last_victory = victory
+	run_state.record_battle_health(controller.player.health)
 	_update_input_state()
 	result_title.text = "战斗胜利" if victory else "战斗失败"
-	result_detail.text = "守住球门，完成本场测试！" if victory else "球门失守，再试一次吧。"
+	result_detail.text = "选择卡牌和战利品后继续下一战。" if victory else "本局已经结束，将从新游戏重新开始。"
+	result_action_button.text = "领取奖励" if victory else "重新开始"
+	if victory:
+		run_state.pending_reward_is_boss = (
+			controller.current_enemy_definition != null
+			and controller.current_enemy_definition.tier == 2
+		)
 	result_overlay.show()
 
 
-# 结果层按钮轮换普通、精英和测试 Boss，便于连续验证各类敌人行为。
+# 胜利进入两步奖励，失败则彻底初始化新局后重新战斗。
 func _on_restart_pressed() -> void:
-	_enemy_index = (_enemy_index + 1) % _enemy_sequence.size()
+	if _last_victory:
+		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
+		return
+	run_state.start_new_run(BATTLE_SEED)
 	start_new_battle()
 
 

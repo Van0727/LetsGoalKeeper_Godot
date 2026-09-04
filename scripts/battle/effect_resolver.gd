@@ -13,7 +13,8 @@ func resolve_card(
 		card: Resource,
 		source,
 		opponent,
-		rng: RandomNumberGenerator = null
+		rng: RandomNumberGenerator = null,
+		damage_modifiers: Dictionary = {}
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	for effect in card.effects:
@@ -35,7 +36,7 @@ func resolve_card(
 		var recipient = source if effect.target == EFFECT_DEFINITION.Target.SELF else opponent
 		match effect.effect_type:
 			EFFECT_DEFINITION.EffectType.DAMAGE:
-				_resolve_damage(effect, card.shot_type, source, recipient, events)
+				_resolve_damage(effect, card.shot_type, source, recipient, events, damage_modifiers)
 			EFFECT_DEFINITION.EffectType.SHIELD:
 				var gained: int = recipient.gain_shield(effect.amount)
 				events.append({"type": "shield", "amount": gained, "target": recipient})
@@ -79,12 +80,14 @@ func _resolve_damage(
 		shot_type: int,
 		source,
 		recipient,
-		events: Array[Dictionary]
+		events: Array[Dictionary],
+		damage_modifiers: Dictionary
 ) -> void:
 	for hit_index in range(effect.hits):
 		# 能量加成读取费用支付后的运行时能量，不回写 EffectDefinition。
 		var energy_bonus: int = source.energy * effect.amount_per_energy
-		var scaled_amount: int = effect.amount + energy_bonus
+		var item_bonus := _get_shot_damage_bonus(shot_type, damage_modifiers)
+		var scaled_amount: int = effect.amount + energy_bonus + item_bonus
 		var damage := maxi(roundi(scaled_amount * source.strength_multiplier), 0)
 		var result: Dictionary = recipient.take_damage(damage)
 		events.append({
@@ -92,6 +95,7 @@ func _resolve_damage(
 			"amount": damage,
 			"base_amount": effect.amount,
 			"energy_bonus": energy_bonus,
+			"item_bonus": item_bonus,
 			"absorbed": result.absorbed,
 			"health_damage": result.health_damage,
 			"hit": hit_index + 1,
@@ -101,3 +105,15 @@ func _resolve_damage(
 		})
 		if recipient.is_dead():
 			break
+
+
+# 汇总所有射门加成与当前弹道专属加成；非射门效果不会获得战利品伤害。
+func _get_shot_damage_bonus(shot_type: int, damage_modifiers: Dictionary) -> int:
+	if shot_type == 0:
+		return 0
+	var bonus: int = damage_modifiers.get("all", 0)
+	match shot_type:
+		1: bonus += damage_modifiers.get("straight", 0)
+		2: bonus += damage_modifiers.get("banana", 0)
+		3: bonus += damage_modifiers.get("lob", 0)
+	return bonus
