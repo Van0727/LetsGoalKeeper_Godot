@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+
+[sub_resource type="Resource" id="Effect_damage"]
+script = ExtResource("2_effect")
+effect_type = 0
+target = 1
+amount = 8
+hits = 1
+
+[resource]
+script = ExtResource("1_card")
+card_id = "card_lob_shot"
+display_name = "挑射"
+description = "造成8点伤害"
+cost = 2
+card_type = 0
+shot_type = 3
+rarity = 0
+effects = Array[Resource]([SubResource("Effect_damage")])

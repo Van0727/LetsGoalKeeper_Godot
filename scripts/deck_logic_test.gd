@@ -3,6 +3,10 @@ extends Control
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
 const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
 const BANANA_SHOT := preload("res://data/cards/card_banana_shot.tres")
+const LOB_SHOT := preload("res://data/cards/card_lob_shot.tres")
+const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
+const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
+const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -54,7 +58,10 @@ func _reset_deck() -> void:
 		STRAIGHT_SHOT,
 		STRAIGHT_SHOT,
 		BANANA_SHOT,
-		BANANA_SHOT,
+		LOB_SHOT,
+		BARRAGE_SHOT,
+		ATTACK_AND_DEFEND,
+		EXPLOSION_BALL,
 		GLOVES,
 		SPORTS_DRINK,
 		TOWEL,

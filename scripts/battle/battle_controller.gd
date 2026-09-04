@@ -25,20 +25,20 @@ var enemy = COMBATANT_STATE.new("企鹅", ENEMY_MAX_HEALTH)
 var phase := Phase.NOT_STARTED
 var turn_number := 0
 var enemy_intent_damage := 0
-var seed := 0
+var battle_seed := 0
 
 var _rng := RandomNumberGenerator.new()
 var _effect_resolver = EFFECT_RESOLVER.new()
 
 
 func setup(seed_value := 20260902) -> void:
-	seed = seed_value
-	_rng.seed = seed
+	battle_seed = seed_value
+	_rng.seed = battle_seed
 	player = COMBATANT_STATE.new("玩家", PLAYER_MAX_HEALTH, PLAYER_MAX_ENERGY)
 	enemy = COMBATANT_STATE.new("企鹅", ENEMY_MAX_HEALTH)
 	turn_number = 1
 	phase = Phase.NOT_STARTED
-	_log("战斗开始，seed=%d" % seed)
+	_log("战斗开始，seed=%d" % battle_seed)
 	_start_player_turn()
 
 
@@ -88,7 +88,7 @@ func play_card(card: Resource) -> bool:
 		return false
 
 	_log("打出 %s，支付 %d 能量" % [card.display_name, card.cost])
-	var events := _effect_resolver.resolve_card(card, player, enemy)
+	var events := _effect_resolver.resolve_card(card, player, enemy, _rng)
 	for event in events:
 		_log_effect_event(event)
 
@@ -184,7 +184,11 @@ func _finish_battle(victory: bool) -> void:
 func _log_effect_event(event: Dictionary) -> void:
 	match event.type:
 		"damage":
-			_log("效果：%d 伤害（护盾吸收 %d，生命损失 %d）" % [
+			var hit_text := ""
+			if event.hits > 1:
+				hit_text = "第%d/%d段：" % [event.hit, event.hits]
+			_log("效果：%s%d 伤害（护盾吸收 %d，生命损失 %d）" % [
+				hit_text,
 				event.amount,
 				event.absorbed,
 				event.health_damage,
@@ -195,6 +199,14 @@ func _log_effect_event(event: Dictionary) -> void:
 			_log("效果：恢复 %d 生命" % event.amount)
 		"energy":
 			_log("效果：恢复 %d 能量" % event.amount)
+		"chance":
+			_log("效果：概率判定 %d/%d，%s" % [
+				event.roll,
+				event.chance_percent,
+				"触发" if event.succeeded else "未触发",
+			])
+		"effect_interrupted":
+			_log("效果：后续结算已中断")
 		_:
 			_log("效果暂未支持：%s" % event.get("effect_type", "unknown"))
 

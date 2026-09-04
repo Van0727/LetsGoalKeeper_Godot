@@ -4,6 +4,11 @@ const COMBATANT_STATE := preload("res://scripts/battle/combatant_state.gd")
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
 const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
+const BANANA_SHOT := preload("res://data/cards/card_banana_shot.tres")
+const LOB_SHOT := preload("res://data/cards/card_lob_shot.tres")
+const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
+const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
+const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -22,6 +27,8 @@ func _run() -> void:
 	_test_turn_flow_and_victory()
 	_test_player_defeat()
 	_test_card_costs_and_effects()
+	_test_shot_types_multi_hit_and_multi_effect()
+	_test_probability_branch_and_interrupt()
 	_test_effect_order()
 	_test_deterministic_seed()
 
@@ -81,6 +88,19 @@ func _test_deterministic_seed() -> void:
 	first.free()
 	second.free()
 
+	var first_explosion = BATTLE_CONTROLLER.new()
+	var second_explosion = BATTLE_CONTROLLER.new()
+	root.add_child(first_explosion)
+	root.add_child(second_explosion)
+	first_explosion.setup(24680)
+	second_explosion.setup(24680)
+	first_explosion.play_card(EXPLOSION_BALL)
+	second_explosion.play_card(EXPLOSION_BALL)
+	_assert_equal(first_explosion.player.health, second_explosion.player.health, "固定 seed 的爆炸球自伤结果")
+	_assert_equal(first_explosion.enemy.health, second_explosion.enemy.health, "固定 seed 的爆炸球攻击结果")
+	first_explosion.free()
+	second_explosion.free()
+
 
 func _test_effect_order() -> void:
 	var battle = BATTLE_CONTROLLER.new()
@@ -105,6 +125,79 @@ func _test_effect_order() -> void:
 	battle.play_card(ordered_card)
 	_assert_equal(battle.player.health, 97, "效果按数组顺序先治疗再自伤")
 	battle.free()
+
+
+func _test_shot_types_multi_hit_and_multi_effect() -> void:
+	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
+	var source = COMBATANT_STATE.new("测试射手", 20, 10)
+	var target = COMBATANT_STATE.new("测试门将", 40)
+
+	var banana_events: Array[Dictionary] = resolver.resolve_card(BANANA_SHOT, source, target)
+	_assert_equal(banana_events.size(), 1, "香蕉球产生一次伤害事件")
+	_assert_equal(banana_events[0].shot_type, BANANA_SHOT.ShotType.BANANA, "香蕉球事件保留弹道类型")
+
+	var lob_events: Array[Dictionary] = resolver.resolve_card(LOB_SHOT, source, target)
+	_assert_equal(lob_events[0].shot_type, LOB_SHOT.ShotType.LOB, "挑射事件保留弹道类型")
+
+	target.shield = 4
+	var barrage_events: Array[Dictionary] = resolver.resolve_card(BARRAGE_SHOT, source, target)
+	_assert_equal(barrage_events.size(), 3, "连续射门逐段产生伤害事件")
+	_assert_equal(barrage_events[0].absorbed, 3, "第一段伤害消耗护盾")
+	_assert_equal(barrage_events[1].absorbed, 1, "第二段伤害消耗剩余护盾")
+	_assert_equal(barrage_events[2].health_damage, 3, "第三段伤害作用于生命")
+	var lethal_target = COMBATANT_STATE.new("低生命目标", 4)
+	var lethal_events: Array[Dictionary] = resolver.resolve_card(BARRAGE_SHOT, source, lethal_target)
+	_assert_equal(lethal_events.size(), 2, "多段攻击在目标死亡后停止后续段数")
+
+	var battle = BATTLE_CONTROLLER.new()
+	root.add_child(battle)
+	battle.setup(101)
+	_assert_true(battle.play_card(ATTACK_AND_DEFEND), "可打出多效果卡牌")
+	_assert_equal(battle.enemy.health, 25, "多效果卡牌先造成伤害")
+	_assert_equal(battle.player.shield, 5, "多效果卡牌再获得护盾")
+	battle.free()
+
+
+func _test_probability_branch_and_interrupt() -> void:
+	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
+	var success_rng := _find_rng_for_chance_result(true)
+	var success_source = COMBATANT_STATE.new("爆炸触发者", 20, 3)
+	var success_target = COMBATANT_STATE.new("未受攻击目标", 20)
+	var success_events: Array[Dictionary] = resolver.resolve_card(
+		EXPLOSION_BALL,
+		success_source,
+		success_target,
+		success_rng
+	)
+	_assert_true(success_events[0].succeeded, "爆炸球成功分支触发")
+	_assert_equal(success_source.health, 17, "爆炸球触发时对自身造成3点伤害")
+	_assert_equal(success_target.health, 20, "爆炸球触发后中断敌方伤害")
+	_assert_equal(success_events[-1].type, "effect_interrupted", "爆炸球记录中断事件")
+
+	var failure_rng := _find_rng_for_chance_result(false)
+	var failure_source = COMBATANT_STATE.new("安全射手", 20, 3)
+	var failure_target = COMBATANT_STATE.new("受攻击目标", 20)
+	var failure_events: Array[Dictionary] = resolver.resolve_card(
+		EXPLOSION_BALL,
+		failure_source,
+		failure_target,
+		failure_rng
+	)
+	_assert_true(not failure_events[0].succeeded, "爆炸球失败分支未触发")
+	_assert_equal(failure_source.health, 20, "爆炸球未触发时不造成自伤")
+	_assert_equal(failure_target.health, 8, "爆炸球未触发时造成12点伤害")
+	_assert_equal(failure_events.size(), 2, "爆炸球未触发时继续后续效果")
+
+
+func _find_rng_for_chance_result(expected_success: bool) -> RandomNumberGenerator:
+	for candidate_seed in range(1, 1000):
+		var probe := RandomNumberGenerator.new()
+		probe.seed = candidate_seed
+		if (probe.randi_range(1, 100) <= 50) == expected_success:
+			var result := RandomNumberGenerator.new()
+			result.seed = candidate_seed
+			return result
+	return RandomNumberGenerator.new()
 
 
 func _test_player_defeat() -> void:

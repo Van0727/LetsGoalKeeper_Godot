@@ -8,11 +8,11 @@ var hand: Array[Resource] = []
 var _rng := RandomNumberGenerator.new()
 
 
-func setup(deck_definitions: Array[Resource], seed: int) -> void:
+func setup(deck_definitions: Array[Resource], seed_value: int) -> void:
 	draw_pile = deck_definitions.duplicate()
 	discard_pile.clear()
 	hand.clear()
-	_rng.seed = seed
+	_rng.seed = seed_value
 	_shuffle(draw_pile)
 
 

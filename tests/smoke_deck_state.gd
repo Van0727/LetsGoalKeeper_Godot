@@ -3,6 +3,10 @@ extends SceneTree
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
 const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
 const BANANA_SHOT := preload("res://data/cards/card_banana_shot.tres")
+const LOB_SHOT := preload("res://data/cards/card_lob_shot.tres")
+const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
+const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
+const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -30,6 +34,15 @@ func _test_card_definitions() -> void:
 	_assert_equal(STRAIGHT_SHOT.card_id, "card_straight_shot", "直球稳定ID")
 	_assert_equal(STRAIGHT_SHOT.cost, 1, "直球费用")
 	_assert_equal(STRAIGHT_SHOT.effects[0].amount, 6, "直球伤害")
+	_assert_equal(BANANA_SHOT.shot_type, BANANA_SHOT.ShotType.BANANA, "香蕉球弹道类型")
+	_assert_equal(LOB_SHOT.shot_type, LOB_SHOT.ShotType.LOB, "挑射弹道类型")
+	_assert_equal(LOB_SHOT.effects[0].amount, 8, "挑射伤害")
+	_assert_equal(BARRAGE_SHOT.effects[0].hits, 3, "连续射门攻击段数")
+	_assert_equal(ATTACK_AND_DEFEND.effects.size(), 2, "攻守兼备效果数量")
+	_assert_equal(EXPLOSION_BALL.cost, 1, "爆炸球费用")
+	_assert_equal(EXPLOSION_BALL.effects[0].chance_percent, 50, "爆炸球触发概率")
+	_assert_true(EXPLOSION_BALL.effects[0].interrupt_on_success, "爆炸球触发后中断")
+	_assert_equal(EXPLOSION_BALL.effects[1].amount, 12, "爆炸球未触发时伤害")
 	_assert_equal(GLOVES.effects[0].amount, 6, "手套护盾")
 	_assert_equal(SPORTS_DRINK.effects[0].amount, 6, "佳得乐治疗")
 	_assert_equal(TOWEL.effects[0].amount, 2, "毛巾恢复能量")
@@ -37,7 +50,7 @@ func _test_card_definitions() -> void:
 
 func _test_draw_play_discard_and_recycle() -> void:
 	var deck = DECK_STATE.new()
-	var definitions: Array[Resource] = [STRAIGHT_SHOT, BANANA_SHOT, GLOVES, SPORTS_DRINK]
+	var definitions: Array[Resource] = [STRAIGHT_SHOT, BANANA_SHOT, LOB_SHOT, BARRAGE_SHOT]
 	deck.setup(definitions, 99)
 	_assert_equal(deck.draw_cards(3).size(), 3, "回合开始抽牌数")
 	_assert_equal(deck.hand.size(), 3, "抽牌后手牌数")
@@ -55,7 +68,7 @@ func _test_draw_play_discard_and_recycle() -> void:
 
 
 func _test_deterministic_shuffle() -> void:
-	var definitions: Array[Resource] = [STRAIGHT_SHOT, BANANA_SHOT, GLOVES, SPORTS_DRINK]
+	var definitions: Array[Resource] = [STRAIGHT_SHOT, BANANA_SHOT, LOB_SHOT, ATTACK_AND_DEFEND]
 	var first = DECK_STATE.new()
 	var second = DECK_STATE.new()
 	first.setup(definitions, 12345)

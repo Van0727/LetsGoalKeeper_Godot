@@ -102,7 +102,37 @@ columns = 2
 custom_minimum_size = Vector2(156, 46)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "攻击 6"
+text = "射门：6"
+
+[node name="Banana" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "香蕉球：6"
+
+[node name="Lob" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "挑射：8"
+
+[node name="Barrage" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "连续射门：3×3"
+
+[node name="AttackAndDefend" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "攻守兼备：5+5"
+
+[node name="ExplosionBall" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "爆炸球：50%"
 
 [node name="Guard" type="Button" parent="Margin/Layout/ActionButtons"]
 custom_minimum_size = Vector2(156, 46)
@@ -140,6 +170,11 @@ script = ExtResource("2_controller")
 
 [connection signal="pressed" from="Margin/Layout/Header/BackButton" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Attack" to="." method="_on_attack_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/Banana" to="." method="_on_banana_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/Lob" to="." method="_on_lob_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/Barrage" to="." method="_on_barrage_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/AttackAndDefend" to="." method="_on_attack_and_defend_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/ExplosionBall" to="." method="_on_explosion_ball_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Guard" to="." method="_on_guard_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Heal" to="." method="_on_heal_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Energy" to="." method="_on_energy_pressed"]

@@ -1,6 +1,11 @@
 extends Control
 
 const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
+const BANANA_SHOT := preload("res://data/cards/card_banana_shot.tres")
+const LOB_SHOT := preload("res://data/cards/card_lob_shot.tres")
+const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
+const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
+const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -22,6 +27,26 @@ func _ready() -> void:
 
 func _on_attack_pressed() -> void:
 	controller.play_card(STRAIGHT_SHOT)
+
+
+func _on_banana_pressed() -> void:
+	controller.play_card(BANANA_SHOT)
+
+
+func _on_lob_pressed() -> void:
+	controller.play_card(LOB_SHOT)
+
+
+func _on_barrage_pressed() -> void:
+	controller.play_card(BARRAGE_SHOT)
+
+
+func _on_attack_and_defend_pressed() -> void:
+	controller.play_card(ATTACK_AND_DEFEND)
+
+
+func _on_explosion_ball_pressed() -> void:
+	controller.play_card(EXPLOSION_BALL)
 
 
 func _on_guard_pressed() -> void:
