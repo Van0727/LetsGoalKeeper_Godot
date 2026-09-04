@@ -1,5 +1,10 @@
 extends Control
 
+const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
+const GLOVES := preload("res://data/cards/card_gloves.tres")
+const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
+const TOWEL := preload("res://data/cards/card_towel.tres")
+
 @onready var controller := %BattleController
 @onready var player_status: Label = %PlayerStatus
 @onready var enemy_status: Label = %EnemyStatus
@@ -16,15 +21,19 @@ func _ready() -> void:
 
 
 func _on_attack_pressed() -> void:
-	controller.player_attack()
+	controller.play_card(STRAIGHT_SHOT)
 
 
 func _on_guard_pressed() -> void:
-	controller.player_guard()
+	controller.play_card(GLOVES)
 
 
 func _on_heal_pressed() -> void:
-	controller.player_heal()
+	controller.play_card(SPORTS_DRINK)
+
+
+func _on_energy_pressed() -> void:
+	controller.play_card(TOWEL)
 
 
 func _on_end_turn_pressed() -> void:
@@ -47,10 +56,12 @@ func _on_log_added(message: String) -> void:
 
 
 func _refresh_status() -> void:
-	player_status.text = "玩家  HP %d/%d  护盾 %d" % [
+	player_status.text = "玩家  HP %d/%d  护盾 %d  能量 %d/%d" % [
 		controller.player.health,
 		controller.player.max_health,
 		controller.player.shield,
+		controller.player.energy,
+		controller.player.max_energy,
 	]
 	enemy_status.text = "企鹅  HP %d/%d  护盾 %d" % [
 		controller.enemy.health,

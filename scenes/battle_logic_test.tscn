@@ -74,7 +74,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 26)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "玩家  HP 100/100  护盾 0"
+text = "玩家  HP 100/100  护盾 0  能量 3/3"
 
 [node name="EnemyStatus" type="Label" parent="Margin/Layout"]
 unique_name_in_owner = true
@@ -116,6 +116,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "治疗 6"
 
+[node name="Energy" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "毛巾：回能 2"
+
 [node name="EndTurn" type="Button" parent="Margin/Layout/ActionButtons"]
 custom_minimum_size = Vector2(156, 46)
 layout_mode = 2
@@ -136,5 +142,6 @@ script = ExtResource("2_controller")
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Attack" to="." method="_on_attack_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Guard" to="." method="_on_guard_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Heal" to="." method="_on_heal_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/Energy" to="." method="_on_energy_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/EndTurn" to="." method="_on_end_turn_pressed"]
 [connection signal="pressed" from="Margin/Layout/ResetButton" to="." method="_on_reset_pressed"]

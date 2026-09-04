@@ -2,6 +2,13 @@ extends SceneTree
 
 const COMBATANT_STATE := preload("res://scripts/battle/combatant_state.gd")
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
+const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
+const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
+const GLOVES := preload("res://data/cards/card_gloves.tres")
+const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
+const TOWEL := preload("res://data/cards/card_towel.tres")
+const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
+const EFFECT_DEFINITION := preload("res://scripts/cards/effect_definition.gd")
 
 var _failed := false
 
@@ -14,6 +21,8 @@ func _run() -> void:
 	_test_damage_shield_and_healing()
 	_test_turn_flow_and_victory()
 	_test_player_defeat()
+	_test_card_costs_and_effects()
+	_test_effect_order()
 	_test_deterministic_seed()
 
 	if _failed:
@@ -73,6 +82,31 @@ func _test_deterministic_seed() -> void:
 	second.free()
 
 
+func _test_effect_order() -> void:
+	var battle = BATTLE_CONTROLLER.new()
+	root.add_child(battle)
+	battle.setup(5)
+	battle.player.health = 99
+
+	var heal_effect = EFFECT_DEFINITION.new()
+	heal_effect.effect_type = EFFECT_DEFINITION.EffectType.HEAL
+	heal_effect.target = EFFECT_DEFINITION.Target.SELF
+	heal_effect.amount = 6
+	var self_damage_effect = EFFECT_DEFINITION.new()
+	self_damage_effect.effect_type = EFFECT_DEFINITION.EffectType.DAMAGE
+	self_damage_effect.target = EFFECT_DEFINITION.Target.SELF
+	self_damage_effect.amount = 3
+	var ordered_card = CARD_DEFINITION.new()
+	ordered_card.display_name = "顺序测试"
+	ordered_card.cost = 0
+	var ordered_effects: Array[Resource] = [heal_effect, self_damage_effect]
+	ordered_card.effects = ordered_effects
+
+	battle.play_card(ordered_card)
+	_assert_equal(battle.player.health, 97, "效果按数组顺序先治疗再自伤")
+	battle.free()
+
+
 func _test_player_defeat() -> void:
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)
@@ -84,8 +118,50 @@ func _test_player_defeat() -> void:
 	battle.free()
 
 
+func _test_card_costs_and_effects() -> void:
+	var battle = BATTLE_CONTROLLER.new()
+	root.add_child(battle)
+	battle.setup(88)
+	battle.player.take_damage(10)
+
+	_assert_true(battle.play_card(STRAIGHT_SHOT), "能量充足时可打攻击牌")
+	_assert_equal(battle.player.energy, 2, "攻击牌支付能量")
+	_assert_equal(battle.enemy.health, 24, "攻击效果造成伤害")
+	_assert_true(battle.play_card(GLOVES), "能量充足时可打防御牌")
+	_assert_equal(battle.player.shield, 6, "防御效果增加护盾")
+	_assert_true(battle.play_card(SPORTS_DRINK), "能量充足时可打治疗牌")
+	_assert_equal(battle.player.health, 96, "治疗效果不超过最大生命")
+	_assert_true(not battle.play_card(STRAIGHT_SHOT), "能量不足时拒绝出牌")
+	_assert_equal(battle.enemy.health, 24, "能量不足不结算效果")
+
+	battle.end_player_turn()
+	_assert_equal(battle.player.energy, 3, "新玩家回合恢复满能量")
+	_assert_true(battle.play_card(TOWEL), "可打出回能牌")
+	_assert_equal(battle.player.energy, 3, "回能牌费用和效果依次结算且不超过上限")
+
+	var deck = DECK_STATE.new()
+	var cards: Array[Resource] = [STRAIGHT_SHOT, GLOVES, SPORTS_DRINK, TOWEL]
+	deck.setup(cards, 17)
+	deck.draw_cards(3)
+	battle.player.energy = 0
+	var hand_before: Array[Resource] = deck.hand.duplicate()
+	_assert_true(not battle.play_card_from_hand(deck, 0), "费用不足时手牌出牌失败")
+	_assert_equal(deck.hand, hand_before, "费用不足不移动手牌")
+	battle.player.energy = 3
+	_assert_true(battle.play_card_from_hand(deck, 0), "费用充足时从手牌出牌")
+	_assert_equal(deck.discard_pile.size(), 1, "成功出牌后进入弃牌堆")
+	battle.free()
+
+
 func _assert_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual == expected:
 		return
 	_failed = true
 	push_error("%s：期望 %s，实际 %s" % [label, expected, actual])
+
+
+func _assert_true(value: bool, label: String) -> void:
+	if value:
+		return
+	_failed = true
+	push_error("%s：条件未满足" % label)

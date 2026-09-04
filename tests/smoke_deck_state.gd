@@ -5,6 +5,7 @@ const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
 const BANANA_SHOT := preload("res://data/cards/card_banana_shot.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
+const TOWEL := preload("res://data/cards/card_towel.tres")
 
 var _failed := false
 
@@ -31,6 +32,7 @@ func _test_card_definitions() -> void:
 	_assert_equal(STRAIGHT_SHOT.effects[0].amount, 6, "直球伤害")
 	_assert_equal(GLOVES.effects[0].amount, 6, "手套护盾")
 	_assert_equal(SPORTS_DRINK.effects[0].amount, 6, "佳得乐治疗")
+	_assert_equal(TOWEL.effects[0].amount, 2, "毛巾恢复能量")
 
 
 func _test_draw_play_discard_and_recycle() -> void:

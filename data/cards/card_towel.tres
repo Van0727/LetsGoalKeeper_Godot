@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+
+[sub_resource type="Resource" id="Effect_energy"]
+script = ExtResource("2_effect")
+effect_type = 3
+target = 0
+amount = 2
+hits = 1
+
+[resource]
+script = ExtResource("1_card")
+card_id = "card_towel"
+display_name = "毛巾"
+description = "恢复2点能量"
+cost = 1
+card_type = 2
+shot_type = 0
+rarity = 0
+effects = Array[Resource]([SubResource("Effect_energy")])

@@ -5,6 +5,7 @@ const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
 const BANANA_SHOT := preload("res://data/cards/card_banana_shot.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
+const TOWEL := preload("res://data/cards/card_towel.tres")
 const TEST_SEED := 20260902
 
 @onready var zone_status: Label = %ZoneStatus
@@ -56,6 +57,7 @@ func _reset_deck() -> void:
 		BANANA_SHOT,
 		GLOVES,
 		SPORTS_DRINK,
+		TOWEL,
 	]
 	_deck.setup(definitions, TEST_SEED)
 	_log("牌堆已按固定 seed 初始化")
