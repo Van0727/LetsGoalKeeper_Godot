@@ -1,3 +1,4 @@
+# 小屏布局冒烟测试：确保所有测试场景在 360×640 基准视口内不越界。
 extends SceneTree
 
 const TARGET_SIZE := Vector2(360, 640)
@@ -12,10 +13,12 @@ const TEST_SCENES := [
 var _failed := false
 
 
+# 延迟运行以确保根视口可设置尺寸。
 func _initialize() -> void:
 	call_deferred("_run")
 
 
+# 逐个实例化场景，等待一次布局更新后递归检查可见控件。
 func _run() -> void:
 	root.size = Vector2i(TARGET_SIZE)
 
@@ -35,6 +38,7 @@ func _run() -> void:
 	quit()
 
 
+# 检查当前控件矩形，并递归检查全部子节点。
 func _check_control_tree(node: Node, scene_path: String) -> void:
 	if node is Control and node.visible:
 		var control := node as Control

@@ -1,3 +1,4 @@
+# 牌堆冒烟测试：验证卡牌数据、抽弃牌流转和固定种子洗牌。
 extends SceneTree
 
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
@@ -15,10 +16,12 @@ const TOWEL := preload("res://data/cards/card_towel.tres")
 var _failed := false
 
 
+# 延迟运行以等待场景树初始化。
 func _initialize() -> void:
 	call_deferred("_run")
 
 
+# 执行全部牌堆用例并根据断言结果设置退出码。
 func _run() -> void:
 	_test_card_definitions()
 	_test_draw_play_discard_and_recycle()
@@ -31,6 +34,7 @@ func _run() -> void:
 	quit()
 
 
+# 验证已迁移卡牌的稳定 ID、费用与关键效果参数。
 func _test_card_definitions() -> void:
 	_assert_equal(STRAIGHT_SHOT.card_id, "card_straight_shot", "直球稳定ID")
 	_assert_equal(STRAIGHT_SHOT.cost, 1, "直球费用")
@@ -52,6 +56,7 @@ func _test_card_definitions() -> void:
 	_assert_equal(TOWEL.effects[0].amount, 2, "毛巾恢复能量")
 
 
+# 验证抽牌、出牌补位、弃牌及抽牌堆耗尽后的回洗。
 func _test_draw_play_discard_and_recycle() -> void:
 	var deck = DECK_STATE.new()
 	var definitions: Array[Resource] = [STRAIGHT_SHOT, BANANA_SHOT, LOB_SHOT, BARRAGE_SHOT]
@@ -71,6 +76,7 @@ func _test_draw_play_discard_and_recycle() -> void:
 	_assert_equal(deck.draw_cards(3).size(), 3, "抽牌堆空时回洗弃牌堆")
 
 
+# 验证相同种子得到完全一致的牌序。
 func _test_deterministic_shuffle() -> void:
 	var definitions: Array[Resource] = [STRAIGHT_SHOT, BANANA_SHOT, LOB_SHOT, ATTACK_AND_DEFEND]
 	var first = DECK_STATE.new()
@@ -82,6 +88,7 @@ func _test_deterministic_shuffle() -> void:
 	_assert_equal(first_ids, second_ids, "固定 seed 的洗牌顺序")
 
 
+# 提取卡牌稳定 ID，供牌序比较使用。
 func _card_ids(cards: Array[Resource]) -> PackedStringArray:
 	var ids: PackedStringArray = []
 	for card in cards:
@@ -89,6 +96,7 @@ func _card_ids(cards: Array[Resource]) -> PackedStringArray:
 	return ids
 
 
+# 通用相等断言。
 func _assert_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual == expected:
 		return
@@ -96,6 +104,7 @@ func _assert_equal(actual: Variant, expected: Variant, label: String) -> void:
 	push_error("%s：期望 %s，实际 %s" % [label, expected, actual])
 
 
+# 通用布尔断言。
 func _assert_true(value: bool, label: String) -> void:
 	if value:
 		return

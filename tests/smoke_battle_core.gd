@@ -1,3 +1,4 @@
+# 战斗核心冒烟测试：覆盖基础数值、回合、卡牌效果、随机分支和胜负边界。
 extends SceneTree
 
 const COMBATANT_STATE := preload("res://scripts/battle/combatant_state.gd")
@@ -19,10 +20,12 @@ const EFFECT_DEFINITION := preload("res://scripts/cards/effect_definition.gd")
 var _failed := false
 
 
+# 延迟到场景树初始化完成后运行测试集合。
 func _initialize() -> void:
 	call_deferred("_run")
 
 
+# 顺序执行所有核心用例，任一断言失败则以非零状态退出。
 func _run() -> void:
 	_test_damage_shield_and_healing()
 	_test_turn_flow_and_victory()
@@ -41,6 +44,7 @@ func _run() -> void:
 	quit()
 
 
+# 验证护盾优先吸收、生命扣减和治疗上限。
 func _test_damage_shield_and_healing() -> void:
 	var combatant = COMBATANT_STATE.new("测试角色", 10)
 	combatant.gain_shield(5)
@@ -59,6 +63,7 @@ func _test_damage_shield_and_healing() -> void:
 	_assert_equal(combatant.health, 10, "治疗不超过最大生命")
 
 
+# 验证玩家/敌人回合推进及击杀后的胜利状态。
 func _test_turn_flow_and_victory() -> void:
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)
@@ -74,6 +79,7 @@ func _test_turn_flow_and_victory() -> void:
 	battle.free()
 
 
+# 验证相同种子生成相同敌人意图和概率卡牌结果。
 func _test_deterministic_seed() -> void:
 	var first = BATTLE_CONTROLLER.new()
 	var second = BATTLE_CONTROLLER.new()
@@ -104,6 +110,7 @@ func _test_deterministic_seed() -> void:
 	second_explosion.free()
 
 
+# 验证复合卡牌严格按效果数组顺序执行。
 func _test_effect_order() -> void:
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)
@@ -129,6 +136,7 @@ func _test_effect_order() -> void:
 	battle.free()
 
 
+# 验证射门类型、多段护盾消耗、死亡截断和多效果卡牌。
 func _test_shot_types_multi_hit_and_multi_effect() -> void:
 	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
 	var source = COMBATANT_STATE.new("测试射手", 20, 10)
@@ -160,6 +168,7 @@ func _test_shot_types_multi_hit_and_multi_effect() -> void:
 	battle.free()
 
 
+# 同时覆盖爆炸球成功自伤中断与失败继续攻击两条分支。
 func _test_probability_branch_and_interrupt() -> void:
 	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
 	var success_rng := _find_rng_for_chance_result(true)
@@ -191,6 +200,7 @@ func _test_probability_branch_and_interrupt() -> void:
 	_assert_equal(failure_events.size(), 2, "爆炸球未触发时继续后续效果")
 
 
+# 搜索一个能稳定产生指定 50% 判定结果的种子，避免测试依赖随机运气。
 func _find_rng_for_chance_result(expected_success: bool) -> RandomNumberGenerator:
 	for candidate_seed in range(1, 1000):
 		var probe := RandomNumberGenerator.new()
@@ -202,6 +212,7 @@ func _find_rng_for_chance_result(expected_success: bool) -> RandomNumberGenerato
 	return RandomNumberGenerator.new()
 
 
+# 验证能量射门读取的是支付费用后的剩余能量。
 func _test_remaining_energy_damage() -> void:
 	var full_energy_battle = BATTLE_CONTROLLER.new()
 	root.add_child(full_energy_battle)
@@ -221,6 +232,7 @@ func _test_remaining_energy_damage() -> void:
 	last_energy_battle.free()
 
 
+# 验证敌人致命攻击进入失败状态且生命不会为负。
 func _test_player_defeat() -> void:
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)
@@ -232,6 +244,7 @@ func _test_player_defeat() -> void:
 	battle.free()
 
 
+# 验证费用支付、基础效果、回能上限以及手牌成功/失败流转。
 func _test_card_costs_and_effects() -> void:
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)
@@ -267,6 +280,7 @@ func _test_card_costs_and_effects() -> void:
 	battle.free()
 
 
+# 通用相等断言：记录失败但继续执行其余用例，便于一次看到全部问题。
 func _assert_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual == expected:
 		return
@@ -274,6 +288,7 @@ func _assert_equal(actual: Variant, expected: Variant, label: String) -> void:
 	push_error("%s：期望 %s，实际 %s" % [label, expected, actual])
 
 
+# 通用布尔断言。
 func _assert_true(value: bool, label: String) -> void:
 	if value:
 		return

@@ -1,6 +1,8 @@
+# 单场战斗流程控制器：协调回合状态、卡牌结算、敌人行动和胜负信号。
 class_name BattleController
 extends Node
 
+# 表现层通过信号读取日志和刷新状态，核心结算不等待动画回调。
 signal log_added(message: String)
 signal state_changed
 signal battle_finished(victory: bool)
@@ -12,6 +14,7 @@ const PLAYER_MAX_ENERGY := 3
 const ENEMY_MAX_HEALTH := 30
 const ENEMY_BASE_DAMAGE := 8
 
+# 战斗阶段限制玩家只能在自己的行动阶段操作。
 enum Phase {
 	NOT_STARTED,
 	PLAYER_TURN,
@@ -20,6 +23,7 @@ enum Phase {
 	FINISHED,
 }
 
+# 玩家、敌人和回合字段都是本场战斗的运行时状态。
 var player = COMBATANT_STATE.new("玩家", PLAYER_MAX_HEALTH, PLAYER_MAX_ENERGY)
 var enemy = COMBATANT_STATE.new("企鹅", ENEMY_MAX_HEALTH)
 var phase := Phase.NOT_STARTED
@@ -31,6 +35,7 @@ var _rng := RandomNumberGenerator.new()
 var _effect_resolver = EFFECT_RESOLVER.new()
 
 
+# 用指定种子重置战斗，保证敌人意图和概率卡牌结果可复现。
 func setup(seed_value := 20260902) -> void:
 	battle_seed = seed_value
 	_rng.seed = battle_seed
@@ -42,6 +47,7 @@ func setup(seed_value := 20260902) -> void:
 	_start_player_turn()
 
 
+# 早期测试保留的直接攻击接口，正式卡牌统一走 play_card。
 func player_attack(base_damage := 6) -> bool:
 	if not _can_player_act():
 		return false
@@ -59,6 +65,7 @@ func player_attack(base_damage := 6) -> bool:
 	return true
 
 
+# 早期测试保留的直接防御接口。
 func player_guard(amount := 6) -> bool:
 	if not _can_player_act():
 		return false
@@ -68,6 +75,7 @@ func player_guard(amount := 6) -> bool:
 	return true
 
 
+# 早期测试保留的直接治疗接口。
 func player_heal(amount := 6) -> bool:
 	if not _can_player_act():
 		return false
@@ -77,6 +85,7 @@ func player_heal(amount := 6) -> bool:
 	return true
 
 
+# 检查行动阶段与费用，支付成功后按顺序结算整张卡牌。
 func play_card(card: Resource) -> bool:
 	if not _can_player_act():
 		return false
@@ -101,6 +110,7 @@ func play_card(card: Resource) -> bool:
 	return true
 
 
+# 从指定手牌位置出牌；只有结算成功才移动卡牌并补牌。
 func play_card_from_hand(deck_state, hand_index: int) -> bool:
 	if hand_index < 0 or hand_index >= deck_state.hand.size():
 		_log("无效手牌位置")
@@ -112,6 +122,7 @@ func play_card_from_hand(deck_state, hand_index: int) -> bool:
 	return true
 
 
+# 结束玩家阶段并立即执行当前敌人行动。
 func end_player_turn() -> bool:
 	if not _can_player_act():
 		return false
@@ -121,6 +132,7 @@ func end_player_turn() -> bool:
 	return true
 
 
+# 返回供界面显示的中文阶段名称。
 func get_phase_text() -> String:
 	match phase:
 		Phase.PLAYER_TURN:
@@ -135,6 +147,7 @@ func get_phase_text() -> String:
 			return "尚未开始"
 
 
+# 玩家回合开始时清盾、回满能量并生成本回合敌人意图。
 func _start_player_turn() -> void:
 	var cleared_shield := player.clear_shield()
 	var restored_energy := player.refill_energy()
@@ -145,6 +158,7 @@ func _start_player_turn() -> void:
 	state_changed.emit()
 
 
+# 执行敌方攻击；玩家存活时推进回合并重新进入玩家阶段。
 func _execute_enemy_turn() -> void:
 	phase = Phase.ENEMY_TURN
 	var cleared_shield := enemy.clear_shield()
@@ -162,10 +176,12 @@ func _execute_enemy_turn() -> void:
 	_start_player_turn()
 
 
+# 在基础伤害上下 20% 范围内生成敌人最终意图值。
 func _roll_enemy_damage() -> int:
 	return maxi(roundi(ENEMY_BASE_DAMAGE * _rng.randf_range(0.8, 1.2)), 0)
 
 
+# 统一拦截错误阶段的玩家操作并写入日志。
 func _can_player_act() -> bool:
 	if phase == Phase.PLAYER_TURN:
 		return true
@@ -173,6 +189,7 @@ func _can_player_act() -> bool:
 	return false
 
 
+# 锁定战斗状态、清除意图并广播最终胜负。
 func _finish_battle(victory: bool) -> void:
 	phase = Phase.FINISHED
 	enemy_intent_damage = 0
@@ -181,6 +198,7 @@ func _finish_battle(victory: bool) -> void:
 	battle_finished.emit(victory)
 
 
+# 把结构化效果事件转换为玩家可读的中文战斗日志。
 func _log_effect_event(event: Dictionary) -> void:
 	match event.type:
 		"damage":
@@ -211,5 +229,6 @@ func _log_effect_event(event: Dictionary) -> void:
 			_log("效果暂未支持：%s" % event.get("effect_type", "unknown"))
 
 
+# 所有战斗日志统一从此信号出口发送给表现层。
 func _log(message: String) -> void:
 	log_added.emit(message)

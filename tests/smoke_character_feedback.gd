@@ -1,12 +1,15 @@
+# 角色反馈冒烟测试：验证伤害、治疗、护盾文本及状态数值同步。
 extends SceneTree
 
 const TEST_SCENE := preload("res://scenes/character_feedback_test.tscn")
 
 
+# 延迟运行以等待场景树准备完成。
 func _initialize() -> void:
 	call_deferred("_run")
 
 
+# 实例化反馈场景，调用交互入口并检查每一步的数值结果。
 func _run() -> void:
 	var test_scene := TEST_SCENE.instantiate()
 	root.add_child(test_scene)
@@ -35,6 +38,7 @@ func _run() -> void:
 	quit()
 
 
+# 通用相等断言；失败时立即输出对应功能标签。
 func _assert_equal(actual: Variant, expected: Variant, label: String) -> void:
 	if actual == expected:
 		return

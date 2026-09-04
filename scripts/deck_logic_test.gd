@@ -1,3 +1,4 @@
+# 牌堆人工测试场景：展示固定牌库的抽取、出牌补牌、弃牌和回洗结果。
 extends Control
 
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
@@ -20,16 +21,19 @@ const TEST_SEED := 20260902
 var _deck = DECK_STATE.new()
 
 
+# 场景加载时建立固定种子的测试牌堆。
 func _ready() -> void:
 	_reset_deck()
 
 
+# 抽三张牌并刷新牌区数量。
 func _on_draw_pressed() -> void:
 	var drawn := _deck.draw_cards(3)
 	_log("抽取 %d 张：%s" % [drawn.size(), _card_names(drawn)])
 	_refresh_status()
 
 
+# 打出第一张手牌并验证原位置补牌行为。
 func _on_play_pressed() -> void:
 	var played := _deck.play_card_at(0)
 	if played == null:
@@ -39,20 +43,24 @@ func _on_play_pressed() -> void:
 	_refresh_status()
 
 
+# 模拟回合结束并弃掉所有手牌。
 func _on_end_turn_pressed() -> void:
 	var count := _deck.discard_hand()
 	_log("回合结束，弃掉 %d 张手牌" % count)
 	_refresh_status()
 
 
+# 使用相同种子重建牌堆，便于人工对比确定性顺序。
 func _on_reset_pressed() -> void:
 	_reset_deck()
 
 
+# 返回迁移测试版主菜单。
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
+# 创建包含当前已迁移卡牌的测试牌库。
 func _reset_deck() -> void:
 	deck_log.clear()
 	var definitions: Array[Resource] = [
@@ -73,6 +81,7 @@ func _reset_deck() -> void:
 	_refresh_status()
 
 
+# 同步抽牌堆、弃牌堆和手牌的界面状态。
 func _refresh_status() -> void:
 	zone_status.text = "抽牌堆 %d　弃牌堆 %d　手牌 %d" % [
 		_deck.draw_pile.size(),
@@ -82,6 +91,7 @@ func _refresh_status() -> void:
 	hand_status.text = "手牌：%s" % _card_names(_deck.hand)
 
 
+# 将卡牌数组转换为中文名称列表。
 func _card_names(cards: Array[Resource]) -> String:
 	var names: PackedStringArray = []
 	for card in cards:
@@ -89,6 +99,7 @@ func _card_names(cards: Array[Resource]) -> String:
 	return "、".join(names) if not names.is_empty() else "无"
 
 
+# 追加一条牌堆操作日志并滚动到底部。
 func _log(message: String) -> void:
 	deck_log.text += message + "\n"
 	deck_log.scroll_vertical = deck_log.get_line_count()

@@ -1,6 +1,8 @@
+# 可拖拽卡牌控件：统一处理鼠标和单指触摸，并判断是否落入出牌区。
 class_name DraggableCard
 extends PanelContainer
 
+# 只有在有效出牌区释放时才发送成功信号。
 signal card_played(card: DraggableCard)
 
 @export var play_zone: Control
@@ -12,11 +14,13 @@ var _home_global_position := Vector2.ZERO
 var _return_tween: Tween
 
 
+# 缓存场景中的出牌区，并在布局稳定后记录卡牌初始位置。
 func _ready() -> void:
 	gui_input.connect(_on_gui_input)
 	call_deferred("_remember_home_position")
 
 
+# 触摸事件由全局输入处理，以便手指移出卡牌矩形后仍能继续拖拽和释放。
 func _input(event: InputEvent) -> void:
 	if not _dragging:
 		if event is InputEventScreenTouch and event.pressed:
@@ -36,6 +40,7 @@ func _input(event: InputEvent) -> void:
 			_finish_drag(event.position)
 
 
+# 鼠标按键由控件输入处理，避免点到卡牌外部时错误起拖。
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -43,10 +48,12 @@ func _on_gui_input(event: InputEvent) -> void:
 			accept_event()
 
 
+# 布局完成后记录回弹目标位置。
 func _remember_home_position() -> void:
 	_home_global_position = global_position
 
 
+# 开始一次指定指针的拖拽，并取消尚未完成的回弹动画。
 func _start_drag(pointer_id: int, pointer_position: Vector2) -> void:
 	if _dragging:
 		return
@@ -59,10 +66,12 @@ func _start_drag(pointer_id: int, pointer_position: Vector2) -> void:
 	z_index = 10
 
 
+# 保持按下点与卡牌左上角的偏移，避免起拖时发生跳动。
 func _move_to_pointer(pointer_position: Vector2) -> void:
 	global_position = pointer_position - _drag_offset
 
 
+# 有效释放时出牌，无效释放时回到初始位置。
 func _finish_drag(pointer_position: Vector2) -> void:
 	_dragging = false
 	_pointer_id = -1
@@ -75,6 +84,7 @@ func _finish_drag(pointer_position: Vector2) -> void:
 	_return_to_home()
 
 
+# 使用短 Tween 平滑回到手牌位置。
 func _return_to_home() -> void:
 	_return_tween = create_tween()
 	_return_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

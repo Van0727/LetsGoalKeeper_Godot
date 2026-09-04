@@ -1,11 +1,14 @@
+# 卡牌效果执行器：只负责按数据结算并产出事件，不依赖动画或 UI。
 class_name EffectResolver
 extends RefCounted
 
 const EFFECT_DEFINITION := preload("res://scripts/cards/effect_definition.gd")
 
+# 直接调用且未注入战斗随机数时使用的后备随机数生成器。
 var _fallback_rng := RandomNumberGenerator.new()
 
 
+# 按数组顺序执行卡牌效果；概率失败会跳过当前效果，中断标记会终止后续效果。
 func resolve_card(
 		card: Resource,
 		source,
@@ -14,6 +17,7 @@ func resolve_card(
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	for effect in card.effects:
+		# 概率事件保留掷骰明细，确保日志、测试和以后回放都能解释结果。
 		var chance := clampi(effect.chance_percent, 0, 100)
 		if chance < 100:
 			var active_rng := rng if rng != null else _fallback_rng
@@ -44,6 +48,7 @@ func resolve_card(
 			_:
 				events.append({"type": "unsupported", "effect_type": effect.effect_type})
 
+		# 中断发生在当前效果成功结算之后，例如爆炸球先自伤再取消攻击。
 		if effect.interrupt_on_success:
 			events.append({"type": "effect_interrupted"})
 			break
@@ -52,6 +57,7 @@ func resolve_card(
 	return events
 
 
+# 逐段结算伤害；每一段独立消耗护盾，目标死亡后立即停止剩余段数。
 func _resolve_damage(
 		effect: Resource,
 		shot_type: int,
@@ -60,6 +66,7 @@ func _resolve_damage(
 		events: Array[Dictionary]
 ) -> void:
 	for hit_index in range(effect.hits):
+		# 能量加成读取费用支付后的运行时能量，不回写 EffectDefinition。
 		var energy_bonus: int = source.energy * effect.amount_per_energy
 		var scaled_amount: int = effect.amount + energy_bonus
 		var damage := maxi(roundi(scaled_amount * source.strength_multiplier), 0)
