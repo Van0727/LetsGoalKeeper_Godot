@@ -87,7 +87,11 @@ func _on_choice_pressed(index: int) -> void:
 			return
 		run_state.add_item(choices[index])
 	run_state.complete_reward()
-	get_tree().change_scene_to_file("res://scenes/battle.tscn")
+	# 正式流程回到路线地图；没有地图房间上下文（直连战斗回归）时继续进入下一场战斗。
+	if run_state.map_state != null and run_state.map_state.current_room_id != "":
+		get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
+	else:
+		get_tree().change_scene_to_file("res://scenes/battle.tscn")
 
 
 # 奖励阶段允许返回主菜单，但不会把未完成奖励误记为完成。

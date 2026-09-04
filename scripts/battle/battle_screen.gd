@@ -13,10 +13,10 @@ const SUPER_ATTACK := preload("res://data/skills/skill_super_attack.tres")
 const SUPER_DEFENSE := preload("res://data/skills/skill_super_defense.tres")
 const SUPER_ABILITY := preload("res://data/skills/skill_super_ability.tres")
 
-const BATTLE_SEED := 20260904
 const STARTING_HAND_SIZE := 3
 const CARD_SIZE := Vector2(104, 146)
 const CARD_GAP := 6.0
+const REST_ROOM_TYPE := 3
 
 @onready var controller: BattleController = %BattleController
 @onready var player_display: CharacterDisplay = %PlayerDisplay
@@ -69,7 +69,7 @@ func _ready() -> void:
 	start_new_battle()
 
 
-# 使用首版建议牌库和当前遭遇重置战斗；阶段 4 依次演示普通、精英与测试 Boss。
+# 使用本局牌库和房间敌人重置战斗：路线地图进入的房间按房型从章节池选敌。
 func start_new_battle(enemy_definition: Resource = null) -> void:
 	result_overlay.hide()
 	ball_label.hide()
@@ -82,7 +82,13 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 		if card != null:
 			starting_deck.append(card)
 	var selected_enemy := enemy_definition
+	var current_room: Dictionary = run_state.get_current_room()
+	if selected_enemy == null and not current_room.is_empty():
+		# 正式地图流程：休息房不应进入战斗，普通/精英/Boss 房型与遭遇池 Tier 序号一致。
+		if current_room.type != REST_ROOM_TYPE:
+			selected_enemy = _select_room_enemy(current_room)
 	if selected_enemy == null:
+		# 保留阶段 4 演示入口：没有地图房间上下文（测试直连）时按胜场循环展示三类敌人。
 		_enemy_index = run_state.battles_won % _enemy_sequence.size()
 		selected_enemy = _enemy_sequence[_enemy_index]
 	var current_seed: int = run_state.seed + run_state.battles_won * 101
@@ -170,6 +176,27 @@ func _on_skill_pressed() -> void:
 		return
 	status_label.text = "%s已结算" % skill.display_name
 	call_deferred("_finish_resolution")
+
+
+# 按当前章节遭遇池和房间房型确定敌人；同房间首次选择后缓存敌人ID，保证可复现。
+func _select_room_enemy(room: Dictionary) -> Resource:
+	var cached_id: String = run_state.map_state.get_enemy_id(room.id)
+	if not cached_id.is_empty():
+		return load("res://data/enemies/%s.tres" % cached_id)
+	var pool_path := "res://data/encounters/chapter_%d.tres" % run_state.chapter
+	if not ResourceLoader.exists(pool_path):
+		push_error("找不到章节遭遇池：%s，回退到乌龟" % pool_path)
+		return TURTLE
+	var pool: Resource = load(pool_path)
+	var rng := RandomNumberGenerator.new()
+	# 敌人随机数由本局seed与房间位置共同派生，同一局内重进同一房间会得到同一个敌人。
+	rng.seed = run_state.seed + room.layer * 1000 + room.index * 100 + 17
+	var enemy: Resource = pool.pick_enemy(room.type, rng)
+	if enemy == null:
+		push_error("第%d章%s房间遭遇池为空，回退到乌龟" % [run_state.chapter, room.type])
+		return TURTLE
+	run_state.map_state.set_enemy_id(room.id, enemy.enemy_id)
+	return enemy
 
 
 # GM 调试按钮立即结束当前关卡；控制器负责绕过护盾和反伤并广播正常胜利。
@@ -299,8 +326,8 @@ func _on_battle_finished(victory: bool) -> void:
 	run_state.record_battle_health(controller.player.health)
 	_update_input_state()
 	result_title.text = "战斗胜利" if victory else "战斗失败"
-	result_detail.text = "选择卡牌和战利品后继续下一战。" if victory else "本局已经结束，将从新游戏重新开始。"
-	result_action_button.text = "领取奖励" if victory else "重新开始"
+	result_detail.text = "选择卡牌和战利品后返回路线地图。" if victory else "本局失败：返回主菜单后可开始新的一局。"
+	result_action_button.text = "领取奖励" if victory else "返回主菜单"
 	if victory:
 		run_state.pending_reward_is_boss = (
 			controller.current_enemy_definition != null
@@ -309,13 +336,12 @@ func _on_battle_finished(victory: bool) -> void:
 	result_overlay.show()
 
 
-# 胜利进入两步奖励，失败则彻底初始化新局后重新战斗。
+# 胜利进入两步奖励，失败则整局结束并返回主菜单重新开始。
 func _on_restart_pressed() -> void:
 	if _last_victory:
 		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
 		return
-	run_state.start_new_run(BATTLE_SEED)
-	start_new_battle()
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
 # 返回迁移测试版主菜单。

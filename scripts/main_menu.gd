@@ -5,16 +5,18 @@ const CARD_DRAG_TEST_SCENE := preload("res://scenes/card_drag_test.tscn")
 const CHARACTER_FEEDBACK_TEST_SCENE := preload("res://scenes/character_feedback_test.tscn")
 const BATTLE_LOGIC_TEST_SCENE := preload("res://scenes/battle_logic_test.tscn")
 const DECK_LOGIC_TEST_SCENE := preload("res://scenes/deck_logic_test.tscn")
-const BATTLE_SCENE := preload("res://scenes/battle.tscn")
 
 @onready var status_label: Label = %StatusLabel
 
 
-# 进入阶段 3 的单场可玩战斗；完整新游戏流程将在后续 RunState 阶段替换。
+# 开始新游戏：使用随机种子彻底重置本局并进入第 1 章路线地图。
 func _on_start_button_pressed() -> void:
-	status_label.text = "正在进入可玩战斗……"
-	get_node("/root/RunState").start_new_run(20260904)
-	get_tree().change_scene_to_packed(BATTLE_SCENE)
+	status_label.text = "正在开始新的一局……"
+	var run_state := get_node("/root/RunState")
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	run_state.start_new_run(rng.randi())
+	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 
 # 保留阶段 2 的牌堆逻辑测试入口，方便后续回归抽弃牌规则。

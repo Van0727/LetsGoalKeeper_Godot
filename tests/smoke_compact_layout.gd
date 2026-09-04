@@ -10,6 +10,8 @@ const TEST_SCENES := [
 	"res://scenes/deck_logic_test.tscn",
 	"res://scenes/battle.tscn",
 	"res://scenes/reward_screen.tscn",
+	"res://scenes/map_screen.tscn",
+	"res://scenes/rest_room.tscn",
 ]
 
 var _failed := false

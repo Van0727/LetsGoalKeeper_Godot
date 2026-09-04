@@ -1,7 +1,9 @@
-# 本局唯一运行状态：保存跨房间生命、牌库ID、战利品ID、伤害加成和流程进度。
+# 本局唯一运行状态：保存跨房间生命、牌库ID、战利品ID、伤害加成、流程进度和地图状态。
 extends Node
 
 signal run_changed
+
+const MAP_GENERATOR := preload("res://scripts/map/map_generator.gd")
 
 const DEFAULT_MAX_HEALTH := 100
 const DEFAULT_DECK: Array[String] = [
@@ -18,6 +20,8 @@ var owned_item_ids: Array[String] = []
 var damage_modifiers := {"all": 0, "straight": 0, "banana": 0, "lob": 0}
 var battles_won := 0
 var pending_reward_is_boss := false
+# 单局路线地图：随 start_new_run 用本局 seed 确定性生成，只在本局内修改。
+var map_state: RefCounted = null
 
 
 # 首次启动若没有本局数据则建立默认新游戏，后续场景切换不会重复重置。
@@ -26,7 +30,7 @@ func _ready() -> void:
 		start_new_run(20260904)
 
 
-# 新游戏彻底覆盖上一局数据，防止生命、牌库或战利品残留。
+# 新游戏彻底覆盖上一局数据，防止生命、牌库、战利品或地图残留。
 func start_new_run(seed_value: int) -> void:
 	seed = seed_value
 	chapter = 1
@@ -37,7 +41,20 @@ func start_new_run(seed_value: int) -> void:
 	damage_modifiers = {"all": 0, "straight": 0, "banana": 0, "lob": 0}
 	battles_won = 0
 	pending_reward_is_boss = false
+	_regenerate_map()
 	run_changed.emit()
+
+
+# 用本局 seed 生成当前章节地图；配置缺失时保持无地图，由界面提示而不是静默崩溃。
+func _regenerate_map() -> void:
+	var generator = MAP_GENERATOR.new()
+	var config: Resource = generator.load_config_for_chapter(chapter)
+	if config == null:
+		map_state = null
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	map_state = generator.generate(config, rng)
 
 
 # 战斗结束只写回跨房间生命；失败时生命允许保持为0。
@@ -72,3 +89,21 @@ func complete_reward() -> void:
 	battles_won += 1
 	pending_reward_is_boss = false
 	run_changed.emit()
+
+
+# 休息房治疗：恢复指定生命但不超过上限，返回实际恢复量。
+func heal_run(amount: int) -> int:
+	var healed := mini(max_hp - player_hp, maxi(amount, 0))
+	player_hp += healed
+	run_changed.emit()
+	return healed
+
+
+# 返回当前正在进行的房间；没有地图或尚未进入房间时返回空字典。
+func get_current_room() -> Dictionary:
+	if map_state == null:
+		return {}
+	var room_id: String = map_state.current_room_id
+	if room_id.is_empty():
+		return {}
+	return map_state.room_by_id(room_id)
