@@ -12,11 +12,11 @@ hits = 1
 
 [resource]
 script = ExtResource("1_card")
-card_id = "card_lob_shot"
-display_name = "挑射"
-description = "造成6点伤害"
+card_id = "card_rugby_ball"
+display_name = "橄榄球"
+description = "使用随机射门造成6点伤害"
 cost = 1
 card_type = 0
-shot_type = 3
+shot_type = 4
 rarity = 0
 effects = Array[Resource]([SubResource("Effect_damage")])

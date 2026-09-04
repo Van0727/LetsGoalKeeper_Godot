@@ -13,6 +13,11 @@ const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const ENERGY_SHOT := preload("res://data/cards/card_energy_shot.tres")
 const RUN_UP := preload("res://data/cards/card_run_up.tres")
 const WEAKNESS := preload("res://data/cards/card_weakness.tres")
+const SHOT_GROUP := preload("res://data/cards/card_shot_group.tres")
+const DOUBLE_BANANA_SHOT := preload("res://data/cards/card_double_banana_shot.tres")
+const BLOODTHIRSTY_BALL := preload("res://data/cards/card_bloodthirsty_ball.tres")
+const SPIKED_BALL := preload("res://data/cards/card_spiked_ball.tres")
+const RUGBY_BALL := preload("res://data/cards/card_rugby_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -37,6 +42,7 @@ func _run() -> void:
 	_test_probability_branch_and_interrupt()
 	_test_remaining_energy_damage()
 	_test_strength_and_weakness_duration()
+	_test_remaining_migrated_cards()
 	_test_effect_order()
 	_test_deterministic_seed()
 
@@ -281,6 +287,61 @@ func _test_strength_and_weakness_duration() -> void:
 	weakness_battle.end_player_turn()
 	_assert_equal(weakness_battle.enemy.strength_multiplier, 1.0, "虚弱到期后恢复正常倍率")
 	weakness_battle.free()
+
+
+# 验证阶段2补齐卡牌的段数、射门类型、效果顺序与自伤死亡中断。
+func _test_remaining_migrated_cards() -> void:
+	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
+
+	var group_source = COMBATANT_STATE.new("组射门球员", 20, 3)
+	var group_target = COMBATANT_STATE.new("组射门目标", 30)
+	var group_events: Array[Dictionary] = resolver.resolve_card(SHOT_GROUP, group_source, group_target)
+	_assert_equal(group_events.size(), 5, "一组射门产生5段伤害事件")
+	_assert_equal(group_target.health, 20, "一组射门总计造成10点伤害")
+	_assert_equal(group_events[0].shot_type, SHOT_GROUP.ShotType.RANDOM, "一组射门保留随机射门类型")
+
+	var double_source = COMBATANT_STATE.new("双向香蕉球球员", 20, 3)
+	var double_target = COMBATANT_STATE.new("双向香蕉球目标", 20)
+	var double_events: Array[Dictionary] = resolver.resolve_card(
+		DOUBLE_BANANA_SHOT,
+		double_source,
+		double_target
+	)
+	_assert_equal(double_events.size(), 2, "双向香蕉球产生2段伤害事件")
+	_assert_equal(double_target.health, 14, "双向香蕉球总计造成6点伤害")
+	_assert_equal(double_events[0].shot_type, DOUBLE_BANANA_SHOT.ShotType.BANANA, "双向香蕉球保留香蕉球类型")
+
+	var blood_source = COMBATANT_STATE.new("嗜血球球员", 20, 3)
+	blood_source.health = 10
+	var blood_target = COMBATANT_STATE.new("嗜血球目标", 20)
+	var blood_events: Array[Dictionary] = resolver.resolve_card(
+		BLOODTHIRSTY_BALL,
+		blood_source,
+		blood_target
+	)
+	_assert_equal(blood_events[0].type, "damage", "嗜血球先造成伤害")
+	_assert_equal(blood_events[1].type, "heal", "嗜血球后恢复生命")
+	_assert_equal(blood_target.health, 14, "嗜血球造成6点伤害")
+	_assert_equal(blood_source.health, 13, "嗜血球恢复3点生命")
+
+	var spike_source = COMBATANT_STATE.new("尖刺球球员", 20, 3)
+	var spike_target = COMBATANT_STATE.new("尖刺球目标", 20)
+	var spike_events: Array[Dictionary] = resolver.resolve_card(SPIKED_BALL, spike_source, spike_target)
+	_assert_equal(spike_events[0].target, spike_source, "尖刺球第一效果目标是自己")
+	_assert_equal(spike_source.health, 17, "尖刺球先造成3点自伤")
+	_assert_equal(spike_target.health, 14, "尖刺球再对敌人造成6点伤害")
+
+	var fatal_source = COMBATANT_STATE.new("濒死尖刺球球员", 3, 3)
+	var safe_target = COMBATANT_STATE.new("未受伤目标", 20)
+	var fatal_events: Array[Dictionary] = resolver.resolve_card(SPIKED_BALL, fatal_source, safe_target)
+	_assert_equal(fatal_events.size(), 1, "尖刺球自伤致死后中断后续效果")
+	_assert_equal(safe_target.health, 20, "尖刺球自伤致死时不再攻击敌人")
+
+	var rugby_source = COMBATANT_STATE.new("橄榄球球员", 20, 3)
+	var rugby_target = COMBATANT_STATE.new("橄榄球目标", 20)
+	var rugby_events: Array[Dictionary] = resolver.resolve_card(RUGBY_BALL, rugby_source, rugby_target)
+	_assert_equal(rugby_events[0].shot_type, RUGBY_BALL.ShotType.RANDOM, "橄榄球保留随机射门类型")
+	_assert_equal(rugby_target.health, 14, "橄榄球造成6点伤害")
 
 
 # 验证敌人致命攻击进入失败状态且生命不会为负。

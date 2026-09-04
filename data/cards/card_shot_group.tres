@@ -7,16 +7,16 @@
 script = ExtResource("2_effect")
 effect_type = 0
 target = 1
-amount = 6
-hits = 1
+amount = 2
+hits = 5
 
 [resource]
 script = ExtResource("1_card")
-card_id = "card_lob_shot"
-display_name = "挑射"
-description = "造成6点伤害"
+card_id = "card_shot_group"
+display_name = "一组射门"
+description = "随机射门5次，每次造成2点伤害"
 cost = 1
 card_type = 0
-shot_type = 3
-rarity = 0
+shot_type = 4
+rarity = 1
 effects = Array[Resource]([SubResource("Effect_damage")])

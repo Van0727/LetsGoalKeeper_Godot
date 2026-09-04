@@ -11,6 +11,11 @@ const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const ENERGY_SHOT := preload("res://data/cards/card_energy_shot.tres")
 const RUN_UP := preload("res://data/cards/card_run_up.tres")
 const WEAKNESS := preload("res://data/cards/card_weakness.tres")
+const SHOT_GROUP := preload("res://data/cards/card_shot_group.tres")
+const DOUBLE_BANANA_SHOT := preload("res://data/cards/card_double_banana_shot.tres")
+const BLOODTHIRSTY_BALL := preload("res://data/cards/card_bloodthirsty_ball.tres")
+const SPIKED_BALL := preload("res://data/cards/card_spiked_ball.tres")
+const RUGBY_BALL := preload("res://data/cards/card_rugby_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -76,6 +81,11 @@ func _reset_deck() -> void:
 		ENERGY_SHOT,
 		RUN_UP,
 		WEAKNESS,
+		SHOT_GROUP,
+		DOUBLE_BANANA_SHOT,
+		BLOODTHIRSTY_BALL,
+		SPIKED_BALL,
+		RUGBY_BALL,
 		GLOVES,
 		SPORTS_DRINK,
 		TOWEL,

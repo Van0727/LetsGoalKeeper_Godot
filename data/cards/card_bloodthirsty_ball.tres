@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="CardDefinition" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+
+[sub_resource type="Resource" id="Effect_damage"]
+script = ExtResource("2_effect")
+effect_type = 0
+target = 1
+amount = 6
+hits = 1
+
+[sub_resource type="Resource" id="Effect_heal"]
+script = ExtResource("2_effect")
+effect_type = 2
+target = 0
+amount = 3
+hits = 1
+
+[resource]
+script = ExtResource("1_card")
+card_id = "card_bloodthirsty_ball"
+display_name = "嗜血球"
+description = "造成6点伤害，然后恢复3点生命"
+cost = 1
+card_type = 0
+shot_type = 1
+rarity = 0
+effects = Array[Resource]([SubResource("Effect_damage"), SubResource("Effect_heal")])

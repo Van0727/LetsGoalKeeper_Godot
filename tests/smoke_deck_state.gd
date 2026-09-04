@@ -11,6 +11,11 @@ const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const ENERGY_SHOT := preload("res://data/cards/card_energy_shot.tres")
 const RUN_UP := preload("res://data/cards/card_run_up.tres")
 const WEAKNESS := preload("res://data/cards/card_weakness.tres")
+const SHOT_GROUP := preload("res://data/cards/card_shot_group.tres")
+const DOUBLE_BANANA_SHOT := preload("res://data/cards/card_double_banana_shot.tres")
+const BLOODTHIRSTY_BALL := preload("res://data/cards/card_bloodthirsty_ball.tres")
+const SPIKED_BALL := preload("res://data/cards/card_spiked_ball.tres")
+const RUGBY_BALL := preload("res://data/cards/card_rugby_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -38,12 +43,34 @@ func _run() -> void:
 
 # 验证已迁移卡牌的稳定 ID、费用与关键效果参数。
 func _test_card_definitions() -> void:
+	var all_cards: Array[Resource] = [
+		STRAIGHT_SHOT,
+		BANANA_SHOT,
+		LOB_SHOT,
+		BARRAGE_SHOT,
+		ATTACK_AND_DEFEND,
+		EXPLOSION_BALL,
+		ENERGY_SHOT,
+		RUN_UP,
+		WEAKNESS,
+		SHOT_GROUP,
+		DOUBLE_BANANA_SHOT,
+		BLOODTHIRSTY_BALL,
+		SPIKED_BALL,
+		RUGBY_BALL,
+		GLOVES,
+		SPORTS_DRINK,
+		TOWEL,
+	]
+	_assert_equal(all_cards.size(), 17, "当前可由数据生成的卡牌总数")
+	_assert_equal(_unique_card_id_count(all_cards), 17, "17张卡牌均具有非空且唯一的稳定ID")
 	_assert_equal(STRAIGHT_SHOT.card_id, "card_straight_shot", "直球稳定ID")
 	_assert_equal(STRAIGHT_SHOT.cost, 1, "直球费用")
 	_assert_equal(STRAIGHT_SHOT.effects[0].amount, 6, "直球伤害")
 	_assert_equal(BANANA_SHOT.shot_type, BANANA_SHOT.ShotType.BANANA, "香蕉球弹道类型")
 	_assert_equal(LOB_SHOT.shot_type, LOB_SHOT.ShotType.LOB, "挑射弹道类型")
-	_assert_equal(LOB_SHOT.effects[0].amount, 8, "挑射伤害")
+	_assert_equal(LOB_SHOT.cost, 1, "挑射费用")
+	_assert_equal(LOB_SHOT.effects[0].amount, 6, "挑射伤害")
 	_assert_equal(BARRAGE_SHOT.effects[0].hits, 3, "连续射门攻击段数")
 	_assert_equal(ATTACK_AND_DEFEND.effects.size(), 2, "攻守兼备效果数量")
 	_assert_equal(EXPLOSION_BALL.cost, 1, "爆炸球费用")
@@ -57,6 +84,13 @@ func _test_card_definitions() -> void:
 	_assert_equal(RUN_UP.effects[0].multiplier, 1.5, "助跑力量倍率")
 	_assert_equal(WEAKNESS.effects[0].amount, 2, "虚弱持续回合")
 	_assert_equal(WEAKNESS.effects[0].multiplier, 0.5, "虚弱伤害倍率")
+	_assert_equal(SHOT_GROUP.effects[0].amount, 2, "一组射门单段伤害")
+	_assert_equal(SHOT_GROUP.effects[0].hits, 5, "一组射门攻击段数")
+	_assert_equal(DOUBLE_BANANA_SHOT.effects[0].amount, 3, "双向香蕉球单段伤害")
+	_assert_equal(DOUBLE_BANANA_SHOT.effects[0].hits, 2, "双向香蕉球攻击段数")
+	_assert_equal(BLOODTHIRSTY_BALL.effects[1].amount, 3, "嗜血球治疗量")
+	_assert_equal(SPIKED_BALL.effects[0].target, SPIKED_BALL.effects[0].Target.SELF, "尖刺球先对自身生效")
+	_assert_equal(RUGBY_BALL.shot_type, RUGBY_BALL.ShotType.RANDOM, "橄榄球使用随机射门")
 	_assert_equal(GLOVES.effects[0].amount, 6, "手套护盾")
 	_assert_equal(SPORTS_DRINK.effects[0].amount, 6, "佳得乐治疗")
 	_assert_equal(TOWEL.effects[0].amount, 2, "毛巾恢复能量")
@@ -100,6 +134,15 @@ func _card_ids(cards: Array[Resource]) -> PackedStringArray:
 	for card in cards:
 		ids.append(card.card_id)
 	return ids
+
+
+# 统计非空稳定 ID 的唯一数量，用于防止新增卡牌误用重复存档键。
+func _unique_card_id_count(cards: Array[Resource]) -> int:
+	var unique_ids := {}
+	for card in cards:
+		if not card.card_id.is_empty():
+			unique_ids[card.card_id] = true
+	return unique_ids.size()
 
 
 # 通用相等断言。
