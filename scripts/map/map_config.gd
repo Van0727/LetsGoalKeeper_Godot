@@ -1,8 +1,12 @@
-# 章节地图固定定义：只描述每层房间数量和房型权重，不保存本局地图节点状态。
+# 章节地图固定定义：描述章节显示主题、每层房间数量和房型权重，不保存本局地图节点状态。
 class_name MapConfig
 extends Resource
 
 @export var chapter := 1
+# 章节名称与占位配色让尚无正式美术的三章仍可清楚区分；后续替换背景资源时保持同一数据入口。
+@export var chapter_name := "第一章"
+@export var map_background_color := Color(0.04, 0.11, 0.16, 1.0)
+@export var battle_background_color := Color(0.04, 0.09, 0.12, 1.0)
 # 每层最少房间数，数组下标从第1层开始；最后一层固定为单房间 Boss。
 @export var layer_min_rooms: Array[int] = []
 # 每层最多房间数，与 layer_min_rooms 一一对应。
@@ -21,6 +25,9 @@ func is_valid() -> bool:
 		return false
 	if chapter < 1 or sizes[0] == 0:
 		push_error("地图章节必须大于0且至少配置一层")
+		return false
+	if chapter_name.strip_edges().is_empty():
+		push_error("第%d章缺少章节显示名称" % chapter)
 		return false
 
 	for layer_index in range(sizes[0]):

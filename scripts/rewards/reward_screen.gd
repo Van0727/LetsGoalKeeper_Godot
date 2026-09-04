@@ -1,4 +1,4 @@
-# 两步奖励界面：战斗胜利后先选一张卡，再选一个未拥有战利品并进入下一战。
+# 两步奖励界面：战斗胜利后先选卡牌、再选战利品，最后统一推进房间或章节。
 extends Control
 
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
@@ -73,7 +73,7 @@ func _refresh_buttons() -> void:
 		button.text = "%s\n%s" % [definition.display_name, definition.description]
 
 
-# 卡牌选择后进入战利品步骤；两项奖励完成后才提交房间完成并推进路线。
+# 卡牌选择后进入战利品步骤；两项奖励完成后才原子提交房间并判断章节结果。
 func _on_choice_pressed(index: int) -> void:
 	if phase == Phase.CARD:
 		if index >= choices.size():
@@ -86,14 +86,12 @@ func _on_choice_pressed(index: int) -> void:
 		if index >= choices.size():
 			return
 		run_state.add_item(choices[index])
-	var returns_to_map: bool = run_state.map_state != null and run_state.map_state.current_room_id != ""
-	run_state.complete_reward()
-	if returns_to_map:
-		# 只有卡牌和战利品奖励都处理完毕，战斗房才正式变为已访问并解锁后续路线。
-		run_state.complete_current_room()
-		get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
-	else:
+	var flow_result: int = run_state.complete_reward_and_advance()
+	if flow_result == run_state.RewardFlowResult.NO_MAP:
 		get_tree().change_scene_to_file("res://scenes/battle.tscn")
+		return
+	# 第三章通关暂回到地图显示完成状态；下一任务会把该结果接到独立通关界面。
+	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 
 # 奖励阶段允许返回主菜单，但不会把未完成奖励误记为完成。

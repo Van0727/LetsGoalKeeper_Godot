@@ -15,6 +15,7 @@ const LOCKED_COLOR := Color(0.4, 0.45, 0.48)
 const BUTTON_SIZE := Vector2(96, 54)
 
 @onready var title_label: Label = %TitleLabel
+@onready var background: ColorRect = $Background
 @onready var rows_container: VBoxContainer = %RowsContainer
 @onready var connections_layer: Control = %ConnectionsLayer
 @onready var info_label: Label = %InfoLabel
@@ -42,7 +43,9 @@ func refresh_ui() -> void:
 		missing_overlay.show()
 		return
 	missing_overlay.hide()
-	title_label.text = "第 %d 章 · 路线地图" % run_state.chapter
+	var config: Resource = load("res://data/maps/map_chapter_%d.tres" % run_state.chapter)
+	background.color = config.map_background_color
+	title_label.text = "第 %d 章 · %s" % [run_state.chapter, config.chapter_name]
 	_rebuild_rows()
 	_update_info()
 	completed_overlay.visible = run_state.map_state.boss_visited()

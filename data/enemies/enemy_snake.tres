@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_attack"]
+script = ExtResource("2_action")
+action_id = "snake_attack"
+display_name = "毒牙射门"
+action_type = 0
+amount = 13
+variance_percent = 20
+
+[sub_resource type="Resource" id="Action_weakness"]
+script = ExtResource("2_action")
+action_id = "snake_weakness"
+display_name = "毒雾干扰"
+action_type = 3
+amount = 2
+multiplier = 0.5
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "enemy_snake"
+display_name = "蛇"
+tier = 1
+max_health = 95
+action_mode = 0
+actions = Array[Resource]([SubResource("Action_attack"), SubResource("Action_weakness")])
+migration_note = "Unity 生命6为占位；阶段8暂定生命95和行动数值，作为第三章精英。"

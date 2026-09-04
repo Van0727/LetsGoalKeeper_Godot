@@ -23,7 +23,7 @@ func _run() -> void:
 	_test_bear_active_skill_reduction()
 	_test_penguin_drain_and_weakness()
 	_test_weighted_boss_is_deterministic()
-	_test_encounter_pool_filters_disabled_placeholders()
+	_test_chapter_one_encounter_pool()
 
 	if _failed:
 		quit(1)
@@ -109,13 +109,13 @@ func _test_weighted_boss_is_deterministic() -> void:
 	second.free()
 
 
-# 遭遇池可选三种正式测试级别，同时过滤生命为6且未确认的企鹅占位数据。
-func _test_encounter_pool_filters_disabled_placeholders() -> void:
+# 第一章正式遭遇池按玩法规格提供企鹅、熊和大象三种级别。
+func _test_chapter_one_encounter_pool() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 106
-	_assert_equal(CHAPTER_ONE.pick_enemy(TURTLE.Tier.NORMAL, rng).enemy_id, TURTLE.enemy_id, "普通池选择乌龟")
-	_assert_equal(CHAPTER_ONE.pick_enemy(BEAR.Tier.ELITE, rng).enemy_id, BEAR.enemy_id, "精英池过滤禁用企鹅")
-	_assert_equal(CHAPTER_ONE.pick_enemy(TRAINING_BOSS.Tier.BOSS, rng).enemy_id, TRAINING_BOSS.enemy_id, "Boss池选择测试Boss")
+	_assert_equal(CHAPTER_ONE.pick_enemy(PENGUIN.Tier.NORMAL, rng).enemy_id, PENGUIN.enemy_id, "普通池选择企鹅")
+	_assert_equal(CHAPTER_ONE.pick_enemy(BEAR.Tier.ELITE, rng).enemy_id, BEAR.enemy_id, "精英池选择熊")
+	_assert_equal(CHAPTER_ONE.pick_enemy(TRAINING_BOSS.Tier.BOSS, rng).enemy_id, "enemy_elephant_boss", "Boss池选择大象")
 
 
 # 通用相等断言。

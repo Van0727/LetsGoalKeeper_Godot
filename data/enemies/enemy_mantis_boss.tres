@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_attack"]
+script = ExtResource("2_action")
+action_id = "mantis_attack"
+display_name = "冠军斩击"
+action_type = 0
+amount = 17
+variance_percent = 20
+weight = 4
+
+[sub_resource type="Resource" id="Action_shield"]
+script = ExtResource("2_action")
+action_id = "mantis_shield"
+display_name = "架势防守"
+action_type = 1
+amount = 18
+weight = 2
+
+[sub_resource type="Resource" id="Action_weakness"]
+script = ExtResource("2_action")
+action_id = "mantis_weakness"
+display_name = "压迫气场"
+action_type = 3
+amount = 2
+multiplier = 0.5
+weight = 1
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "enemy_mantis_boss"
+display_name = "螳螂冠军"
+tier = 2
+max_health = 140
+action_mode = 1
+actions = Array[Resource]([SubResource("Action_attack"), SubResource("Action_shield"), SubResource("Action_weakness")])
+migration_note = "Unity 生命6为占位；阶段8暂定生命140和行动数值，作为第三章最终 Boss。"

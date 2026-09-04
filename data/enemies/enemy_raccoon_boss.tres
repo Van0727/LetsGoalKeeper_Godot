@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_attack"]
+script = ExtResource("2_action")
+action_id = "raccoon_attack"
+display_name = "诡计射门"
+action_type = 0
+amount = 14
+variance_percent = 20
+weight = 3
+
+[sub_resource type="Resource" id="Action_shield"]
+script = ExtResource("2_action")
+action_id = "raccoon_shield"
+display_name = "偷取节奏"
+action_type = 1
+amount = 16
+weight = 2
+
+[sub_resource type="Resource" id="Action_heal"]
+script = ExtResource("2_action")
+action_id = "raccoon_heal"
+display_name = "临场调整"
+action_type = 2
+amount = 10
+weight = 1
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "enemy_raccoon_boss"
+display_name = "浣熊队长"
+tier = 2
+max_health = 110
+action_mode = 1
+actions = Array[Resource]([SubResource("Action_attack"), SubResource("Action_shield"), SubResource("Action_heal")])
+migration_note = "沿用阶段4测试 Boss 的加权行动结构；阶段8暂定生命110和行动数值。"

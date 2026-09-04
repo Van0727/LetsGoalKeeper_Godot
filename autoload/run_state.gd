@@ -4,15 +4,35 @@ extends Node
 signal run_changed
 
 const MAP_GENERATOR := preload("res://scripts/map/map_generator.gd")
+const MAP_STATE := preload("res://scripts/map/map_state.gd")
 
 const DEFAULT_MAX_HEALTH := 100
+const FINAL_CHAPTER := 3
+const CHAPTER_SEED_STEP := 1000003
 const DEFAULT_DECK: Array[String] = [
 	"card_straight_shot", "card_straight_shot", "card_straight_shot", "card_straight_shot",
 	"card_gloves", "card_gloves", "card_sports_drink", "card_towel",
 ]
 
+# 对局状态预留给主菜单、结局和后续存档；本任务先接入进行中与通关两条路径。
+enum RunStatus {
+	NOT_STARTED,
+	ACTIVE,
+	FAILED,
+	COMPLETED,
+}
+
+# 奖励结算结果由界面负责映射到场景，避免 RunState 直接依赖具体 UI 文件。
+enum RewardFlowResult {
+	NO_MAP,
+	MAP_CONTINUES,
+	CHAPTER_ADVANCED,
+	RUN_COMPLETED,
+}
+
 var seed := 0
 var chapter := 1
+var run_status := RunStatus.NOT_STARTED
 var player_hp := DEFAULT_MAX_HEALTH
 var max_hp := DEFAULT_MAX_HEALTH
 var deck_card_ids: Array[String] = []
@@ -34,6 +54,7 @@ func _ready() -> void:
 func start_new_run(seed_value: int) -> void:
 	seed = seed_value
 	chapter = 1
+	run_status = RunStatus.ACTIVE
 	max_hp = DEFAULT_MAX_HEALTH
 	player_hp = max_hp
 	deck_card_ids.assign(DEFAULT_DECK)
@@ -53,7 +74,8 @@ func _regenerate_map() -> void:
 		map_state = null
 		return
 	var rng := RandomNumberGenerator.new()
-	rng.seed = seed
+	# 每章从同一本局 seed 派生独立地图，同时保持相同 seed 的完整流程可复现。
+	rng.seed = seed + (chapter - 1) * CHAPTER_SEED_STEP
 	map_state = generator.generate(config, rng)
 
 
@@ -89,6 +111,34 @@ func complete_reward() -> void:
 	battles_won += 1
 	pending_reward_is_boss = false
 	run_changed.emit()
+
+
+# 两步奖励完成后原子提交房间；Boss 房再按章节进入下一地图或整局通关。
+# 结算顺序固定为：奖励入账 → 胜场增加 → 房间完成 → 章节推进，防止中途状态被误判为可继续。
+func complete_reward_and_advance() -> int:
+	battles_won += 1
+	pending_reward_is_boss = false
+	if map_state == null or map_state.current_room_id.is_empty():
+		run_changed.emit()
+		return RewardFlowResult.NO_MAP
+
+	var completed: Dictionary = map_state.complete_current_room()
+	if completed.is_empty():
+		run_changed.emit()
+		return RewardFlowResult.NO_MAP
+	if completed.type != MAP_STATE.RoomType.BOSS:
+		run_changed.emit()
+		return RewardFlowResult.MAP_CONTINUES
+
+	if chapter < FINAL_CHAPTER:
+		chapter += 1
+		_regenerate_map()
+		run_changed.emit()
+		return RewardFlowResult.CHAPTER_ADVANCED
+
+	run_status = RunStatus.COMPLETED
+	run_changed.emit()
+	return RewardFlowResult.RUN_COMPLETED
 
 
 # 基础治疗入口：恢复指定生命但不超过上限，返回实际恢复量。

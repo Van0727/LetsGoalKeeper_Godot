@@ -19,6 +19,7 @@ const CARD_GAP := 6.0
 const REST_ROOM_TYPE := 3
 
 @onready var controller: BattleController = %BattleController
+@onready var background: ColorRect = $Background
 @onready var player_display: CharacterDisplay = %PlayerDisplay
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
 @onready var play_zone: PanelContainer = %PlayZone
@@ -61,12 +62,21 @@ func _ready() -> void:
 	if run_state == null:
 		run_state = RUN_STATE_SCRIPT.new()
 		add_child(run_state)
+	_apply_chapter_theme()
 	controller.log_added.connect(_on_log_added)
 	controller.state_changed.connect(_refresh_all)
 	controller.effect_resolved.connect(_on_effect_resolved)
 	controller.battle_finished.connect(_on_battle_finished)
 	ball_timer.timeout.connect(_hide_ball_feedback)
 	start_new_battle()
+
+
+# 战斗背景暂用章节配置色区分内容阶段；正式美术接入时只需替换该配置入口。
+func _apply_chapter_theme() -> void:
+	var config_path := "res://data/maps/map_chapter_%d.tres" % run_state.chapter
+	if ResourceLoader.exists(config_path):
+		var config: Resource = load(config_path)
+		background.color = config.battle_background_color
 
 
 # 使用本局牌库和房间敌人重置战斗：路线地图进入的房间按房型从章节池选敌。

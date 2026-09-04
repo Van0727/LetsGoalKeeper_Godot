@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="EncounterPool" load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/encounter_pool.gd" id="1_pool"]
-[ext_resource type="Resource" path="res://data/enemies/enemy_penguin.tres" id="2_normal"]
-[ext_resource type="Resource" path="res://data/enemies/enemy_bear.tres" id="3_elite"]
-[ext_resource type="Resource" path="res://data/enemies/enemy_elephant_boss.tres" id="4_boss"]
+[ext_resource type="Resource" path="res://data/enemies/enemy_robot.tres" id="2_normal"]
+[ext_resource type="Resource" path="res://data/enemies/enemy_snake.tres" id="3_elite"]
+[ext_resource type="Resource" path="res://data/enemies/enemy_mantis_boss.tres" id="4_boss"]
 
 [resource]
 script = ExtResource("1_pool")
-chapter = 1
+chapter = 3
 enemies = Array[Resource]([ExtResource("2_normal"), ExtResource("3_elite"), ExtResource("4_boss")])
