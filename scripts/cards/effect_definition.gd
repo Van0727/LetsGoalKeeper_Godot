@@ -24,6 +24,8 @@ enum Target {
 @export_range(0, 999, 1) var amount := 0
 @export_range(1, 99, 1) var hits := 1
 @export_range(0, 999, 1) var amount_per_energy := 0
+# multiplier 用于力量和虚弱等倍率状态，具体持续回合由 amount 表示。
+@export_range(0.0, 10.0, 0.05) var multiplier := 1.0
 # 概率判定成功后可选择中断整张卡的后续效果，例如爆炸球自爆。
 @export_range(0, 100, 1) var chance_percent := 100
 @export var interrupt_on_success := false

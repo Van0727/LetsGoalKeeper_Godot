@@ -45,6 +45,22 @@ func resolve_card(
 			EFFECT_DEFINITION.EffectType.ENERGY:
 				var restored: int = recipient.gain_energy(effect.amount)
 				events.append({"type": "energy", "amount": restored, "target": recipient})
+			EFFECT_DEFINITION.EffectType.APPLY_STRENGTH:
+				var strength_turns: int = recipient.apply_strength(effect.multiplier, effect.amount)
+				events.append({
+					"type": "strength",
+					"multiplier": recipient.strength_multiplier,
+					"turns": strength_turns,
+					"target": recipient,
+				})
+			EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS:
+				var weakness_turns: int = recipient.apply_weakness(effect.multiplier, effect.amount)
+				events.append({
+					"type": "weakness",
+					"multiplier": recipient.strength_multiplier,
+					"turns": weakness_turns,
+					"target": recipient,
+				})
 			_:
 				events.append({"type": "unsupported", "effect_type": effect.effect_type})
 

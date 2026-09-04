@@ -83,6 +83,14 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "企鹅  HP 30/30  护盾 0"
 
+[node name="StatusSummary" type="Label" parent="Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.95, 1)
+theme_override_font_sizes/font_size = 14
+text = "玩家：无　敌人：无"
+
 [node name="BattleLog" type="TextEdit" parent="Margin/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -95,7 +103,7 @@ wrap_mode = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/v_separation = 6
 columns = 2
 
 [node name="Attack" type="Button" parent="Margin/Layout/ActionButtons"]
@@ -140,6 +148,18 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "能量射门：6+2×能量"
 
+[node name="RunUp" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "助跑：力量×1.5"
+
+[node name="Weakness" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "虚弱：伤害×0.5"
+
 [node name="Guard" type="Button" parent="Margin/Layout/ActionButtons"]
 custom_minimum_size = Vector2(156, 46)
 layout_mode = 2
@@ -182,6 +202,8 @@ script = ExtResource("2_controller")
 [connection signal="pressed" from="Margin/Layout/ActionButtons/AttackAndDefend" to="." method="_on_attack_and_defend_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/ExplosionBall" to="." method="_on_explosion_ball_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/EnergyShot" to="." method="_on_energy_shot_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/RunUp" to="." method="_on_run_up_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/Weakness" to="." method="_on_weakness_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Guard" to="." method="_on_guard_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Heal" to="." method="_on_heal_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Energy" to="." method="_on_energy_pressed"]

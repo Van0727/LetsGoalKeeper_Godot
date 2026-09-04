@@ -8,6 +8,8 @@ const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
 const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
 const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const ENERGY_SHOT := preload("res://data/cards/card_energy_shot.tres")
+const RUN_UP := preload("res://data/cards/card_run_up.tres")
+const WEAKNESS := preload("res://data/cards/card_weakness.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -15,6 +17,7 @@ const TOWEL := preload("res://data/cards/card_towel.tres")
 @onready var controller := %BattleController
 @onready var player_status: Label = %PlayerStatus
 @onready var enemy_status: Label = %EnemyStatus
+@onready var status_summary: Label = %StatusSummary
 @onready var phase_label: Label = %PhaseLabel
 @onready var battle_log: TextEdit = %BattleLog
 @onready var action_buttons: GridContainer = %ActionButtons
@@ -55,6 +58,14 @@ func _on_explosion_ball_pressed() -> void:
 
 func _on_energy_shot_pressed() -> void:
 	controller.play_card(ENERGY_SHOT)
+
+
+func _on_run_up_pressed() -> void:
+	controller.play_card(RUN_UP)
+
+
+func _on_weakness_pressed() -> void:
+	controller.play_card(WEAKNESS)
 
 
 func _on_guard_pressed() -> void:
@@ -106,10 +117,14 @@ func _refresh_status() -> void:
 		controller.enemy.max_health,
 		controller.enemy.shield,
 	]
+	status_summary.text = "玩家：%s　敌人：%s" % [
+		controller.player.get_strength_status_text(),
+		controller.enemy.get_strength_status_text(),
+	]
 	phase_label.text = "回合 %d · %s · 意图 %d" % [
 		controller.turn_number,
 		controller.get_phase_text(),
-		controller.enemy_intent_damage,
+		controller.get_enemy_intent_damage(),
 	]
 
 

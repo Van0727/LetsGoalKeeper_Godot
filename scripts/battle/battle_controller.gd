@@ -128,6 +128,7 @@ func end_player_turn() -> bool:
 		return false
 	phase = Phase.PLAYER_END
 	_log("玩家结束第 %d 回合" % turn_number)
+	_advance_strength_status(player)
 	_execute_enemy_turn()
 	return true
 
@@ -154,7 +155,7 @@ func _start_player_turn() -> void:
 	phase = Phase.PLAYER_TURN
 	enemy_intent_damage = _roll_enemy_damage()
 	_log("第 %d 回合：玩家行动（清除护盾 %d，恢复能量 %d）" % [turn_number, cleared_shield, restored_energy])
-	_log("敌人意图：攻击 %d" % enemy_intent_damage)
+	_log("敌人意图：攻击 %d" % get_enemy_intent_damage())
 	state_changed.emit()
 
 
@@ -163,12 +164,14 @@ func _execute_enemy_turn() -> void:
 	phase = Phase.ENEMY_TURN
 	var cleared_shield := enemy.clear_shield()
 	_log("敌人行动（清除护盾 %d）" % cleared_shield)
-	var result := player.take_damage(enemy_intent_damage)
+	var final_damage := get_enemy_intent_damage()
+	var result := player.take_damage(final_damage)
 	_log("敌人攻击：%d 伤害（护盾吸收 %d，生命损失 %d）" % [
-		enemy_intent_damage,
+		final_damage,
 		result.absorbed,
 		result.health_damage,
 	])
+	_advance_strength_status(enemy)
 	if player.is_dead():
 		_finish_battle(false)
 		return
@@ -179,6 +182,18 @@ func _execute_enemy_turn() -> void:
 # 在基础伤害上下 20% 范围内生成敌人最终意图值。
 func _roll_enemy_damage() -> int:
 	return maxi(roundi(ENEMY_BASE_DAMAGE * _rng.randf_range(0.8, 1.2)), 0)
+
+
+# 返回包含当前力量/虚弱倍率的最终敌人意图伤害。
+func get_enemy_intent_damage() -> int:
+	return maxi(roundi(enemy_intent_damage * enemy.strength_multiplier), 0)
+
+
+# 推进指定角色的伤害倍率状态，并在持续时间结束时记录恢复日志。
+func _advance_strength_status(combatant) -> void:
+	var result: Dictionary = combatant.advance_strength_turn()
+	if result.expired:
+		_log("%s 的力量状态已结束" % combatant.display_name)
 
 
 # 统一拦截错误阶段的玩家操作并写入日志。
@@ -217,6 +232,10 @@ func _log_effect_event(event: Dictionary) -> void:
 			_log("效果：恢复 %d 生命" % event.amount)
 		"energy":
 			_log("效果：恢复 %d 能量" % event.amount)
+		"strength":
+			_log("效果：力量变为 ×%.1f，持续 %d 回合" % [event.multiplier, event.turns])
+		"weakness":
+			_log("效果：虚弱变为 ×%.1f，持续 %d 回合" % [event.multiplier, event.turns])
 		"chance":
 			_log("效果：概率判定 %d/%d，%s" % [
 				event.roll,

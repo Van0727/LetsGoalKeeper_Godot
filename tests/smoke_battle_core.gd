@@ -11,6 +11,8 @@ const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
 const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
 const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
 const ENERGY_SHOT := preload("res://data/cards/card_energy_shot.tres")
+const RUN_UP := preload("res://data/cards/card_run_up.tres")
+const WEAKNESS := preload("res://data/cards/card_weakness.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -34,6 +36,7 @@ func _run() -> void:
 	_test_shot_types_multi_hit_and_multi_effect()
 	_test_probability_branch_and_interrupt()
 	_test_remaining_energy_damage()
+	_test_strength_and_weakness_duration()
 	_test_effect_order()
 	_test_deterministic_seed()
 
@@ -230,6 +233,54 @@ func _test_remaining_energy_damage() -> void:
 	_assert_equal(last_energy_battle.player.energy, 0, "最后1点能量被支付")
 	_assert_equal(last_energy_battle.enemy.health, 24, "无剩余能量时只造成6点基础伤害")
 	last_energy_battle.free()
+
+
+# 验证力量/虚弱倍率、同类延时、相反状态替换及各自回合结束后的持续时间扣减。
+func _test_strength_and_weakness_duration() -> void:
+	var status_target = COMBATANT_STATE.new("状态测试角色", 20)
+	_assert_equal(status_target.apply_strength(1.5, 2), 2, "首次施加力量持续2回合")
+	_assert_equal(status_target.apply_strength(1.5, 2), 4, "重复力量只增加持续时间")
+	_assert_equal(status_target.strength_multiplier, 1.5, "重复力量不叠加倍率")
+	_assert_equal(status_target.apply_weakness(0.5, 2), 2, "虚弱替换力量并重置持续时间")
+	_assert_equal(status_target.strength_multiplier, 0.5, "相反状态替换倍率")
+
+	var strength_battle = BATTLE_CONTROLLER.new()
+	root.add_child(strength_battle)
+	strength_battle.setup(401)
+	_assert_true(strength_battle.play_card(RUN_UP), "可打出助跑")
+	_assert_equal(strength_battle.player.strength_turns, 2, "助跑赋予2回合力量")
+	_assert_true(strength_battle.play_card(STRAIGHT_SHOT), "力量状态下可打出射门")
+	_assert_equal(strength_battle.enemy.health, 21, "力量使6点伤害变为9点")
+	strength_battle.end_player_turn()
+	_assert_equal(strength_battle.player.strength_turns, 1, "玩家完成回合后力量减1回合")
+	strength_battle.play_card(STRAIGHT_SHOT)
+	_assert_equal(strength_battle.enemy.health, 12, "下一回合力量仍然生效")
+	strength_battle.end_player_turn()
+	_assert_equal(strength_battle.player.strength_multiplier, 1.0, "力量到期后恢复正常倍率")
+	strength_battle.free()
+
+	var weakness_battle = BATTLE_CONTROLLER.new()
+	root.add_child(weakness_battle)
+	weakness_battle.setup(402)
+	var raw_intent: int = weakness_battle.enemy_intent_damage
+	_assert_true(weakness_battle.play_card(WEAKNESS), "可打出虚弱")
+	_assert_equal(
+		weakness_battle.get_enemy_intent_damage(),
+		roundi(raw_intent * 0.5),
+		"虚弱立即更新敌人最终意图"
+	)
+	var health_before_attack: int = weakness_battle.player.health
+	var first_weak_damage: int = weakness_battle.get_enemy_intent_damage()
+	weakness_battle.end_player_turn()
+	_assert_equal(
+		weakness_battle.player.health,
+		health_before_attack - first_weak_damage,
+		"敌人攻击应用虚弱倍率"
+	)
+	_assert_equal(weakness_battle.enemy.strength_turns, 1, "敌人完成回合后虚弱减1回合")
+	weakness_battle.end_player_turn()
+	_assert_equal(weakness_battle.enemy.strength_multiplier, 1.0, "虚弱到期后恢复正常倍率")
+	weakness_battle.free()
 
 
 # 验证敌人致命攻击进入失败状态且生命不会为负。

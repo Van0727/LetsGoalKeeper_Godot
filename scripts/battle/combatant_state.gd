@@ -2,6 +2,12 @@
 class_name CombatantState
 extends RefCounted
 
+enum StrengthStatus {
+	NONE,
+	STRENGTH,
+	WEAKNESS,
+}
+
 # 生命、护盾、能量和力量倍率都属于单场战斗临时数据。
 var display_name: String
 var max_health: int
@@ -10,6 +16,8 @@ var shield := 0
 var max_energy: int
 var energy: int
 var strength_multiplier := 1.0
+var strength_status := StrengthStatus.NONE
+var strength_turns := 0
 
 
 # 创建角色并把生命、能量初始化为各自上限。
@@ -83,6 +91,67 @@ func spend_energy(cost: int) -> bool:
 		return false
 	energy -= safe_cost
 	return true
+
+
+# 施加力量状态；同类状态只增加持续时间，不叠加倍率。
+func apply_strength(new_multiplier: float, turns: int) -> int:
+	return _apply_strength_status(
+		StrengthStatus.STRENGTH,
+		maxf(new_multiplier, 1.0),
+		turns
+	)
+
+
+# 施加虚弱状态；倍率被限制在 0～1，避免意外把减益变成增益。
+func apply_weakness(new_multiplier: float, turns: int) -> int:
+	return _apply_strength_status(
+		StrengthStatus.WEAKNESS,
+		clampf(new_multiplier, 0.0, 1.0),
+		turns
+	)
+
+
+# 受影响角色完成自己的回合后调用；持续时间归零时恢复正常伤害。
+func advance_strength_turn() -> Dictionary:
+	if strength_status == StrengthStatus.NONE:
+		return {"expired": false, "remaining_turns": 0, "status": StrengthStatus.NONE}
+
+	var previous_status := strength_status
+	strength_turns = maxi(strength_turns - 1, 0)
+	var expired := strength_turns == 0
+	if expired:
+		strength_status = StrengthStatus.NONE
+		strength_multiplier = 1.0
+	return {
+		"expired": expired,
+		"remaining_turns": strength_turns,
+		"status": previous_status,
+	}
+
+
+# 返回紧凑的中文状态文字，供战斗界面显示。
+func get_strength_status_text() -> String:
+	match strength_status:
+		StrengthStatus.STRENGTH:
+			return "力量×%.1f（%d）" % [strength_multiplier, strength_turns]
+		StrengthStatus.WEAKNESS:
+			return "虚弱×%.1f（%d）" % [strength_multiplier, strength_turns]
+		_:
+			return "无"
+
+
+# 切换状态时替换原状态；再次施加同类状态时延长回合数。
+func _apply_strength_status(new_status: int, new_multiplier: float, turns: int) -> int:
+	var safe_turns := maxi(turns, 0)
+	if safe_turns == 0:
+		return strength_turns
+	if strength_status == new_status:
+		strength_turns += safe_turns
+	else:
+		strength_status = new_status
+		strength_multiplier = new_multiplier
+		strength_turns = safe_turns
+	return strength_turns
 
 
 # 生命归零即视为死亡。
