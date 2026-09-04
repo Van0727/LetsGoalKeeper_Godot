@@ -16,6 +16,7 @@ const BUTTON_SIZE := Vector2(96, 54)
 
 @onready var title_label: Label = %TitleLabel
 @onready var rows_container: VBoxContainer = %RowsContainer
+@onready var connections_layer: Control = %ConnectionsLayer
 @onready var info_label: Label = %InfoLabel
 @onready var completed_overlay: ColorRect = %CompletedOverlay
 @onready var missing_overlay: ColorRect = %MissingOverlay
@@ -74,6 +75,15 @@ func _rebuild_rows() -> void:
 			arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			arrow.add_theme_color_override("font_color", Color(0.5, 0.62, 0.66))
 			rows_container.add_child(arrow)
+	# 容器布局在当前帧末完成，延迟后再读取按钮全局位置绘制真实稀疏连线。
+	call_deferred("_refresh_connections")
+
+
+# 将按钮映射与纯逻辑地图交给独立绘图层，地图状态本身不持有任何 UI 引用。
+func _refresh_connections() -> void:
+	if run_state.map_state == null:
+		return
+	connections_layer.configure(room_buttons, run_state.map_state)
 
 
 # 按房间状态上色：可进高亮房型色，已完成偏蓝，锁定置灰且禁用。
@@ -101,12 +111,12 @@ func _update_info() -> void:
 	]
 
 
-# 进入所选房间：状态流转失败时刷新按钮并忽略；休息房走休息场景，战斗房走战斗场景。
+# 开始所选房间：只登记进行中房间，完成状态由奖励或休息结算提交。
 func _on_room_button_pressed(room_id: String) -> void:
 	var state = run_state.map_state
 	if state == null:
 		return
-	var room: Dictionary = state.enter_room(room_id)
+	var room: Dictionary = state.begin_room(room_id)
 	if room.is_empty():
 		refresh_ui()
 		return

@@ -20,12 +20,13 @@ func _ready() -> void:
 	_refresh_labels()
 
 
-# 治疗一次并禁用按钮；房间只进入一次，不允许第二次治疗。
+# 治疗机会写入当前房间运行状态；重新加载场景也不能重复治疗。
 func _on_heal_pressed() -> void:
 	if run_state == null or heal_button.disabled:
 		return
-	var healed = run_state.heal_run(REST_HEAL_AMOUNT)
-	heal_button.disabled = true
+	var healed = run_state.use_current_rest(REST_HEAL_AMOUNT)
+	var current_room: Dictionary = run_state.get_current_room()
+	heal_button.disabled = current_room.is_empty() or current_room.get("rest_used", false)
 	if healed > 0:
 		status_label.text = "已恢复 %d 点生命" % healed
 	else:
@@ -33,13 +34,15 @@ func _on_heal_pressed() -> void:
 	_refresh_labels()
 
 
-# 返回路线地图继续选择房间。
+# 继续前进时才提交休息房完成状态并解锁下一层。
 func _on_continue_pressed() -> void:
+	run_state.complete_current_room()
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 
-# 返回主菜单放弃当前路线。
+# 返回主菜单时取消尚未完成的休息房，不提前推进路线。
 func _on_back_pressed() -> void:
+	run_state.cancel_current_room()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
@@ -47,3 +50,7 @@ func _on_back_pressed() -> void:
 func _refresh_labels() -> void:
 	run_label.text = "生命 %d/%d" % [run_state.player_hp, run_state.max_hp]
 	heal_button.text = "治疗 %d 点" % REST_HEAL_AMOUNT
+	var current_room: Dictionary = run_state.get_current_room()
+	heal_button.disabled = current_room.is_empty() or current_room.get("rest_used", false)
+	if not current_room.is_empty() and current_room.get("rest_used", false):
+		status_label.text = "本休息房已经使用过治疗"

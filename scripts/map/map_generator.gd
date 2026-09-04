@@ -14,7 +14,7 @@ func load_config_for_chapter(chapter: int) -> Resource:
 	return load(path)
 
 
-# 生成一张新地图：层数与房间数来自配置，连线采用相邻层全连通保证任何路线都可抵达 Boss。
+# 生成一张新地图：层数与房间数来自配置，连线保持稀疏并保证上下层每个房间都参与路线。
 func generate(config: Resource, rng: RandomNumberGenerator) -> MapState:
 	if config == null or not config.is_valid():
 		return null
@@ -35,21 +35,34 @@ func generate(config: Resource, rng: RandomNumberGenerator) -> MapState:
 				"state": MAP_STATE.RoomState.LOCKED,
 				"connections": [],
 				"enemy_id": "",
+				"rest_used": false,
 			}
 			if layer == 1:
 				room.state = MAP_STATE.RoomState.ATTAINABLE
 			state.add_room(room)
 
-	# 相邻层全连通：第1层任何选择都能到达第2层全部房间，Boss 房与第2层每个房间相连。
+	# 先给每个上层房间至少一条随机出边，再补齐没有入边的下层房间；避免全连接让路线选择失去意义。
 	for layer in range(1, state.layer_count):
 		var current_rooms := state.rooms_on_layer(layer)
 		var next_rooms := state.rooms_on_layer(layer + 1)
-		var next_ids: Array = []
-		for next_room in next_rooms:
-			next_ids.append(next_room.id)
 		for room in current_rooms:
-			room.connections = next_ids.duplicate()
+			var target: Dictionary = next_rooms[rng.randi_range(0, next_rooms.size() - 1)]
+			room.connections.append(target.id)
+		for next_room in next_rooms:
+			if _has_incoming_connection(current_rooms, next_room.id):
+				continue
+			var source: Dictionary = current_rooms[rng.randi_range(0, current_rooms.size() - 1)]
+			if next_room.id not in source.connections:
+				source.connections.append(next_room.id)
 	return state
+
+
+# 判断下一层房间是否已被任一上层房间连接，用于补齐不可达节点。
+func _has_incoming_connection(current_rooms: Array[Dictionary], target_id: String) -> bool:
+	for room in current_rooms:
+		if target_id in room.connections:
+			return true
+	return false
 
 
 # 规划某一层的房型序列；休息房插在随机位置，其余战斗房按层权重掷精英。

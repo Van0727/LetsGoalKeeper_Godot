@@ -91,12 +91,39 @@ func complete_reward() -> void:
 	run_changed.emit()
 
 
-# 休息房治疗：恢复指定生命但不超过上限，返回实际恢复量。
+# 基础治疗入口：恢复指定生命但不超过上限，返回实际恢复量。
 func heal_run(amount: int) -> int:
 	var healed := mini(max_hp - player_hp, maxi(amount, 0))
 	player_hp += healed
 	run_changed.emit()
 	return healed
+
+
+# 使用当前休息房的唯一治疗机会；使用记录先写入地图状态，场景重载也不能重复领取。
+func use_current_rest(amount: int) -> int:
+	if map_state == null or not map_state.mark_current_rest_used():
+		return 0
+	return heal_run(amount)
+
+
+# 房间内容结算成功后统一提交路线推进，避免战斗失败或奖励未完成时提前解锁。
+func complete_current_room() -> Dictionary:
+	if map_state == null:
+		return {}
+	var completed: Dictionary = map_state.complete_current_room()
+	if not completed.is_empty():
+		run_changed.emit()
+	return completed
+
+
+# 放弃进行中的房间但不改变路线三态，供战斗失败或主动退出清理临时上下文。
+func cancel_current_room() -> bool:
+	if map_state == null:
+		return false
+	var cancelled: bool = map_state.cancel_current_room()
+	if cancelled:
+		run_changed.emit()
+	return cancelled
 
 
 # 返回当前正在进行的房间；没有地图或尚未进入房间时返回空字典。

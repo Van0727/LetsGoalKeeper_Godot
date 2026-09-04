@@ -10,7 +10,7 @@ enum RoomType {
 	REST,
 }
 
-# 房间三态：初始锁定，只有当前层可进，进入后本房已完成且同层其余路线被锁。
+# 房间三态：初始锁定，当前层可进；内容结算完成后本房已访问且同层其余路线被锁。
 enum RoomState {
 	LOCKED,
 	ATTAINABLE,
@@ -18,9 +18,9 @@ enum RoomState {
 }
 
 var layer_count := 0
-# 每项保存房间运行数据：id、layer、index、type、state、connections、enemy_id。
+# 每项保存房间运行数据：id、layer、index、type、state、connections、enemy_id、rest_used。
 var rooms: Array[Dictionary] = []
-# 当前所在房间 ID；新一局开始前为空字符串。
+# 当前正在结算的房间 ID；只有完成战斗奖励或休息结算后才会清空并推进路线。
 var current_room_id := ""
 
 var _id_map := {}
@@ -58,7 +58,7 @@ func room_by_id(room_id: String) -> Dictionary:
 	return _id_map.get(room_id, {})
 
 
-# Boss 已进入即代表本局路线走完，此后不允许再生成新的可进房间。
+# Boss 房完成结算才代表本章路线走完；仅开始 Boss 战不会提前判定通关。
 func boss_visited() -> bool:
 	for room in rooms:
 		if room.type == RoomType.BOSS and room.state == RoomState.VISITED:
@@ -72,22 +72,53 @@ func add_room(room: Dictionary) -> void:
 	_id_map[room.id] = room
 
 
-# 进入一个可进房间：标记完成、锁定同层其余路线，并解锁其连线的下一层房间。
-# 非法进入（锁定/已访问/不存在）不改动状态并返回空字典。
-func enter_room(room_id: String) -> Dictionary:
+# 开始一个可进房间：仅记录进行中房间，不提前修改三态或解锁后续路线。
+# 已有房间正在结算时拒绝切换，避免从战斗/休息流程中途改走另一条路线。
+func begin_room(room_id: String) -> Dictionary:
+	if not current_room_id.is_empty():
+		return {}
 	var room := room_by_id(room_id)
 	if room.is_empty() or room.state != RoomState.ATTAINABLE:
 		return {}
-	room.state = RoomState.VISITED
 	current_room_id = room_id
+	return room
+
+
+# 完成当前房间：提交已访问状态、锁定同层其他选择并解锁真实连线指向的下一层。
+# 该接口只能由战斗奖励全部领取或休息房结算调用，失败和中途退出不得调用。
+func complete_current_room() -> Dictionary:
+	if current_room_id.is_empty():
+		return {}
+	var room := room_by_id(current_room_id)
+	if room.is_empty() or room.state != RoomState.ATTAINABLE:
+		return {}
+	room.state = RoomState.VISITED
 	for sibling in rooms_on_layer(room.layer):
-		if sibling.id != room_id and sibling.state == RoomState.ATTAINABLE:
+		if sibling.id != room.id and sibling.state == RoomState.ATTAINABLE:
 			sibling.state = RoomState.LOCKED
 	for next_id in room.connections:
 		var next_room := room_by_id(next_id)
 		if not next_room.is_empty() and next_room.state == RoomState.LOCKED:
 			next_room.state = RoomState.ATTAINABLE
+	current_room_id = ""
 	return room
+
+
+# 取消尚未完成的房间，不改变任何房间三态；用于放弃战斗或结束失败的本局。
+func cancel_current_room() -> bool:
+	if current_room_id.is_empty():
+		return false
+	current_room_id = ""
+	return true
+
+
+# 消耗当前休息房的唯一治疗机会；返回 false 表示房型错误、没有进行中房间或已经使用。
+func mark_current_rest_used() -> bool:
+	var room := room_by_id(current_room_id)
+	if room.is_empty() or room.type != RoomType.REST or room.get("rest_used", false):
+		return false
+	room.rest_used = true
+	return true
 
 
 # 记录该房间选定的敌人稳定 ID（进入战斗时确定，重进同一场不重新随机）。

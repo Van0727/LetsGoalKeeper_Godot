@@ -13,10 +13,36 @@ extends Resource
 @export var rest_count_by_layer: Array[int] = []
 
 
-# 校验层配置数组长度是否一致；不一致时输出明确错误供内容排查。
+# 校验层配置结构和逐层数值，防止空层、反向随机范围或多个 Boss 进入运行时。
 func is_valid() -> bool:
 	var sizes := [layer_min_rooms.size(), layer_max_rooms.size(), elite_chance_by_layer.size(), rest_count_by_layer.size()]
 	if sizes.min() != sizes.max():
 		push_error("第%d章地图配置的层数组长度不一致" % chapter)
 		return false
-	return sizes[0] > 0
+	if chapter < 1 or sizes[0] == 0:
+		push_error("地图章节必须大于0且至少配置一层")
+		return false
+
+	for layer_index in range(sizes[0]):
+		var minimum := layer_min_rooms[layer_index]
+		var maximum := layer_max_rooms[layer_index]
+		var rest_count := rest_count_by_layer[layer_index]
+		var elite_chance := elite_chance_by_layer[layer_index]
+		if minimum < 1 or maximum < minimum:
+			push_error("第%d章第%d层房间范围非法：%d~%d" % [chapter, layer_index + 1, minimum, maximum])
+			return false
+		if rest_count < 0 or rest_count > minimum:
+			push_error("第%d章第%d层休息房数量超过该层最少房间数" % [chapter, layer_index + 1])
+			return false
+		if elite_chance < 0.0 or elite_chance > 1.0:
+			push_error("第%d章第%d层精英概率必须在0~1之间" % [chapter, layer_index + 1])
+			return false
+
+	var last_index: int = sizes[0] - 1
+	if layer_min_rooms[last_index] != 1 or layer_max_rooms[last_index] != 1:
+		push_error("第%d章最后一层必须固定为单个Boss房" % chapter)
+		return false
+	if rest_count_by_layer[last_index] != 0:
+		push_error("第%d章Boss层不能配置休息房" % chapter)
+		return false
+	return true

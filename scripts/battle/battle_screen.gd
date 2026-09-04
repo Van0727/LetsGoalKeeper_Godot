@@ -324,6 +324,9 @@ func _on_battle_finished(victory: bool) -> void:
 	_input_locked = true
 	_last_victory = victory
 	run_state.record_battle_health(controller.player.health)
+	# 失败不提交房间完成，清除进行中上下文；胜利则保留到两步奖励全部领取后再提交。
+	if not victory:
+		run_state.cancel_current_room()
 	_update_input_state()
 	result_title.text = "战斗胜利" if victory else "战斗失败"
 	result_detail.text = "选择卡牌和战利品后返回路线地图。" if victory else "本局失败：返回主菜单后可开始新的一局。"
@@ -344,6 +347,7 @@ func _on_restart_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
-# 返回迁移测试版主菜单。
+# 主动退出战斗视为放弃当前尝试，不得让尚未完成的房间继续占用流程状态。
 func _on_back_pressed() -> void:
+	run_state.cancel_current_room()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

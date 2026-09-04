@@ -73,7 +73,7 @@ func _refresh_buttons() -> void:
 		button.text = "%s\n%s" % [definition.display_name, definition.description]
 
 
-# 卡牌选择后进入战利品步骤；战利品选择完成后推进胜场并进入下一战。
+# 卡牌选择后进入战利品步骤；两项奖励完成后才提交房间完成并推进路线。
 func _on_choice_pressed(index: int) -> void:
 	if phase == Phase.CARD:
 		if index >= choices.size():
@@ -86,9 +86,11 @@ func _on_choice_pressed(index: int) -> void:
 		if index >= choices.size():
 			return
 		run_state.add_item(choices[index])
+	var returns_to_map: bool = run_state.map_state != null and run_state.map_state.current_room_id != ""
 	run_state.complete_reward()
-	# 正式流程回到路线地图；没有地图房间上下文（直连战斗回归）时继续进入下一场战斗。
-	if run_state.map_state != null and run_state.map_state.current_room_id != "":
+	if returns_to_map:
+		# 只有卡牌和战利品奖励都处理完毕，战斗房才正式变为已访问并解锁后续路线。
+		run_state.complete_current_room()
 		get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 	else:
 		get_tree().change_scene_to_file("res://scenes/battle.tscn")
