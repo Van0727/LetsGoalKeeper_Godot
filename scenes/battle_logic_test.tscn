@@ -134,6 +134,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "爆炸球：50%"
 
+[node name="EnergyShot" type="Button" parent="Margin/Layout/ActionButtons"]
+custom_minimum_size = Vector2(156, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "能量射门：6+2×能量"
+
 [node name="Guard" type="Button" parent="Margin/Layout/ActionButtons"]
 custom_minimum_size = Vector2(156, 46)
 layout_mode = 2
@@ -175,6 +181,7 @@ script = ExtResource("2_controller")
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Barrage" to="." method="_on_barrage_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/AttackAndDefend" to="." method="_on_attack_and_defend_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/ExplosionBall" to="." method="_on_explosion_ball_pressed"]
+[connection signal="pressed" from="Margin/Layout/ActionButtons/EnergyShot" to="." method="_on_energy_shot_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Guard" to="." method="_on_guard_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Heal" to="." method="_on_heal_pressed"]
 [connection signal="pressed" from="Margin/Layout/ActionButtons/Energy" to="." method="_on_energy_pressed"]

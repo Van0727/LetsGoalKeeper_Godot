@@ -7,6 +7,7 @@ const LOB_SHOT := preload("res://data/cards/card_lob_shot.tres")
 const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
 const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
 const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
+const ENERGY_SHOT := preload("res://data/cards/card_energy_shot.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -62,6 +63,7 @@ func _reset_deck() -> void:
 		BARRAGE_SHOT,
 		ATTACK_AND_DEFEND,
 		EXPLOSION_BALL,
+		ENERGY_SHOT,
 		GLOVES,
 		SPORTS_DRINK,
 		TOWEL,

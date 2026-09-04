@@ -60,11 +60,15 @@ func _resolve_damage(
 		events: Array[Dictionary]
 ) -> void:
 	for hit_index in range(effect.hits):
-		var damage := maxi(roundi(effect.amount * source.strength_multiplier), 0)
+		var energy_bonus: int = source.energy * effect.amount_per_energy
+		var scaled_amount: int = effect.amount + energy_bonus
+		var damage := maxi(roundi(scaled_amount * source.strength_multiplier), 0)
 		var result: Dictionary = recipient.take_damage(damage)
 		events.append({
 			"type": "damage",
 			"amount": damage,
+			"base_amount": effect.amount,
+			"energy_bonus": energy_bonus,
 			"absorbed": result.absorbed,
 			"health_damage": result.health_damage,
 			"hit": hit_index + 1,

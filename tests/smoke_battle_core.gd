@@ -9,6 +9,7 @@ const LOB_SHOT := preload("res://data/cards/card_lob_shot.tres")
 const BARRAGE_SHOT := preload("res://data/cards/card_barrage_shot.tres")
 const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
 const EXPLOSION_BALL := preload("res://data/cards/card_explosion_ball.tres")
+const ENERGY_SHOT := preload("res://data/cards/card_energy_shot.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
@@ -29,6 +30,7 @@ func _run() -> void:
 	_test_card_costs_and_effects()
 	_test_shot_types_multi_hit_and_multi_effect()
 	_test_probability_branch_and_interrupt()
+	_test_remaining_energy_damage()
 	_test_effect_order()
 	_test_deterministic_seed()
 
@@ -198,6 +200,25 @@ func _find_rng_for_chance_result(expected_success: bool) -> RandomNumberGenerato
 			result.seed = candidate_seed
 			return result
 	return RandomNumberGenerator.new()
+
+
+func _test_remaining_energy_damage() -> void:
+	var full_energy_battle = BATTLE_CONTROLLER.new()
+	root.add_child(full_energy_battle)
+	full_energy_battle.setup(303)
+	_assert_true(full_energy_battle.play_card(ENERGY_SHOT), "满能量时可打出能量射门")
+	_assert_equal(full_energy_battle.player.energy, 2, "能量射门先支付1点费用")
+	_assert_equal(full_energy_battle.enemy.health, 20, "剩余2点能量时造成10点伤害")
+	full_energy_battle.free()
+
+	var last_energy_battle = BATTLE_CONTROLLER.new()
+	root.add_child(last_energy_battle)
+	last_energy_battle.setup(304)
+	last_energy_battle.player.energy = 1
+	_assert_true(last_energy_battle.play_card(ENERGY_SHOT), "最后1点能量可打出能量射门")
+	_assert_equal(last_energy_battle.player.energy, 0, "最后1点能量被支付")
+	_assert_equal(last_energy_battle.enemy.health, 24, "无剩余能量时只造成6点基础伤害")
+	last_energy_battle.free()
 
 
 func _test_player_defeat() -> void:

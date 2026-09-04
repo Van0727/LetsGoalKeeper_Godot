@@ -19,5 +19,6 @@ enum Target {
 @export var target := Target.ENEMY
 @export_range(0, 999, 1) var amount := 0
 @export_range(1, 99, 1) var hits := 1
+@export_range(0, 999, 1) var amount_per_energy := 0
 @export_range(0, 100, 1) var chance_percent := 100
 @export var interrupt_on_success := false
