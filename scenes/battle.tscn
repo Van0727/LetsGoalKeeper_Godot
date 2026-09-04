@@ -234,9 +234,16 @@ theme_override_font_sizes/font_size = 13
 text = "抽牌 5　弃牌 0"
 vertical_alignment = 1
 
+[node name="SkillButton" type="Button" parent="Footer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(134, 58)
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "连击 0/3"
+
 [node name="EndTurnButton" type="Button" parent="Footer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(130, 58)
+custom_minimum_size = Vector2(104, 58)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "结束回合"
@@ -299,7 +306,7 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
-text = "再来一场"
+text = "挑战下一个敌人"
 
 [node name="MenuButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
 custom_minimum_size = Vector2(0, 44)
@@ -308,6 +315,7 @@ theme_override_font_sizes/font_size = 16
 text = "返回主菜单"
 
 [connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="Footer/SkillButton" to="." method="_on_skill_pressed"]
 [connection signal="pressed" from="Footer/EndTurnButton" to="." method="_on_end_turn_pressed"]
 [connection signal="pressed" from="ResultOverlay/ResultCenter/ResultPanel/ResultContent/RestartButton" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="ResultOverlay/ResultCenter/ResultPanel/ResultContent/MenuButton" to="." method="_on_back_pressed"]

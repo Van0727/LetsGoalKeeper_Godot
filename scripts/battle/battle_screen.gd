@@ -8,6 +8,12 @@ const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
+const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
+const BEAR := preload("res://data/enemies/enemy_bear.tres")
+const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
+const SUPER_ATTACK := preload("res://data/skills/skill_super_attack.tres")
+const SUPER_DEFENSE := preload("res://data/skills/skill_super_defense.tres")
+const SUPER_ABILITY := preload("res://data/skills/skill_super_ability.tres")
 
 const BATTLE_SEED := 20260904
 const STARTING_HAND_SIZE := 3
@@ -28,6 +34,7 @@ const CARD_GAP := 6.0
 @onready var status_label: Label = %StatusLabel
 @onready var hand_layer: Control = %HandLayer
 @onready var pile_label: Label = %PileLabel
+@onready var skill_button: Button = %SkillButton
 @onready var end_turn_button: Button = %EndTurnButton
 @onready var result_overlay: ColorRect = %ResultOverlay
 @onready var result_title: Label = %ResultTitle
@@ -35,6 +42,13 @@ const CARD_GAP := 6.0
 
 var deck_state := DECK_STATE.new()
 var _input_locked := false
+var _enemy_index := 0
+var _enemy_sequence: Array[Resource] = [TURTLE, BEAR, TRAINING_BOSS]
+var _skills_by_type := {
+	0: SUPER_ATTACK,
+	1: SUPER_DEFENSE,
+	2: SUPER_ABILITY,
+}
 
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
@@ -47,8 +61,8 @@ func _ready() -> void:
 	start_new_battle()
 
 
-# 使用首版建议的 8 张基础牌库重置战斗，并抽取三张起手牌。
-func start_new_battle() -> void:
+# 使用首版建议牌库和当前遭遇重置战斗；阶段 4 依次演示普通、精英与测试 Boss。
+func start_new_battle(enemy_definition: Resource = null) -> void:
 	result_overlay.hide()
 	ball_label.hide()
 	shot_type_label.hide()
@@ -58,14 +72,19 @@ func start_new_battle() -> void:
 		STRAIGHT_SHOT, STRAIGHT_SHOT, STRAIGHT_SHOT, STRAIGHT_SHOT,
 		GLOVES, GLOVES, SPORTS_DRINK, TOWEL,
 	]
+	var selected_enemy := enemy_definition
+	if selected_enemy == null:
+		selected_enemy = _enemy_sequence[_enemy_index]
 	deck_state.setup(starting_deck, BATTLE_SEED)
-	controller.setup(BATTLE_SEED)
+	controller.setup(BATTLE_SEED, selected_enemy)
 	player_display.configure(controller.player.display_name, controller.player.max_health, Color(0.45, 0.75, 1.0))
 	enemy_display.configure(controller.enemy.display_name, controller.enemy.max_health, Color(1.0, 0.55, 0.42))
 	deck_state.draw_cards(STARTING_HAND_SIZE)
 	_input_locked = false
 	_rebuild_hand()
 	_refresh_all()
+	if not selected_enemy.passive_description.is_empty():
+		status_label.text = "%s被动：%s" % [selected_enemy.display_name, selected_enemy.passive_description]
 
 
 # 尝试打出指定手牌；锁在核心结算与手牌重建完成前，拦截同帧重复输入。
@@ -123,6 +142,23 @@ func _on_end_turn_pressed() -> void:
 	call_deferred("_finish_resolution")
 
 
+# 释放当前卡牌类型对应的主动技，结算帧内与卡牌共用同一输入锁。
+func _on_skill_pressed() -> void:
+	if _input_locked:
+		return
+	var skill: Resource = _get_current_skill()
+	if skill == null:
+		return
+	_input_locked = true
+	_update_input_state()
+	if not controller.play_active_skill(skill):
+		_input_locked = false
+		_update_input_state()
+		return
+	status_label.text = "%s已结算" % skill.display_name
+	call_deferred("_finish_resolution")
+
+
 # 核心结算后的下一帧才恢复输入，确保一次指针释放最多触发一张牌。
 func _finish_resolution() -> void:
 	_rebuild_hand()
@@ -159,7 +195,7 @@ func _refresh_all() -> void:
 	enemy_display.set_health(controller.enemy.health)
 	enemy_display.set_shield(controller.enemy.shield)
 	turn_label.text = "第 %d 回合 · %s" % [controller.turn_number, controller.get_phase_text()]
-	intent_label.text = "敌人意图：攻击 %d" % controller.get_enemy_intent_damage()
+	intent_label.text = "意图：%s" % controller.get_enemy_intent_text()
 	energy_label.text = "能量  %d / %d" % [controller.player.energy, controller.player.max_energy]
 	pile_label.text = "抽牌 %d　弃牌 %d" % [deck_state.draw_pile.size(), deck_state.discard_pile.size()]
 	_update_input_state()
@@ -169,11 +205,23 @@ func _refresh_all() -> void:
 func _update_input_state() -> void:
 	var can_act := not _input_locked and controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN
 	end_turn_button.disabled = not can_act
+	var current_skill := _get_current_skill()
+	var combo_count: int = controller.combo_state.count
+	if current_skill == null:
+		skill_button.text = "连击 0/3"
+	else:
+		skill_button.text = "%s %d/3" % [current_skill.display_name, combo_count]
+	skill_button.disabled = not can_act or not controller.combo_state.can_activate()
 	for child in hand_layer.get_children():
 		if child is BattleCardView:
 			var affordable: bool = controller.player.can_spend_energy(child.card_definition.cost)
 			child.set_interaction_enabled(can_act and affordable)
 			child.modulate = Color.WHITE if can_act and affordable else Color(0.55, 0.55, 0.55, 0.82)
+
+
+# 根据当前连击类型取得三种主动技能之一；无连击时不提供技能。
+func _get_current_skill() -> Resource:
+	return _skills_by_type.get(controller.combo_state.card_type)
 
 
 # 把结构化效果事件分派到对应角色显示，并为射门显示短暂静态足球占位。
@@ -228,8 +276,9 @@ func _on_battle_finished(victory: bool) -> void:
 	result_overlay.show()
 
 
-# 结果层重新开始按钮复用完整初始化入口。
+# 结果层按钮轮换普通、精英和测试 Boss，便于连续验证各类敌人行为。
 func _on_restart_pressed() -> void:
+	_enemy_index = (_enemy_index + 1) % _enemy_sequence.size()
 	start_new_battle()
 
 

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EncounterPool" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/encounter_pool.gd" id="1_pool"]
+[ext_resource type="Resource" path="res://data/enemies/enemy_turtle.tres" id="2_turtle"]
+[ext_resource type="Resource" path="res://data/enemies/enemy_bear.tres" id="3_bear"]
+[ext_resource type="Resource" path="res://data/enemies/enemy_training_raccoon_boss.tres" id="4_boss"]
+[ext_resource type="Resource" path="res://data/enemies/enemy_penguin.tres" id="5_penguin"]
+
+[resource]
+script = ExtResource("1_pool")
+chapter = 1
+enemies = Array[Resource]([ExtResource("2_turtle"), ExtResource("3_bear"), ExtResource("4_boss"), ExtResource("5_penguin")])

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_attack"]
+script = ExtResource("2_action")
+action_id = "turtle_attack"
+display_name = "攻击"
+action_type = 0
+amount = 3
+variance_percent = 20
+
+[sub_resource type="Resource" id="Action_shield"]
+script = ExtResource("2_action")
+action_id = "turtle_shield"
+display_name = "缩壳"
+action_type = 1
+amount = 6
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "enemy_turtle"
+display_name = "乌龟"
+tier = 0
+max_health = 50
+action_mode = 0
+actions = Array[Resource]([SubResource("Action_attack"), SubResource("Action_shield")])
+passive_type = 1
+passive_value = 1.0
+passive_description = "每次受到伤害时，对玩家造成1点反伤"
+migration_note = "生命与行动数值来自 Unity 原型。"

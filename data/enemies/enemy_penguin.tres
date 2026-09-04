@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
+
+[sub_resource type="Resource" id="Action_drain_7"]
+script = ExtResource("2_action")
+action_id = "penguin_drain_7"
+display_name = "吸血射门"
+action_type = 4
+amount = 7
+variance_percent = 20
+
+[sub_resource type="Resource" id="Action_drain_10"]
+script = ExtResource("2_action")
+action_id = "penguin_drain_10"
+display_name = "强力吸血"
+action_type = 4
+amount = 10
+variance_percent = 20
+
+[sub_resource type="Resource" id="Action_weakness"]
+script = ExtResource("2_action")
+action_id = "penguin_weakness"
+display_name = "施加虚弱"
+action_type = 3
+amount = 2
+multiplier = 0.5
+
+[resource]
+script = ExtResource("1_enemy")
+enemy_id = "enemy_penguin"
+display_name = "企鹅"
+tier = 1
+max_health = 6
+action_mode = 0
+actions = Array[Resource]([SubResource("Action_drain_7"), SubResource("Action_drain_10"), SubResource("Action_weakness")])
+encounter_enabled = false
+migration_note = "已迁移吸血与虚弱组合；Unity 生命值为6的占位配置暂时禁用。"

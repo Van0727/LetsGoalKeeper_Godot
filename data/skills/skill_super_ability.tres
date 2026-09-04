@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_definition.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+skill_id = "skill_super_ability"
+display_name = "超级能力"
+description = "每点连击获得1回合1.5倍力量"
+card_type = 2
+base_value = 1
+multiplier = 1.5

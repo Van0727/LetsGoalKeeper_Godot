@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SkillDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/skills/skill_definition.gd" id="1_skill"]
+
+[resource]
+script = ExtResource("1_skill")
+skill_id = "skill_super_defense"
+display_name = "超级防御"
+description = "每点连击获得6点护盾"
+card_type = 1
+base_value = 6
