@@ -53,6 +53,11 @@ func _run() -> void:
 	_assert_equal(battle_screen.controller.phase, battle_screen.controller.Phase.FINISHED, "致命敌方攻击结束战斗")
 	_assert_equal(battle_screen.result_title.text, "战斗失败", "失败结果标题")
 	_assert_true(battle_screen.result_overlay.visible, "失败后显示结果层")
+	_assert_equal(
+		battle_screen.run_state.run_status,
+		battle_screen.run_state.RunStatus.FAILED,
+		"失败后本局状态明确终止"
+	)
 
 	if _failed:
 		quit(1)

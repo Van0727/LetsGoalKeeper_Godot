@@ -14,7 +14,7 @@ const DEFAULT_DECK: Array[String] = [
 	"card_gloves", "card_gloves", "card_sports_drink", "card_towel",
 ]
 
-# 对局状态预留给主菜单、结局和后续存档；本任务先接入进行中与通关两条路径。
+# 对局状态供主菜单、战斗和独立结算界面共享；后续存档只需持久化该状态值。
 enum RunStatus {
 	NOT_STARTED,
 	ACTIVE,
@@ -82,6 +82,12 @@ func _regenerate_map() -> void:
 # 战斗结束只写回跨房间生命；失败时生命允许保持为0。
 func record_battle_health(health: int) -> void:
 	player_hp = clampi(health, 0, max_hp)
+	run_changed.emit()
+
+
+# 战斗失败只终止本局，不提交当前房间；房间上下文由战斗界面随后取消。
+func mark_run_failed() -> void:
+	run_status = RunStatus.FAILED
 	run_changed.emit()
 
 

@@ -90,7 +90,10 @@ func _on_choice_pressed(index: int) -> void:
 	if flow_result == run_state.RewardFlowResult.NO_MAP:
 		get_tree().change_scene_to_file("res://scenes/battle.tscn")
 		return
-	# 第三章通关暂回到地图显示完成状态；下一任务会把该结果接到独立通关界面。
+	# 只有第三章 Boss 完成后进入独立通关页；前两章 Boss 与普通房均继续地图流程。
+	if flow_result == run_state.RewardFlowResult.RUN_COMPLETED:
+		get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
+		return
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 

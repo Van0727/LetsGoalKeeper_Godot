@@ -336,6 +336,7 @@ func _on_battle_finished(victory: bool) -> void:
 	run_state.record_battle_health(controller.player.health)
 	# 失败不提交房间完成，清除进行中上下文；胜利则保留到两步奖励全部领取后再提交。
 	if not victory:
+		run_state.mark_run_failed()
 		run_state.cancel_current_room()
 	_update_input_state()
 	result_title.text = "战斗胜利" if victory else "战斗失败"
@@ -349,12 +350,12 @@ func _on_battle_finished(victory: bool) -> void:
 	result_overlay.show()
 
 
-# 胜利进入两步奖励，失败则整局结束并返回主菜单重新开始。
+# 胜利进入两步奖励，失败进入独立结算页展示本局摘要。
 func _on_restart_pressed() -> void:
 	if _last_victory:
 		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
 		return
-	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+	get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
 
 
 # 主动退出战斗视为放弃当前尝试，不得让尚未完成的房间继续占用流程状态。
