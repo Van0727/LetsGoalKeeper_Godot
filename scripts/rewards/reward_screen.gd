@@ -92,6 +92,13 @@ func _on_choice_pressed(index: int) -> void:
 	var save_service := get_node_or_null("/root/SaveService")
 	if save_service != null:
 		save_service.save_game(run_state)
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("run", "reward_completed", {
+			"chapter": run_state.chapter,
+			"battles_won": run_state.battles_won,
+			"flow_result": flow_result,
+		})
 	if flow_result == run_state.RewardFlowResult.NO_MAP:
 		get_tree().change_scene_to_file("res://scenes/battle.tscn")
 		return

@@ -78,6 +78,7 @@ func save_settings() -> bool:
 		last_error = "无法保存设置：%s" % error_string(error)
 		return false
 	last_error = ""
+	_record_diagnostic("saved", {"language": language, "window_mode": window_mode})
 	return true
 
 
@@ -171,3 +172,12 @@ func _apply_window_mode() -> void:
 		else DisplayServer.WINDOW_MODE_WINDOWED
 	)
 	DisplayServer.window_set_mode(engine_mode)
+
+
+# 设置日志不包含配置文件路径，仅记录可公开的选项值。
+func _record_diagnostic(event_name: String, fields: Dictionary) -> void:
+	if not is_inside_tree():
+		return
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("settings", event_name, fields)

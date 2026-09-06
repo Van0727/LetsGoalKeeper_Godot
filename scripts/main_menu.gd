@@ -44,6 +44,7 @@ func _on_start_button_pressed() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	run_state.start_new_run(rng.randi())
+	_record_diagnostic("new_run", {"seed": run_state.seed})
 	_save_run()
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
@@ -80,6 +81,26 @@ func _save_run() -> void:
 # 设置使用独立场景和独立配置，不改变当前本局或存档安全节点。
 func _on_settings_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/settings_screen.tscn")
+
+
+# 诊断文件只在玩家点击后生成，并把可提交给开发者的虚拟路径显示在主菜单。
+func _on_export_diagnostics_pressed() -> void:
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics == null:
+		status_label.text = "诊断服务不可用"
+		return
+	var exported_path: String = diagnostics.export_logs()
+	status_label.text = (
+		"诊断日志已导出：%s" % exported_path
+		if not exported_path.is_empty()
+		else "导出失败：%s" % diagnostics.last_error
+	)
+
+
+func _record_diagnostic(event_name: String, fields: Dictionary) -> void:
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("run", event_name, fields)
 
 
 # 主菜单没有未提交进度，移动端返回键可直接退出；玩法场景则由暂停层二次确认。

@@ -28,8 +28,22 @@ func get_card_by_id(card_id: String) -> Resource:
 	var path := "res://data/cards/%s.tres" % card_id
 	if not ResourceLoader.exists(path):
 		push_error("找不到卡牌ID：%s" % card_id)
+		_record_missing_resource("card", card_id)
 		return null
 	return load(path)
+
+
+# 缺失固定定义同时写入结构化诊断，便于外部测试包定位坏 ID。
+func _record_missing_resource(resource_type: String, resource_id: String) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var diagnostics := tree.root.get_node_or_null("DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("resource", "missing", {
+			"resource_type": resource_type,
+			"resource_id": resource_id,
+		})
 
 
 # 生成最多三张互不重复的卡牌，Boss战只使用Boss卡池。

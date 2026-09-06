@@ -104,6 +104,13 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	var current_seed: int = run_state.seed + run_state.battles_won * 101
 	deck_state.setup(starting_deck, current_seed)
 	controller.setup(current_seed, selected_enemy, run_state.damage_modifiers)
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("battle", "started", {
+			"seed": current_seed,
+			"chapter": run_state.chapter,
+			"enemy_id": selected_enemy.enemy_id,
+		})
 	controller.player.max_health = run_state.max_hp
 	controller.player.health = clampi(run_state.player_hp, 1, run_state.max_hp)
 	player_display.configure(controller.player.display_name, controller.player.max_health, Color(0.45, 0.75, 1.0))
@@ -192,10 +199,15 @@ func _on_skill_pressed() -> void:
 func _select_room_enemy(room: Dictionary) -> Resource:
 	var cached_id: String = run_state.map_state.get_enemy_id(room.id)
 	if not cached_id.is_empty():
-		return load("res://data/enemies/%s.tres" % cached_id)
+		var cached_path := "res://data/enemies/%s.tres" % cached_id
+		if ResourceLoader.exists(cached_path):
+			return load(cached_path)
+		_record_missing_encounter("enemy", {"enemy_id": cached_id})
+		return TURTLE
 	var pool_path := "res://data/encounters/chapter_%d.tres" % run_state.chapter
 	if not ResourceLoader.exists(pool_path):
 		push_error("找不到章节遭遇池：%s，回退到乌龟" % pool_path)
+		_record_missing_encounter("encounter_pool", {"chapter": run_state.chapter})
 		return TURTLE
 	var pool: Resource = load(pool_path)
 	var rng := RandomNumberGenerator.new()
@@ -204,9 +216,23 @@ func _select_room_enemy(room: Dictionary) -> Resource:
 	var enemy: Resource = pool.pick_enemy(room.type, rng)
 	if enemy == null:
 		push_error("第%d章%s房间遭遇池为空，回退到乌龟" % [run_state.chapter, room.type])
+		_record_missing_encounter("enemy_pool_entry", {
+			"chapter": run_state.chapter,
+			"room_type": room.type,
+		})
 		return TURTLE
 	run_state.map_state.set_enemy_id(room.id, enemy.enemy_id)
 	return enemy
+
+
+# 遭遇资源异常只记录稳定 ID、章节和房型，绝不导出本机资源绝对路径。
+func _record_missing_encounter(resource_type: String, fields: Dictionary) -> void:
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics == null:
+		return
+	var details := fields.duplicate(true)
+	details["resource_type"] = resource_type
+	diagnostics.record("resource", "missing", details)
 
 
 # GM 调试按钮立即结束当前关卡；控制器负责绕过护盾和反伤并广播正常胜利。
@@ -327,6 +353,9 @@ func _hide_ball_feedback() -> void:
 # 保留最近一条核心日志作为紧凑状态提示，便于解释无效操作与随机分支。
 func _on_log_added(message: String) -> void:
 	status_label.text = message
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("battle", "message", {"message": message})
 
 
 # 胜负确定后锁定输入并显示独立结果层，避免重复出牌或结束回合。
@@ -352,6 +381,13 @@ func _on_battle_finished(victory: bool) -> void:
 	var save_service := get_node_or_null("/root/SaveService")
 	if save_service != null:
 		save_service.save_game(run_state)
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("battle", "finished", {
+			"victory": victory,
+			"player_hp": run_state.player_hp,
+			"chapter": run_state.chapter,
+		})
 	result_overlay.show()
 
 

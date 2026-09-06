@@ -130,6 +130,13 @@ func _on_room_button_pressed(room_id: String) -> void:
 		if room.type == MAP_STATE.RoomType.REST
 		else run_state.ResumePoint.BATTLE
 	)
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("run", "room_entered", {
+			"chapter": run_state.chapter,
+			"room_id": room.id,
+			"room_type": room.type,
+		})
 	if save_service != null:
 		save_service.save_game(run_state)
 	if room.type == MAP_STATE.RoomType.REST:

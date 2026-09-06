@@ -31,12 +31,15 @@ func has_valid_save() -> bool:
 func load_game(target_run_state: Node = null) -> bool:
 	var payload := _read_payload()
 	if payload.is_empty():
+		_record_diagnostic("load_failed", {"reason": last_error})
 		return false
 	var state := target_run_state if target_run_state != null else get_node_or_null("/root/RunState")
 	if state == null:
 		last_error = "RunState 不可用"
 		return false
-	return state.from_dict(payload.run_state)
+	var loaded: bool = state.from_dict(payload.run_state)
+	_record_diagnostic("loaded" if loaded else "load_failed", {"save_version": SAVE_VERSION})
+	return loaded
 
 
 # 写入完整安全节点快照；临时文件通过回读解析后才替换正式档，并保留备份用于替换失败回滚。
@@ -76,6 +79,7 @@ func save_game(source_run_state: Node = null) -> bool:
 		return false
 	_remove_if_exists(backup_path)
 	last_error = ""
+	_record_diagnostic("saved", {"save_version": SAVE_VERSION, "chapter": state.chapter})
 	return true
 
 
@@ -113,3 +117,12 @@ func _read_payload_from(path: String) -> Dictionary:
 func _remove_if_exists(path: String) -> void:
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
+
+
+# 存档诊断只记录结果与版本，不记录 user:// 实际路径或文件内容。
+func _record_diagnostic(event_name: String, fields: Dictionary) -> void:
+	if not is_inside_tree():
+		return
+	var diagnostics := get_node_or_null("/root/DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("save", event_name, fields)

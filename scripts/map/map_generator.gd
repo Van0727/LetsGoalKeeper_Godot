@@ -10,8 +10,22 @@ func load_config_for_chapter(chapter: int) -> Resource:
 	var path := "res://data/maps/map_chapter_%d.tres" % chapter
 	if not ResourceLoader.exists(path):
 		push_error("找不到第%d章的地图配置：%s" % [chapter, path])
+		_record_missing_map(chapter)
 		return null
 	return load(path)
+
+
+# 地图配置缺失时只记录章节，不把本机资源路径写入可导出的诊断文件。
+func _record_missing_map(chapter: int) -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return
+	var diagnostics := tree.root.get_node_or_null("DiagnosticsService")
+	if diagnostics != null:
+		diagnostics.record("resource", "missing", {
+			"resource_type": "map_config",
+			"chapter": chapter,
+		})
 
 
 # 生成一张新地图：层数与房间数来自配置，连线保持稀疏并保证上下层每个房间都参与路线。
