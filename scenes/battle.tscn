@@ -6,31 +6,27 @@
 [ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="4_pause"]
 
 [sub_resource type="StyleBoxFlat" id="Style_pitch"]
-bg_color = Color(0.035, 0.24, 0.13, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.72, 0.9, 0.76, 0.55)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
+bg_color = Color(0.17, 0.29, 0.45, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_zone"]
-bg_color = Color(0.12, 0.38, 0.2, 0.92)
+bg_color = Color(0.07, 0.12, 0.16, 0.92)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.38, 0.46, 0.49, 1)
+corner_radius_top_left = 32
+corner_radius_top_right = 32
+corner_radius_bottom_right = 32
+corner_radius_bottom_left = 32
+
+[sub_resource type="StyleBoxFlat" id="Style_energy"]
+bg_color = Color(0.07, 0.2, 0.29, 0.96)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.62, 1, 0.7, 0.8)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-
-[sub_resource type="StyleBoxFlat" id="Style_energy"]
-bg_color = Color(0.08, 0.28, 0.53, 1)
+border_color = Color(0.3, 0.52, 0.6, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -66,27 +62,29 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.025, 0.075, 0.065, 1)
+color = Color(0.17, 0.29, 0.45, 1)
 mouse_filter = 2
 
 [node name="Header" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 8.0
-offset_top = 6.0
-offset_right = -8.0
-offset_bottom = 46.0
+offset_left = 6.0
+offset_top = 2.0
+offset_right = -6.0
+offset_bottom = 34.0
 grow_horizontal = 2
 
 [node name="BackButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(58, 40)
+visible = false
+custom_minimum_size = Vector2(44, 30)
 layout_mode = 2
 text = "返回"
 
 [node name="GMSkipButton" type="Button" parent="Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 40)
+visible = false
+custom_minimum_size = Vector2(52, 30)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
 theme_override_font_sizes/font_size = 11
@@ -96,18 +94,18 @@ text = "GM跳过"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
-theme_override_font_sizes/font_size = 14
-text = "第 1 回合 · 玩家行动"
-horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "PlayerTurn"
+horizontal_alignment = 0
 vertical_alignment = 1
 
 [node name="IntentLabel" type="Label" parent="Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(82, 0)
+custom_minimum_size = Vector2(74, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.66, 0.55, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "敌人意图：8"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -116,20 +114,12 @@ vertical_alignment = 1
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 8.0
-offset_top = 52.0
-offset_right = -8.0
-offset_bottom = 248.0
+offset_top = 36.0
+offset_bottom = 238.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_pitch")
 
-[node name="Combatants" type="HBoxContainer" parent="Pitch"]
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="PlayerDisplay" parent="Pitch/Combatants" instance=ExtResource("3_display")]
-unique_name_in_owner = true
+[node name="Combatants" type="CenterContainer" parent="Pitch"]
 layout_mode = 2
 
 [node name="EnemyDisplay" parent="Pitch/Combatants" instance=ExtResource("3_display")]
@@ -140,10 +130,12 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
-anchor_left = 0.13
-anchor_right = 0.87
-offset_top = 255.0
-offset_bottom = 344.0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -34.0
+offset_top = 267.0
+offset_right = 34.0
+offset_bottom = 335.0
 grow_horizontal = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("Style_zone")
@@ -156,8 +148,8 @@ alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 1, 0.86, 1)
-theme_override_font_sizes/font_size = 18
-text = "出牌区"
+theme_override_font_sizes/font_size = 11
+text = "出牌"
 horizontal_alignment = 1
 
 [node name="BallRow" type="HBoxContainer" parent="PlayZone/ZoneContent"]
@@ -184,15 +176,17 @@ text = "直球"
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
-anchor_left = 0.25
-anchor_right = 0.75
-offset_top = 350.0
-offset_bottom = 378.0
+anchor_left = 0.0
+anchor_right = 0.0
+offset_left = 4.0
+offset_top = 274.0
+offset_right = 84.0
+offset_bottom = 318.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.88, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("Style_energy")
-text = "能量  3 / 3"
+text = "能量 3 / 3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -201,13 +195,13 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 8.0
-offset_top = 382.0
-offset_right = -8.0
-offset_bottom = 404.0
+offset_left = 6.0
+offset_top = 548.0
+offset_right = -6.0
+offset_bottom = 568.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.75, 0.84, 0.82, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "拖动卡牌到绿色区域出牌"
 horizontal_alignment = 1
 text_overrun_behavior = 3
@@ -217,47 +211,60 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 8.0
-offset_top = 408.0
-offset_right = -8.0
-offset_bottom = 554.0
+offset_left = 6.0
+offset_top = 390.0
+offset_right = -6.0
+offset_bottom = 536.0
 grow_horizontal = 2
 
 [node name="Footer" type="HBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 12
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 8.0
-offset_top = -78.0
-offset_right = -8.0
-offset_bottom = -8.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_constants/separation = 8
+anchors_preset = 0
+offset_left = 4.0
+offset_top = 326.0
+offset_right = 356.0
+offset_bottom = 380.0
+theme_override_constants/separation = 6
 
 [node name="PileLabel" type="Label" parent="Footer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.7, 0.78, 0.83, 1)
-theme_override_font_sizes/font_size = 13
-text = "抽牌 5　弃牌 0"
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("Style_energy")
+text = "抽 5 / 弃 0"
+horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="SkillButton" type="Button" parent="Footer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(134, 58)
+custom_minimum_size = Vector2(112, 54)
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 text = "连击 0/3"
 
 [node name="EndTurnButton" type="Button" parent="Footer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(104, 58)
+custom_minimum_size = Vector2(94, 54)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "结束回合"
+
+[node name="PlayerStatus" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 100.0
+offset_top = 574.0
+offset_right = -100.0
+offset_bottom = 634.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_pitch")
+
+[node name="PlayerDisplay" parent="PlayerStatus" instance=ExtResource("3_display")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="BattleController" type="Node" parent="."]
 unique_name_in_owner = true

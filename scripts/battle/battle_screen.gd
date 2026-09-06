@@ -1,4 +1,4 @@
-# 可玩战斗界面：连接战斗核心、牌堆、统一拖拽输入与阶段 3 的即时表现反馈。
+# 可玩战斗界面：连接战斗核心、牌堆和拖拽输入，并维护竖屏球场式信息布局与即时反馈。
 extends Control
 
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
@@ -68,15 +68,15 @@ func _ready() -> void:
 	controller.effect_resolved.connect(_on_effect_resolved)
 	controller.battle_finished.connect(_on_battle_finished)
 	ball_timer.timeout.connect(_hide_ball_feedback)
+	# 参考布局把敌人作为上方视觉焦点，玩家状态则压缩到底部生命栏。
+	enemy_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.ENEMY)
+	player_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.PLAYER_BAR)
 	start_new_battle()
 
 
-# 战斗背景暂用章节配置色区分内容阶段；正式美术接入时只需替换该配置入口。
+# 战斗背景固定为参考界面的蓝灰球场色，避免章节色把上下信息区切成不同底色。
 func _apply_chapter_theme() -> void:
-	var config_path := "res://data/maps/map_chapter_%d.tres" % run_state.chapter
-	if ResourceLoader.exists(config_path):
-		var config: Resource = load(config_path)
-		background.color = config.battle_background_color
+	background.color = Color(0.17, 0.29, 0.45, 1.0)
 
 
 # 使用本局牌库和房间敌人重置战斗：路线地图进入的房间按房型从章节池选敌。

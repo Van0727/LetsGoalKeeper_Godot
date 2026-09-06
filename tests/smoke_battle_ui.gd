@@ -21,6 +21,12 @@ func _run() -> void:
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")
 	_assert_equal(battle_screen.controller.player.energy, 3, "玩家初始能量")
+	# 新竖屏布局必须保持敌人在手牌上方、玩家生命栏在手牌下方，防止后续内容撑高造成重叠。
+	var enemy_rect: Rect2 = battle_screen.enemy_display.get_global_rect()
+	var first_card_rect: Rect2 = battle_screen.hand_layer.get_child(0).get_global_rect()
+	var player_rect: Rect2 = battle_screen.player_display.get_global_rect()
+	_assert_true(enemy_rect.end.y < first_card_rect.position.y, "敌方信息位于手牌上方")
+	_assert_true(first_card_rect.end.y < player_rect.position.y, "手牌不遮挡底部玩家生命栏")
 
 	var played: bool = battle_screen.try_play_hand_card(0)
 	_assert_true(played, "第一张手牌可以结算")
