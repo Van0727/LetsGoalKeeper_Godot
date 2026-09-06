@@ -22,8 +22,8 @@ const REST_ROOM_TYPE := 3
 @onready var background: ColorRect = $Background
 @onready var player_display: CharacterDisplay = %PlayerDisplay
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
-@onready var play_zone: PanelContainer = %PlayZone
-@onready var play_zone_label: Label = %PlayZoneLabel
+# 使用基础控件类型避免新增脚本的全局类缓存尚未刷新时阻塞战斗场景解析。
+@onready var drag_threshold_guide: Control = %DragThresholdGuide
 @onready var ball_label: Label = %BallLabel
 @onready var shot_type_label: Label = %ShotTypeLabel
 @onready var ball_timer: Timer = %BallTimer
@@ -150,18 +150,25 @@ func _on_card_played(card_view: DraggableCard) -> void:
 		try_play_hand_card(card_view.hand_index)
 
 
-# 拖拽开始时高亮有效区域，让鼠标与触摸获得一致的落点提示。
+# 拖拽开始时只显示横向虚线；尚未越线前不显示释放提示。
 func _on_card_drag_started(_card_view: DraggableCard) -> void:
-	play_zone.modulate = Color(1.18, 1.18, 0.72, 1.0)
-	play_zone_label.text = "松开以出牌"
+	drag_threshold_guide.begin_drag()
 
 
-# 无效释放后恢复提示，卡牌自身负责回弹到手牌位置。
+# 拖动过程中实时同步越线状态，使鼠标和触摸都在有效释放前得到明确提示。
+func _on_card_drag_moved(
+	_card_view: DraggableCard,
+	_pointer_position: Vector2,
+	valid_drop: bool
+) -> void:
+	drag_threshold_guide.set_qualified(valid_drop)
+
+
+# 松手后隐藏整条引导；无效释放由卡牌自身负责回弹到原位置。
 func _on_card_drag_finished(_card_view: DraggableCard, valid_drop: bool) -> void:
-	play_zone.modulate = Color.WHITE
-	play_zone_label.text = "出牌区"
+	drag_threshold_guide.end_drag()
 	if not valid_drop:
-		status_label.text = "未进入出牌区，卡牌已返回手牌"
+		status_label.text = "未越过出牌线，卡牌已返回手牌"
 
 
 # 结束回合先弃掉剩余手牌，再执行敌人行动；存活时进入新回合并重新抽三张。
@@ -267,9 +274,11 @@ func _rebuild_hand() -> void:
 		hand_layer.add_child(card_view)
 		card_view.position = Vector2(start_x + index * (CARD_SIZE.x + CARD_GAP), 0)
 		card_view.size = CARD_SIZE
-		card_view.play_zone = play_zone
+		# 阈值采用全局坐标，释放指针高于虚线才允许结算；无需可见圆形落点。
+		card_view.drop_threshold_y = drag_threshold_guide.global_position.y
 		card_view.card_played.connect(_on_card_played)
 		card_view.drag_started.connect(_on_card_drag_started)
+		card_view.drag_moved.connect(_on_card_drag_moved)
 		card_view.drag_finished.connect(_on_card_drag_finished)
 		card_view.configure(deck_state.hand[index], index)
 	_update_input_state()

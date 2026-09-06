@@ -1,13 +1,16 @@
-# 可拖拽卡牌控件：统一处理鼠标和单指触摸，并判断是否落入出牌区。
+# 可拖拽卡牌控件：统一处理鼠标和单指触摸，并支持矩形落点或横向阈值两种出牌判定。
 class_name DraggableCard
 extends PanelContainer
 
 # 拖拽生命周期供战斗界面高亮出牌区；只有在有效区域释放才发送成功信号。
 signal drag_started(card: DraggableCard)
+signal drag_moved(card: DraggableCard, pointer_position: Vector2, valid_drop: bool)
 signal drag_finished(card: DraggableCard, valid_drop: bool)
 signal card_played(card: DraggableCard)
 
 @export var play_zone: Control
+# 战斗界面使用全局 Y 坐标作为出牌阈值；负值表示继续使用传统矩形出牌区。
+@export var drop_threshold_y := -1.0
 
 var _dragging := false
 var _pointer_id := -1
@@ -77,6 +80,7 @@ func _start_drag(pointer_id: int, pointer_position: Vector2) -> void:
 # 保持按下点与卡牌左上角的偏移，避免起拖时发生跳动。
 func _move_to_pointer(pointer_position: Vector2) -> void:
 	global_position = pointer_position - _drag_offset
+	drag_moved.emit(self, pointer_position, _is_valid_drop(pointer_position))
 
 
 # 有效释放时出牌，无效释放时回到初始位置。
@@ -85,13 +89,20 @@ func _finish_drag(pointer_position: Vector2) -> void:
 	_pointer_id = -1
 	z_index = 0
 
-	var valid_drop := play_zone != null and play_zone.get_global_rect().has_point(pointer_position)
+	var valid_drop := _is_valid_drop(pointer_position)
 	drag_finished.emit(self, valid_drop)
 	if valid_drop:
 		print("card_played")
 		card_played.emit(self)
 	else:
 		_return_to_home()
+
+
+# 战斗卡牌以“指针高于虚线”为有效出牌，其他测试和复用场景仍可使用矩形落点。
+func _is_valid_drop(pointer_position: Vector2) -> bool:
+	if drop_threshold_y >= 0.0:
+		return pointer_position.y <= drop_threshold_y
+	return play_zone != null and play_zone.get_global_rect().has_point(pointer_position)
 
 
 # 结算期间关闭鼠标和触摸输入；若正在拖拽则安全回到手牌位置。

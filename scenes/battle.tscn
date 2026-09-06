@@ -1,24 +1,13 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
 [ext_resource type="PackedScene" path="res://scenes/character_display.tscn" id="3_display"]
 [ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="4_pause"]
+[ext_resource type="Script" path="res://scripts/battle/drag_threshold_guide.gd" id="5_guide"]
 
 [sub_resource type="StyleBoxFlat" id="Style_pitch"]
 bg_color = Color(0.17, 0.29, 0.45, 1)
-
-[sub_resource type="StyleBoxFlat" id="Style_zone"]
-bg_color = Color(0.07, 0.12, 0.16, 0.92)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0.38, 0.46, 0.49, 1)
-corner_radius_top_left = 32
-corner_radius_top_right = 32
-corner_radius_bottom_right = 32
-corner_radius_bottom_left = 32
 
 [sub_resource type="StyleBoxFlat" id="Style_energy"]
 bg_color = Color(0.07, 0.2, 0.29, 0.96)
@@ -31,6 +20,13 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="Style_drag_prompt"]
+bg_color = Color(0.04, 0.08, 0.12, 0.88)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="Style_result"]
 bg_color = Color(0.06, 0.09, 0.12, 0.97)
@@ -126,37 +122,17 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="PlayZone" type="PanelContainer" parent="."]
-unique_name_in_owner = true
+[node name="ShotFeedback" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -34.0
-offset_top = 267.0
-offset_right = 34.0
-offset_bottom = 335.0
+anchor_left = 0.35
+anchor_right = 0.65
+offset_top = 248.0
+offset_bottom = 274.0
 grow_horizontal = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("Style_zone")
-
-[node name="ZoneContent" type="VBoxContainer" parent="PlayZone"]
-layout_mode = 2
 alignment = 1
 
-[node name="PlayZoneLabel" type="Label" parent="PlayZone/ZoneContent"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.82, 1, 0.86, 1)
-theme_override_font_sizes/font_size = 11
-text = "出牌"
-horizontal_alignment = 1
-
-[node name="BallRow" type="HBoxContainer" parent="PlayZone/ZoneContent"]
-layout_mode = 2
-alignment = 1
-
-[node name="BallLabel" type="Label" parent="PlayZone/ZoneContent/BallRow"]
+[node name="BallLabel" type="Label" parent="ShotFeedback"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -164,13 +140,40 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 22
 text = "●"
 
-[node name="ShotTypeLabel" type="Label" parent="PlayZone/ZoneContent/BallRow"]
+[node name="ShotTypeLabel" type="Label" parent="ShotFeedback"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
 theme_override_font_sizes/font_size = 14
 text = "直球"
+
+[node name="DragThresholdGuide" type="Control" parent="."]
+unique_name_in_owner = true
+z_index = 20
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 12.0
+offset_top = 440.0
+offset_right = -12.0
+offset_bottom = 442.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("5_guide")
+
+[node name="PromptLabel" type="Label" parent="DragThresholdGuide"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 88.0
+offset_top = -34.0
+offset_right = 248.0
+offset_bottom = -8.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_drag_prompt")
+text = "松开以出牌"
+horizontal_alignment = 1
 
 [node name="EnergyLabel" type="Label" parent="."]
 unique_name_in_owner = true
