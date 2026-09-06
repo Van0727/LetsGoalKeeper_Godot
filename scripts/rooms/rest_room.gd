@@ -37,6 +37,11 @@ func _on_heal_pressed() -> void:
 # 继续前进时才提交休息房完成状态并解锁下一层。
 func _on_continue_pressed() -> void:
 	run_state.complete_current_room()
+	run_state.resume_point = run_state.ResumePoint.MAP
+	# 休息效果与路线推进同时落盘，恢复后不可重复领取治疗。
+	var save_service := get_node_or_null("/root/SaveService")
+	if save_service != null:
+		save_service.save_game(run_state)
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 

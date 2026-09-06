@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/map/map_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/map/map_connections.gd" id="2_connections"]
+[ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="3_pause"]
 
 [sub_resource type="StyleBoxFlat" id="Style_top"]
 bg_color = Color(0.05, 0.12, 0.15, 1)
@@ -47,6 +48,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_screen")
+
+[node name="PauseOverlay" parent="." instance=ExtResource("3_pause")]
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 1

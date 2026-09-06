@@ -87,6 +87,11 @@ func _on_choice_pressed(index: int) -> void:
 			return
 		run_state.add_item(choices[index])
 	var flow_result: int = run_state.complete_reward_and_advance()
+	run_state.resume_point = run_state.ResumePoint.MAP
+	# 奖励、房间完成与可能的章节切换已按固定顺序提交，此处形成新的可恢复安全节点。
+	var save_service := get_node_or_null("/root/SaveService")
+	if save_service != null:
+		save_service.save_game(run_state)
 	if flow_result == run_state.RewardFlowResult.NO_MAP:
 		get_tree().change_scene_to_file("res://scenes/battle.tscn")
 		return

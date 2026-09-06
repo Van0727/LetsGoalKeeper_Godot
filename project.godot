@@ -14,10 +14,13 @@ config/name="LetsGoalKeeper_Godot"
 run/main_scene="res://scenes/boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+config/quit_on_go_back=false
 
 [autoload]
 
 RunState="*res://autoload/run_state.gd"
+SaveService="*res://autoload/save_service.gd"
+SettingsService="*res://autoload/settings_service.gd"
 
 [display]
 

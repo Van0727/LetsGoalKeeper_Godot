@@ -1,0 +1,126 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="1_pause"]
+
+[node name="PauseOverlay" type="CanvasLayer"]
+layer = 100
+process_mode = 3
+script = ExtResource("1_pause")
+
+[node name="PauseButton" type="Button" parent="."]
+unique_name_in_owner = true
+offset_left = 302.0
+offset_top = 10.0
+offset_right = 350.0
+offset_bottom = 50.0
+text = "Ⅱ"
+
+[node name="Shade" type="ColorRect" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.01, 0.02, 0.03, 0.78)
+
+[node name="PauseCenter" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PausePanel" type="PanelContainer" parent="PauseCenter"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 360)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="PauseCenter/PausePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Buttons" type="VBoxContainer" parent="PauseCenter/PausePanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="PauseCenter/PausePanel/Margin/Buttons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "游戏暂停"
+horizontal_alignment = 1
+
+[node name="ResumeButton" type="Button" parent="PauseCenter/PausePanel/Margin/Buttons"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+text = "继续游戏"
+
+[node name="SettingsButton" type="Button" parent="PauseCenter/PausePanel/Margin/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "设置"
+
+[node name="MainMenuButton" type="Button" parent="PauseCenter/PausePanel/Margin/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "返回主菜单"
+
+[node name="QuitButton" type="Button" parent="PauseCenter/PausePanel/Margin/Buttons"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "退出游戏"
+
+[node name="ConfirmCenter" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ConfirmPanel" type="PanelContainer" parent="ConfirmCenter"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(310, 230)
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="ConfirmCenter/ConfirmPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="Layout" type="VBoxContainer" parent="ConfirmCenter/ConfirmPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ConfirmLabel" type="Label" parent="ConfirmCenter/ConfirmPanel/Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+text = "确定执行此操作吗？"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ConfirmButton" type="Button" parent="ConfirmCenter/ConfirmPanel/Margin/Layout"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "确定"
+
+[node name="CancelButton" type="Button" parent="ConfirmCenter/ConfirmPanel/Margin/Layout"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "取消"
+
+[connection signal="pressed" from="PauseButton" to="." method="_on_pause_button_pressed"]
+[connection signal="pressed" from="PauseCenter/PausePanel/Margin/Buttons/ResumeButton" to="." method="_on_resume_pressed"]
+[connection signal="pressed" from="PauseCenter/PausePanel/Margin/Buttons/SettingsButton" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="PauseCenter/PausePanel/Margin/Buttons/MainMenuButton" to="." method="_on_main_menu_pressed"]
+[connection signal="pressed" from="PauseCenter/PausePanel/Margin/Buttons/QuitButton" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="ConfirmCenter/ConfirmPanel/Margin/Layout/ConfirmButton" to="." method="_on_confirm_pressed"]
+[connection signal="pressed" from="ConfirmCenter/ConfirmPanel/Margin/Layout/CancelButton" to="." method="cancel_confirmation"]

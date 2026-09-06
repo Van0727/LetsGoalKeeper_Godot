@@ -145,10 +145,28 @@ func to_dict() -> Dictionary:
 	}
 
 
-# 用快照整体恢复地图状态；调用方负责保证数据来自同一版本结构。
+# 用快照整体恢复地图状态；对缺失字段使用默认值并忽略非字典房间，兼容残缺旧档。
 func from_dict(data: Dictionary) -> void:
 	clear()
-	layer_count = data.get("layer_count", 0)
-	current_room_id = data.get("current_room_id", "")
-	for room in data.get("rooms", []):
-		add_room(room.duplicate(true))
+	layer_count = maxi(int(data.get("layer_count", 0)), 0)
+	current_room_id = str(data.get("current_room_id", ""))
+	var saved_rooms: Variant = data.get("rooms", [])
+	if saved_rooms is not Array:
+		saved_rooms = []
+	for room in saved_rooms:
+		if room is Dictionary and room.has("id"):
+			# JSON 数字统一恢复为整数，并补齐房间运行字段，避免浮点反序列化影响状态比较。
+			var restored_room := {
+				"id": str(room.get("id", "")),
+				"layer": int(room.get("layer", 0)),
+				"index": int(room.get("index", 0)),
+				"type": int(room.get("type", RoomType.NORMAL)),
+				"state": int(room.get("state", RoomState.LOCKED)),
+				"connections": room.get("connections", []).duplicate() if room.get("connections", []) is Array else [],
+				"enemy_id": str(room.get("enemy_id", "")),
+				"rest_used": bool(room.get("rest_used", false)),
+			}
+			if not restored_room.id.is_empty():
+				add_room(restored_room)
+	if not current_room_id.is_empty() and room_by_id(current_room_id).is_empty():
+		current_room_id = ""

@@ -347,6 +347,11 @@ func _on_battle_finished(victory: bool) -> void:
 			controller.current_enemy_definition != null
 			and controller.current_enemy_definition.tier == 2
 		)
+		run_state.resume_point = run_state.ResumePoint.REWARD
+	# 胜负与跨房间生命确定后立即保存；胜利档保留当前房间，等待奖励完成再提交。
+	var save_service := get_node_or_null("/root/SaveService")
+	if save_service != null:
+		save_service.save_game(run_state)
 	result_overlay.show()
 
 

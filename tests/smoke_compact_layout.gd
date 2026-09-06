@@ -4,6 +4,8 @@ extends SceneTree
 const TARGET_SIZE := Vector2(360, 640)
 const TEST_SCENES := [
 	"res://scenes/main_menu.tscn",
+	"res://scenes/settings_screen.tscn",
+	"res://scenes/pause_overlay.tscn",
 	"res://scenes/card_drag_test.tscn",
 	"res://scenes/character_feedback_test.tscn",
 	"res://scenes/battle_logic_test.tscn",

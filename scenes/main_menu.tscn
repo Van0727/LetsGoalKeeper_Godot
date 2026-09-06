@@ -62,6 +62,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "继续当前游戏"
 
+[node name="SettingsButton" type="Button" parent="CenterContainer/Menu"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "设置"
+
 [node name="DeckLogicButton" type="Button" parent="CenterContainer/Menu"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
@@ -96,6 +102,7 @@ horizontal_alignment = 1
 
 [connection signal="pressed" from="CenterContainer/Menu/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/ContinueButton" to="." method="_on_continue_button_pressed"]
+[connection signal="pressed" from="CenterContainer/Menu/SettingsButton" to="." method="_on_settings_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/DeckLogicButton" to="." method="_on_deck_logic_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/BattleLogicButton" to="." method="_on_battle_logic_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/CharacterFeedbackButton" to="." method="_on_character_feedback_button_pressed"]

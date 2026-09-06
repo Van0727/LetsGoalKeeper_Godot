@@ -123,6 +123,15 @@ func _on_room_button_pressed(room_id: String) -> void:
 	if room.is_empty():
 		refresh_ui()
 		return
+	# 进入内容场景前保存进行中房间，强制关闭后会回到同一安全入口而不会重掷路线。
+	var save_service := get_node_or_null("/root/SaveService")
+	run_state.resume_point = (
+		run_state.ResumePoint.REST
+		if room.type == MAP_STATE.RoomType.REST
+		else run_state.ResumePoint.BATTLE
+	)
+	if save_service != null:
+		save_service.save_game(run_state)
 	if room.type == MAP_STATE.RoomType.REST:
 		get_tree().change_scene_to_file("res://scenes/rest_room.tscn")
 	else:

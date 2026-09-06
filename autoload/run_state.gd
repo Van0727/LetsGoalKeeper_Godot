@@ -1,4 +1,4 @@
-# 本局唯一运行状态：保存跨房间生命、牌库ID、战利品ID、伤害加成、流程进度和地图状态。
+# 本局唯一运行状态：保存跨房间数据，并提供与版本化存档服务解耦的纯数据导入/导出契约。
 extends Node
 
 signal run_changed
@@ -30,6 +30,14 @@ enum RewardFlowResult {
 	RUN_COMPLETED,
 }
 
+# 恢复入口只记录安全节点所属场景，不持久化战斗中的手牌、回合等临时状态。
+enum ResumePoint {
+	MAP,
+	BATTLE,
+	REWARD,
+	REST,
+}
+
 var seed := 0
 var chapter := 1
 var run_status := RunStatus.NOT_STARTED
@@ -40,18 +48,23 @@ var owned_item_ids: Array[String] = []
 var damage_modifiers := {"all": 0, "straight": 0, "banana": 0, "lob": 0}
 var battles_won := 0
 var pending_reward_is_boss := false
+var resume_point := ResumePoint.MAP
+# 独立场景与开发测试需要默认牌库；占位局不允许主菜单“继续”，正式新局或读档会清除此标记。
+var is_placeholder_run := false
 # 单局路线地图：随 start_new_run 用本局 seed 确定性生成，只在本局内修改。
 var map_state: RefCounted = null
 
 
-# 首次启动若没有本局数据则建立默认新游戏，后续场景切换不会重复重置。
+# 启动时建立仅供独立场景工作的占位局；SaveService 随后可覆盖它，菜单不会把占位局当正式存档。
 func _ready() -> void:
 	if deck_card_ids.is_empty():
 		start_new_run(20260904)
+		is_placeholder_run = true
 
 
 # 新游戏彻底覆盖上一局数据，防止生命、牌库、战利品或地图残留。
 func start_new_run(seed_value: int) -> void:
+	is_placeholder_run = false
 	seed = seed_value
 	chapter = 1
 	run_status = RunStatus.ACTIVE
@@ -62,6 +75,7 @@ func start_new_run(seed_value: int) -> void:
 	damage_modifiers = {"all": 0, "straight": 0, "banana": 0, "lob": 0}
 	battles_won = 0
 	pending_reward_is_boss = false
+	resume_point = ResumePoint.MAP
 	_regenerate_map()
 	run_changed.emit()
 
@@ -190,3 +204,62 @@ func get_current_room() -> Dictionary:
 	if room_id.is_empty():
 		return {}
 	return map_state.room_by_id(room_id)
+
+
+# 导出仅包含 JSON 可表达的稳定字段；战斗临时态不属于安全节点存档范围。
+func to_dict() -> Dictionary:
+	return {
+		"seed": seed,
+		"chapter": chapter,
+		"run_status": run_status,
+		"player_hp": player_hp,
+		"max_hp": max_hp,
+		"deck_card_ids": deck_card_ids.duplicate(),
+		"owned_item_ids": owned_item_ids.duplicate(),
+		"damage_modifiers": damage_modifiers.duplicate(true),
+		"battles_won": battles_won,
+		"pending_reward_is_boss": pending_reward_is_boss,
+		"resume_point": resume_point,
+		"map_state": map_state.to_dict() if map_state != null else null,
+	}
+
+
+# 从版本迁移后的字典恢复完整本局；缺失字段采用安全默认值，避免旧档或残缺字段阻止启动。
+func from_dict(data: Dictionary) -> bool:
+	is_placeholder_run = false
+	seed = int(data.get("seed", 0))
+	chapter = clampi(int(data.get("chapter", 1)), 1, FINAL_CHAPTER)
+	run_status = clampi(int(data.get("run_status", RunStatus.NOT_STARTED)), RunStatus.NOT_STARTED, RunStatus.COMPLETED)
+	max_hp = maxi(int(data.get("max_hp", DEFAULT_MAX_HEALTH)), 1)
+	player_hp = clampi(int(data.get("player_hp", max_hp)), 0, max_hp)
+	deck_card_ids = _string_array(data.get("deck_card_ids", DEFAULT_DECK))
+	owned_item_ids = _string_array(data.get("owned_item_ids", []))
+	var saved_modifiers: Dictionary = data.get("damage_modifiers", {}) if data.get("damage_modifiers", {}) is Dictionary else {}
+	damage_modifiers = {
+		"all": int(saved_modifiers.get("all", 0)),
+		"straight": int(saved_modifiers.get("straight", 0)),
+		"banana": int(saved_modifiers.get("banana", 0)),
+		"lob": int(saved_modifiers.get("lob", 0)),
+	}
+	battles_won = maxi(int(data.get("battles_won", 0)), 0)
+	pending_reward_is_boss = bool(data.get("pending_reward_is_boss", false))
+	resume_point = clampi(int(data.get("resume_point", ResumePoint.MAP)), ResumePoint.MAP, ResumePoint.REST)
+	var saved_map: Variant = data.get("map_state")
+	if saved_map is Dictionary:
+		map_state = MAP_STATE.new()
+		map_state.from_dict(saved_map)
+	else:
+		map_state = null
+	run_changed.emit()
+	return true
+
+
+# JSON 数组恢复为强类型稳定 ID 数组，并忽略无法转换为有效 ID 的异常项。
+func _string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if value is not Array:
+		return result
+	for entry in value:
+		if entry is String and not entry.is_empty():
+			result.append(entry)
+	return result

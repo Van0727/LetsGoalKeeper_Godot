@@ -46,9 +46,18 @@ func _on_new_run_pressed() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	run_state.start_new_run(rng.randi())
+	var save_service := get_node_or_null("/root/SaveService")
+	if save_service != null:
+		save_service.save_game(run_state)
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 
 # 返回主菜单时保留刚结束的摘要状态，直到玩家主动开始下一局。
 func _on_main_menu_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+
+# 结算页没有可恢复的临时操作，移动端返回键等同返回主菜单。
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_on_main_menu_pressed()
