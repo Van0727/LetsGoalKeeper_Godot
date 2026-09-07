@@ -39,10 +39,22 @@ func resolve_card(
 				_resolve_damage(effect, card.shot_type, source, recipient, events, damage_modifiers)
 			EFFECT_DEFINITION.EffectType.SHIELD:
 				var gained: int = recipient.gain_shield(effect.amount)
-				events.append({"type": "shield", "amount": gained, "target": recipient})
+				events.append({
+					"type": "shield",
+					"amount": gained,
+					"target": recipient,
+					"health_after": recipient.health,
+					"shield_after": recipient.shield,
+				})
 			EFFECT_DEFINITION.EffectType.HEAL:
 				var healed: int = recipient.heal(effect.amount)
-				events.append({"type": "heal", "amount": healed, "target": recipient})
+				events.append({
+					"type": "heal",
+					"amount": healed,
+					"target": recipient,
+					"health_after": recipient.health,
+					"shield_after": recipient.shield,
+				})
 			EFFECT_DEFINITION.EffectType.ENERGY:
 				var restored: int = recipient.gain_energy(effect.amount)
 				events.append({"type": "energy", "amount": restored, "target": recipient})
@@ -102,6 +114,8 @@ func _resolve_damage(
 			"hits": effect.hits,
 			"shot_type": shot_type,
 			"target": recipient,
+			"health_after": recipient.health,
+			"shield_after": recipient.shield,
 		})
 		if recipient.is_dead():
 			break

@@ -5,7 +5,7 @@ extends Node
 # 表现层通过信号读取日志和刷新状态，核心结算不等待动画回调。
 signal log_added(message: String)
 signal state_changed
-# 表现层逐条消费结构化事件；核心结算不会等待颜色闪烁或足球占位反馈。
+# 表现层逐条消费结构化事件；事件携带结算后快照，允许界面按动画顺序延迟显示。
 signal effect_resolved(event: Dictionary)
 signal battle_finished(victory: bool)
 
@@ -405,6 +405,8 @@ func _resolve_reactive_passive(event: Dictionary) -> void:
 		"target": player,
 		"source": enemy,
 		"damage_tag": "passive",
+		"health_after": player.health,
+		"shield_after": player.shield,
 	})
 
 

@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/battle/ball_flight.gd" id="1_ball"]
+[ext_resource type="Texture2D" path="res://assets/football.png" id="2_texture"]
+
+[node name="BallFlight" type="Node2D"]
+unique_name_in_owner = true
+visible = false
+z_index = 40
+script = ExtResource("1_ball")
+
+[node name="DeformPivot" type="Node2D" parent="."]
+
+[node name="BallSprite" type="Sprite2D" parent="DeformPivot"]
+texture = ExtResource("2_texture")
+modulate = Color(0.792, 0.767, 0.624, 1)

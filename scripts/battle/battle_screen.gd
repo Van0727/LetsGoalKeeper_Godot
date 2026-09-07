@@ -1,4 +1,4 @@
-# 可玩战斗界面：连接战斗核心、牌堆和拖拽输入，并维护竖屏球场式信息布局与即时反馈。
+# 可玩战斗界面：连接战斗核心、牌堆和拖拽输入，并按射门动画顺序呈现竖屏战斗反馈。
 extends Control
 
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
@@ -24,9 +24,9 @@ const REST_ROOM_TYPE := 3
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
 # 使用基础控件类型避免新增脚本的全局类缓存尚未刷新时阻塞战斗场景解析。
 @onready var drag_threshold_guide: Control = %DragThresholdGuide
-@onready var ball_label: Label = %BallLabel
+# 使用基础节点类型避免首次导入时全局类缓存尚未登记 BallFlight 而阻塞战斗场景解析。
+@onready var ball_flight: Node2D = %BallFlight
 @onready var shot_type_label: Label = %ShotTypeLabel
-@onready var ball_timer: Timer = %BallTimer
 @onready var turn_label: Label = %TurnLabel
 @onready var intent_label: Label = %IntentLabel
 @onready var energy_label: Label = %EnergyLabel
@@ -35,6 +35,8 @@ const REST_ROOM_TYPE := 3
 @onready var pile_label: Label = %PileLabel
 @onready var skill_button: Button = %SkillButton
 @onready var end_turn_button: Button = %EndTurnButton
+@onready var gm_menu_button: Button = %GMMenuButton
+@onready var gm_overlay: ColorRect = %GMOverlay
 @onready var gm_skip_button: Button = %GMSkipButton
 @onready var result_overlay: ColorRect = %ResultOverlay
 @onready var result_title: Label = %ResultTitle
@@ -48,6 +50,12 @@ var _enemy_sequence: Array[Resource] = [TURTLE, BEAR, TRAINING_BOSS]
 var _last_victory := false
 var _reward_service := REWARD_SERVICE.new()
 var run_state: Node
+# 卡牌结算期间核心仍同步计算；这里缓存逐段事件并按足球命中顺序更新可见状态。
+var _is_presenting_resolution := false
+var _gm_menu_open := false
+var _pending_effect_events: Array[Dictionary] = []
+var _pending_battle_result = null
+var _visual_rng := RandomNumberGenerator.new()
 var _skills_by_type := {
 	0: SUPER_ATTACK,
 	1: SUPER_DEFENSE,
@@ -64,10 +72,10 @@ func _ready() -> void:
 		add_child(run_state)
 	_apply_chapter_theme()
 	controller.log_added.connect(_on_log_added)
-	controller.state_changed.connect(_refresh_all)
+	controller.state_changed.connect(_on_state_changed)
 	controller.effect_resolved.connect(_on_effect_resolved)
 	controller.battle_finished.connect(_on_battle_finished)
-	ball_timer.timeout.connect(_hide_ball_feedback)
+	ball_flight.shot_started.connect(_on_shot_started)
 	# 参考布局把敌人作为上方视觉焦点，玩家状态则压缩到底部生命栏。
 	enemy_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.ENEMY)
 	player_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.PLAYER_BAR)
@@ -82,8 +90,13 @@ func _apply_chapter_theme() -> void:
 # 使用本局牌库和房间敌人重置战斗：路线地图进入的房间按房型从章节池选敌。
 func start_new_battle(enemy_definition: Resource = null) -> void:
 	result_overlay.hide()
-	ball_label.hide()
+	gm_overlay.hide()
+	_gm_menu_open = false
+	ball_flight.hide()
 	shot_type_label.hide()
+	_pending_effect_events.clear()
+	_pending_battle_result = null
+	_is_presenting_resolution = false
 	status_label.text = "拖动卡牌到绿色区域出牌"
 	_input_locked = true
 	var starting_deck: Array[Resource] = []
@@ -102,6 +115,8 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 		_enemy_index = run_state.battles_won % _enemy_sequence.size()
 		selected_enemy = _enemy_sequence[_enemy_index]
 	var current_seed: int = run_state.seed + run_state.battles_won * 101
+	# 表现随机数使用独立种子，避免弹道左右选择改变战斗数值的确定性。
+	_visual_rng.seed = current_seed * 31 + 7
 	deck_state.setup(starting_deck, current_seed)
 	controller.setup(current_seed, selected_enemy, run_state.damage_modifiers)
 	var diagnostics := get_node_or_null("/root/DiagnosticsService")
@@ -131,16 +146,20 @@ func try_play_hand_card(hand_index: int) -> bool:
 		return false
 
 	_input_locked = true
+	_is_presenting_resolution = true
+	_pending_effect_events.clear()
+	_pending_battle_result = null
 	_update_input_state()
 	var played := controller.play_card_from_hand(deck_state, hand_index)
 	if not played:
+		_is_presenting_resolution = false
 		_input_locked = false
 		status_label.text = "无法打出这张牌，请检查能量"
 		_update_input_state()
 		return false
 
-	status_label.text = "卡牌已结算"
-	call_deferred("_finish_resolution")
+	status_label.text = "正在结算卡牌效果"
+	call_deferred("_play_pending_resolution")
 	return true
 
 
@@ -242,10 +261,28 @@ func _record_missing_encounter(resource_type: String, fields: Dictionary) -> voi
 	diagnostics.record("resource", "missing", details)
 
 
-# GM 调试按钮立即结束当前关卡；控制器负责绕过护盾和反伤并广播正常胜利。
+# 仅在玩家可操作时打开 GM 二级面板；面板期间暂停卡牌、技能和回合输入。
+func _on_gm_menu_pressed() -> void:
+	if _input_locked or controller.phase != BATTLE_CONTROLLER.Phase.PLAYER_TURN:
+		return
+	_gm_menu_open = true
+	gm_overlay.show()
+	_update_input_state()
+
+
+# 关闭 GM 面板并恢复此前的战斗输入状态，不改变任何核心数值。
+func _on_gm_close_pressed() -> void:
+	_gm_menu_open = false
+	gm_overlay.hide()
+	_update_input_state()
+
+
+# GM 跳过从二级面板进入统一胜利出口；控制器负责绕过护盾和反伤。
 func _on_gm_skip_pressed() -> void:
 	if _input_locked:
 		return
+	_gm_menu_open = false
+	gm_overlay.hide()
 	_input_locked = true
 	_update_input_state()
 	if not controller.debug_force_victory():
@@ -257,6 +294,13 @@ func _on_gm_skip_pressed() -> void:
 func _finish_resolution() -> void:
 	_rebuild_hand()
 	_input_locked = controller.phase == BATTLE_CONTROLLER.Phase.FINISHED
+	_refresh_all()
+
+
+# 核心状态变化发生在同一帧时先保持当前血条，等待各段动画命中后再逐步更新。
+func _on_state_changed() -> void:
+	if _is_presenting_resolution:
+		return
 	_refresh_all()
 
 
@@ -297,10 +341,19 @@ func _refresh_all() -> void:
 	_update_input_state()
 
 
-# 费用不足的卡牌保持可见但禁止拖拽；结算和结束状态统一锁住所有操作。
+# 费用不足的卡牌保持可见但禁止拖拽；结算、结束和 GM 面板统一锁住战斗操作。
 func _update_input_state() -> void:
-	var can_act := not _input_locked and controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN
+	var can_act := (
+		not _input_locked
+		and not _gm_menu_open
+		and controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN
+	)
 	end_turn_button.disabled = not can_act
+	gm_menu_button.disabled = (
+		_input_locked
+		or _gm_menu_open
+		or controller.phase == BATTLE_CONTROLLER.Phase.FINISHED
+	)
 	gm_skip_button.disabled = _input_locked or controller.phase == BATTLE_CONTROLLER.Phase.FINISHED
 	var current_skill := _get_current_skill()
 	var combo_count: int = controller.combo_state.count
@@ -321,42 +374,73 @@ func _get_current_skill() -> Resource:
 	return _skills_by_type.get(controller.combo_state.card_type)
 
 
-# 把结构化效果事件分派到对应角色显示，并为射门显示短暂静态足球占位。
+# 卡牌结算期间只入队；其他来源的事件仍即时反馈，保持结束回合等既有流程响应速度。
 func _on_effect_resolved(event: Dictionary) -> void:
+	if _is_presenting_resolution:
+		_pending_effect_events.append(event)
+		return
+	_apply_effect_feedback(event)
+
+
+# 按核心事件顺序串行播放；敌方伤害先飞球，命中后再刷新该段生命与受击反馈。
+func _play_pending_resolution() -> void:
+	for event in _pending_effect_events:
+		if (
+			event.get("type", "") == "damage"
+			and event.get("target") == controller.enemy
+			and event.get("shot_type", 0) != 0
+		):
+			await ball_flight.play_shot(
+				event.get("shot_type", 0),
+				_get_player_shot_origin(),
+				enemy_display.get_portrait_global_center(),
+				_visual_rng
+			)
+			shot_type_label.hide()
+		_apply_effect_feedback(event)
+	_pending_effect_events.clear()
+	_is_presenting_resolution = false
+	if _pending_battle_result != null:
+		var victory: bool = _pending_battle_result
+		_pending_battle_result = null
+		_finalize_battle_result(victory)
+		return
+	status_label.text = "卡牌已结算"
+	_finish_resolution()
+
+
+# 玩家当前仅显示底部状态条，足球从状态条上沿中央发出，避免依赖隐藏头像的位置。
+func _get_player_shot_origin() -> Vector2:
+	var player_rect := player_display.get_global_rect()
+	return Vector2(player_rect.get_center().x, player_rect.position.y - 8.0)
+
+
+# 使用事件中的结算后快照更新血条，保证多段攻击不会在第一球时直接显示最终血量。
+func _apply_effect_feedback(event: Dictionary) -> void:
 	var target = event.get("target")
 	var display: CharacterDisplay = player_display if target == controller.player else enemy_display
 	match event.get("type", ""):
 		"damage":
-			display.set_health(target.health)
-			display.set_shield(target.shield)
+			display.set_health(event.get("health_after", target.health))
+			display.set_shield(event.get("shield_after", target.shield))
 			if event.get("health_damage", 0) > 0:
 				display.show_damage(event.health_damage)
 			elif event.get("absorbed", 0) > 0:
 				display.show_shield_loss(event.absorbed)
-			if target == controller.enemy:
-				_show_shot_type(event.get("shot_type", 0))
 		"heal":
-			display.set_health(target.health)
+			display.set_health(event.get("health_after", target.health))
 			display.show_heal(event.amount)
 		"shield":
-			display.set_shield(target.shield)
+			display.set_shield(event.get("shield_after", target.shield))
 			display.show_shield_gain(event.amount)
 
 
-# 将射门枚举转成阶段 3 的文字表现，足球只做显隐占位且不阻塞数值结算。
-func _show_shot_type(shot_type: int) -> void:
+# 足球组件已解析 RANDOM 的实际弹道，此处仅同步显示本次真实射门类型。
+func _on_shot_started(shot_type: int) -> void:
 	var names := ["射门", "直球", "香蕉球", "挑射", "随机射门"]
 	var safe_index := clampi(shot_type, 0, names.size() - 1)
-	ball_label.show()
 	shot_type_label.text = names[safe_index]
 	shot_type_label.show()
-	ball_timer.start()
-
-
-# 隐藏静态足球反馈，不参与结算时序。
-func _hide_ball_feedback() -> void:
-	ball_label.hide()
-	shot_type_label.hide()
 
 
 # 保留最近一条核心日志作为紧凑状态提示，便于解释无效操作与随机分支。
@@ -370,6 +454,17 @@ func _on_log_added(message: String) -> void:
 # 胜负确定后锁定输入并显示独立结果层，避免重复出牌或结束回合。
 func _on_battle_finished(victory: bool) -> void:
 	_input_locked = true
+	if _is_presenting_resolution:
+		_pending_battle_result = victory
+		_update_input_state()
+		return
+	_finalize_battle_result(victory)
+
+
+# 动画队列结束后再提交并展示胜负，防止足球尚未命中时结果层提前遮住战场。
+func _finalize_battle_result(victory: bool) -> void:
+	_gm_menu_open = false
+	gm_overlay.hide()
 	_last_victory = victory
 	run_state.record_battle_health(controller.player.health)
 	# 失败不提交房间完成，清除进行中上下文；胜利则保留到两步奖励全部领取后再提交。

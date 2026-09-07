@@ -164,6 +164,10 @@ func _test_shot_types_multi_hit_and_multi_effect() -> void:
 	_assert_equal(barrage_events[0].absorbed, 3, "第一段伤害消耗护盾")
 	_assert_equal(barrage_events[1].absorbed, 1, "第二段伤害消耗剩余护盾")
 	_assert_equal(barrage_events[2].health_damage, 3, "第三段伤害作用于生命")
+	# 表现层依赖逐段快照在每球命中时更新血条，不能只读取已变成最终值的目标对象。
+	_assert_equal(barrage_events[0].health_after, 28, "第一段结算后生命快照")
+	_assert_equal(barrage_events[1].health_after, 26, "第二段结算后生命快照")
+	_assert_equal(barrage_events[2].health_after, 23, "第三段结算后生命快照")
 	var lethal_target = COMBATANT_STATE.new("低生命目标", 4)
 	var lethal_events: Array[Dictionary] = resolver.resolve_card(BARRAGE_SHOT, source, lethal_target)
 	_assert_equal(lethal_events.size(), 2, "多段攻击在目标死亡后停止后续段数")

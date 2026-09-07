@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
 [ext_resource type="PackedScene" path="res://scenes/character_display.tscn" id="3_display"]
 [ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="4_pause"]
 [ext_resource type="Script" path="res://scripts/battle/drag_threshold_guide.gd" id="5_guide"]
+[ext_resource type="PackedScene" path="res://scenes/ball_flight.tscn" id="6_ball"]
 
 [sub_resource type="StyleBoxFlat" id="Style_pitch"]
 bg_color = Color(0.17, 0.29, 0.45, 1)
@@ -39,6 +40,22 @@ corner_radius_top_left = 18
 corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="Style_gm_panel"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.055, 0.09, 0.13, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.68, 0.2, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
 
 [node name="Battle" type="Control"]
 layout_mode = 3
@@ -77,15 +94,6 @@ custom_minimum_size = Vector2(44, 30)
 layout_mode = 2
 text = "返回"
 
-[node name="GMSkipButton" type="Button" parent="Header"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(52, 30)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
-theme_override_font_sizes/font_size = 11
-text = "GM跳过"
-
 [node name="TurnLabel" type="Label" parent="Header"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -95,6 +103,14 @@ theme_override_font_sizes/font_size = 20
 text = "PlayerTurn"
 horizontal_alignment = 0
 vertical_alignment = 1
+
+[node name="GMMenuButton" type="Button" parent="Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 30)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "GM"
 
 [node name="IntentLabel" type="Label" parent="Header"]
 unique_name_in_owner = true
@@ -132,14 +148,6 @@ offset_bottom = 274.0
 grow_horizontal = 2
 alignment = 1
 
-[node name="BallLabel" type="Label" parent="ShotFeedback"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 22
-text = "●"
-
 [node name="ShotTypeLabel" type="Label" parent="ShotFeedback"]
 unique_name_in_owner = true
 visible = false
@@ -147,6 +155,9 @@ layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
 theme_override_font_sizes/font_size = 14
 text = "直球"
+
+[node name="BallFlight" parent="." instance=ExtResource("6_ball")]
+unique_name_in_owner = true
 
 [node name="DragThresholdGuide" type="Control" parent="."]
 unique_name_in_owner = true
@@ -273,14 +284,69 @@ layout_mode = 2
 unique_name_in_owner = true
 script = ExtResource("2_controller")
 
-[node name="BallTimer" type="Timer" parent="."]
+[node name="GMOverlay" type="ColorRect" parent="."]
 unique_name_in_owner = true
-wait_time = 0.45
-one_shot = true
+visible = false
+z_index = 50
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.62)
+
+[node name="Center" type="CenterContainer" parent="GMOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="GMOverlay/Center"]
+custom_minimum_size = Vector2(280, 200)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_gm_panel")
+
+[node name="Content" type="VBoxContainer" parent="GMOverlay/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="GMOverlay/Center/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
+theme_override_font_sizes/font_size = 24
+text = "GM 工具"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="GMOverlay/Center/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.86, 1)
+theme_override_font_sizes/font_size = 12
+text = "调试功能不会触发普通卡牌效果"
+horizontal_alignment = 1
+
+[node name="GMSkipButton" type="Button" parent="GMOverlay/Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.48, 1)
+theme_override_font_sizes/font_size = 16
+text = "跳过当前战斗"
+
+[node name="GMCloseButton" type="Button" parent="GMOverlay/Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "关闭"
 
 [node name="ResultOverlay" type="ColorRect" parent="."]
 unique_name_in_owner = true
 visible = false
+z_index = 60
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -337,8 +403,10 @@ theme_override_font_sizes/font_size = 16
 text = "返回主菜单"
 
 [connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]
-[connection signal="pressed" from="Header/GMSkipButton" to="." method="_on_gm_skip_pressed"]
+[connection signal="pressed" from="Header/GMMenuButton" to="." method="_on_gm_menu_pressed"]
 [connection signal="pressed" from="Footer/SkillButton" to="." method="_on_skill_pressed"]
 [connection signal="pressed" from="Footer/EndTurnButton" to="." method="_on_end_turn_pressed"]
+[connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMSkipButton" to="." method="_on_gm_skip_pressed"]
+[connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMCloseButton" to="." method="_on_gm_close_pressed"]
 [connection signal="pressed" from="ResultOverlay/ResultCenter/ResultPanel/ResultContent/RestartButton" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="ResultOverlay/ResultCenter/ResultPanel/ResultContent/MenuButton" to="." method="_on_back_pressed"]

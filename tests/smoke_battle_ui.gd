@@ -2,6 +2,7 @@
 extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
+const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 
 var _failed := false
 
@@ -17,6 +18,12 @@ func _run() -> void:
 	var battle_screen := BATTLE_SCENE.instantiate()
 	root.add_child(battle_screen)
 	await process_frame
+	# 显式重置本局，避免本机 user:// 残留存档让玩家以濒死状态进入冒烟测试。
+	battle_screen.run_state.start_new_run(7301)
+	battle_screen.start_new_battle(TURTLE)
+	await process_frame
+	# 冒烟测试保留真实动画链路但提高播放速度，避免按正式时长等待。
+	battle_screen.ball_flight.playback_speed = 1000.0
 
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")
@@ -39,7 +46,7 @@ func _run() -> void:
 	var played: bool = battle_screen.try_play_hand_card(0)
 	_assert_true(played, "第一张手牌可以结算")
 	_assert_true(not battle_screen.try_play_hand_card(0), "结算帧内拦截重复出牌")
-	await process_frame
+	await _wait_for_resolution(battle_screen)
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "出牌后补回三张")
 	_assert_equal(battle_screen.controller.player.energy, 2, "出牌支付一点能量")
 
@@ -50,14 +57,25 @@ func _run() -> void:
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "新回合重新抽三张")
 	_assert_equal(battle_screen.controller.player.energy, 3, "新回合回满能量")
 
-	# GM跳过绕过乌龟反伤，直接复用正常胜利与奖励入口。
+	# GM入口使用二级面板；打开时锁住战斗操作，关闭后恢复，不改变战斗状态。
+	_assert_true(battle_screen.gm_menu_button.visible, "战斗界面显示GM入口")
+	battle_screen._on_gm_menu_pressed()
+	_assert_true(battle_screen.gm_overlay.visible, "点击GM入口显示二级面板")
+	_assert_true(battle_screen.end_turn_button.disabled, "GM面板打开时锁住结束回合")
+	battle_screen._on_gm_close_pressed()
+	_assert_true(not battle_screen.gm_overlay.visible, "关闭按钮隐藏GM面板")
+	_assert_true(not battle_screen.end_turn_button.disabled, "关闭GM面板后恢复战斗输入")
+
+	# 面板内跳过按钮绕过乌龟反伤，直接复用正常胜利与奖励入口。
 	battle_screen.controller.player.health = 1
+	battle_screen._on_gm_menu_pressed()
 	battle_screen._on_gm_skip_pressed()
 	_assert_equal(battle_screen.controller.enemy.health, 0, "GM跳过立即消灭敌人")
 	_assert_equal(battle_screen.controller.player.health, 1, "GM跳过不触发乌龟反伤")
+	_assert_true(not battle_screen.gm_overlay.visible, "GM跳过后关闭二级面板")
 	_assert_true(battle_screen.result_overlay.visible, "胜利后显示结果层")
 	_assert_true(battle_screen.end_turn_button.disabled, "胜利后锁定结束回合")
-	_assert_true(battle_screen.gm_skip_button.disabled, "胜利后锁定GM跳过")
+	_assert_true(battle_screen.gm_menu_button.disabled, "胜利后锁定GM入口")
 
 	# 重开后把玩家置于濒死状态，验证敌方行动可进入失败结果且不会再抽牌。
 	battle_screen.start_new_battle()
@@ -78,6 +96,15 @@ func _run() -> void:
 		return
 	print("smoke_battle_ui: PASS")
 	quit()
+
+
+# 等待异步表现队列完成，并设置帧数上限避免动画异常时测试永久挂起。
+func _wait_for_resolution(battle_screen) -> void:
+	for _frame in range(30):
+		if not battle_screen._is_presenting_resolution and not battle_screen._input_locked:
+			return
+		await process_frame
+	_assert_true(false, "卡牌动画队列在限定帧数内完成")
 
 
 # 通用相等断言，失败时保留实际值便于定位 UI 状态不同步。

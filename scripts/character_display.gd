@@ -91,6 +91,11 @@ func set_shield(shield: int) -> void:
 	shield_label.text = "护盾  %d" % maxi(shield, 0)
 
 
+# 返回头像的全局中心，供足球表现层把命中位置绑定到实际布局而不是写死坐标。
+func get_portrait_global_center() -> Vector2:
+	return portrait.get_global_rect().get_center()
+
+
 # 播放红色受击反馈。
 func show_damage(amount: int) -> void:
 	_play_feedback("-%d" % amount, Color(1.0, 0.32, 0.28), Color(1.0, 0.35, 0.35))
