@@ -133,6 +133,11 @@ func play_impact_feedback() -> void:
 	shot_impacted.emit()
 
 
+# 实战使用统一多声部播放器发声时，足球只广播命中时刻，避免每个临时实例管理音频生命周期。
+func notify_impact() -> void:
+	shot_impacted.emit()
+
+
 # 正式战斗每帧直接读取 BGM 播放头；掉帧后会跳到正确进度，并在目标音频拍点立即命中。
 func _play_music_synced_motion(
 		timing_clock,

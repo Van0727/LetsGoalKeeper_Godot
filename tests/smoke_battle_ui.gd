@@ -35,6 +35,17 @@ func _run() -> void:
 		"战斗绑定按命名约定标注100 BPM的新BGM"
 	)
 	_assert_true(battle_screen.rhythm_feedback.visible, "战斗显示节拍反馈控件")
+	_assert_true(battle_screen._attack_hit_audio.stream != null, "战斗持有统一命中音效资源")
+	_assert_equal(battle_screen._attack_hit_audio.max_polyphony, 8, "多段命中音效支持重叠播放")
+	# 三段攻击必须逐段调用统一播放器，不能因复用足球节点而吞掉后续触发。
+	var impact_audio_count := [0]
+	battle_screen.attack_impact_audio_triggered.connect(
+		func() -> void: impact_audio_count[0] += 1
+	)
+	for _hit in range(3):
+		battle_screen._play_attack_impact_audio()
+	_assert_equal(impact_audio_count[0], 3, "三段攻击产生三次独立命中音效触发")
+	battle_screen._attack_hit_audio.stop()
 	# 新竖屏布局必须保持敌人在手牌上方、玩家生命栏在手牌下方，防止后续内容撑高造成重叠。
 	var enemy_rect: Rect2 = battle_screen.enemy_display.get_global_rect()
 	var first_card_rect: Rect2 = battle_screen.hand_layer.get_child(0).get_global_rect()

@@ -9,9 +9,20 @@ const MAP_STATE := preload("res://scripts/map/map_state.gd")
 const DEFAULT_MAX_HEALTH := 100
 const FINAL_CHAPTER := 3
 const CHAPTER_SEED_STEP := 1000003
+# 初始牌组收录全部具有实际伤害效果的卡牌各一张，不加入纯防御、治疗或能力牌。
 const DEFAULT_DECK: Array[String] = [
-	"card_straight_shot", "card_straight_shot", "card_straight_shot", "card_straight_shot",
-	"card_gloves", "card_gloves", "card_sports_drink", "card_towel",
+	"card_straight_shot",
+	"card_banana_shot",
+	"card_lob_shot",
+	"card_barrage_shot",
+	"card_attack_and_defend",
+	"card_explosion_ball",
+	"card_energy_shot",
+	"card_shot_group",
+	"card_double_banana_shot",
+	"card_bloodthirsty_ball",
+	"card_spiked_ball",
+	"card_rugby_ball",
 ]
 
 # 对局状态供主菜单、战斗和独立结算界面共享；后续存档只需持久化该状态值。

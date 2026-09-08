@@ -97,7 +97,13 @@ func get_music_time() -> float:
 	), 0.0)
 	if raw_music_time + 0.05 < _last_raw_music_time:
 		var stream_length := music.get_length() if music != null else 0.0
-		_music_loop_offset += maxf(stream_length, _last_raw_music_time)
+		# MP3 的资源长度可能包含编码填充；每轮只累计整数拍时长，防止循环次数越多拍点越漂。
+		var quantized_loop_duration := get_quantized_loop_duration(stream_length, bpm)
+		_music_loop_offset += (
+			quantized_loop_duration
+			if quantized_loop_duration > 0.0
+			else maxf(stream_length, _last_raw_music_time)
+		)
 	_last_raw_music_time = raw_music_time
 	return _music_loop_offset + raw_music_time
 
@@ -145,6 +151,15 @@ func get_beat_duration() -> float:
 # 所有卡牌表现统一通过这里把拍数换算为秒，避免飞行和多段间隔各自维护 BPM 公式。
 func beats_to_seconds(beat_count: float) -> float:
 	return maxf(beat_count, 0.0) * get_beat_duration()
+
+
+# 把一轮音频长度吸附到最接近的整数拍，避免 MP3 尾部填充被逐轮累计到节拍时间轴。
+static func get_quantized_loop_duration(stream_length: float, music_bpm: float) -> float:
+	if stream_length <= 0.0 or music_bpm <= 0.0:
+		return 0.0
+	var beat_duration := 60.0 / music_bpm
+	var beat_count := maxi(roundi(stream_length / beat_duration), 1)
+	return beat_count * beat_duration
 
 
 # 从资源文件名末尾的“_bpm数值”读取速度；未遵守命名约定时保留导出的后备 BPM。

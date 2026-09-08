@@ -133,6 +133,16 @@ func _test_rhythm_judgement_and_damage() -> void:
 	_assert_equal(clock.beats_to_seconds(0.25), 0.15, "100 BPM的四分之一拍为0.15秒")
 	_assert_equal(clock.beats_to_seconds(0.5), 0.3, "100 BPM的半拍为0.3秒")
 	_assert_equal(clock.beats_to_seconds(2.0), 1.2, "100 BPM的两拍为1.2秒")
+	_assert_equal(
+		clock.get_quantized_loop_duration(12.017, 100.0),
+		12.0,
+		"MP3尾部填充不会计入单轮节拍时间轴"
+	)
+	_assert_equal(
+		clock.get_quantized_loop_duration(12.017, 100.0) * 10.0,
+		120.0,
+		"循环十次仍按整数拍累计而不放大尾部误差"
+	)
 	clock.perfect_window_ms = 60.0
 	clock.good_window_ms = 140.0
 	_assert_equal(clock.judge_at(0.05).grade, clock.JudgementGrade.PERFECT, "节拍后50ms为Perfect")
@@ -229,17 +239,21 @@ func _test_shot_types_multi_hit_and_multi_effect() -> void:
 
 	var lob_events: Array[Dictionary] = resolver.resolve_card(LOB_SHOT, source, target)
 	_assert_equal(lob_events[0].shot_type, LOB_SHOT.ShotType.LOB, "挑射事件保留弹道类型")
+	_assert_equal(lob_events[0].attack_delay_beats, 2.0, "挑射事件携带2拍延迟")
 
 	target.shield = 4
 	var barrage_events: Array[Dictionary] = resolver.resolve_card(BARRAGE_SHOT, source, target)
-	_assert_equal(barrage_events.size(), 3, "连续射门逐段产生伤害事件")
+	_assert_equal(barrage_events.size(), 4, "连续射门逐段产生四次伤害事件")
+	_assert_equal(barrage_events[0].multi_hit_interval_beats, 0.25, "连续射门事件携带四分之一拍间隔")
 	_assert_equal(barrage_events[0].absorbed, 3, "第一段伤害消耗护盾")
 	_assert_equal(barrage_events[1].absorbed, 1, "第二段伤害消耗剩余护盾")
 	_assert_equal(barrage_events[2].health_damage, 3, "第三段伤害作用于生命")
+	_assert_equal(barrage_events[3].health_damage, 3, "第四段伤害作用于生命")
 	# 表现层依赖逐段快照在每球命中时更新血条，不能只读取已变成最终值的目标对象。
 	_assert_equal(barrage_events[0].health_after, 28, "第一段结算后生命快照")
 	_assert_equal(barrage_events[1].health_after, 26, "第二段结算后生命快照")
 	_assert_equal(barrage_events[2].health_after, 23, "第三段结算后生命快照")
+	_assert_equal(barrage_events[3].health_after, 20, "第四段结算后生命快照")
 	var lethal_target = COMBATANT_STATE.new("低生命目标", 4)
 	var lethal_events: Array[Dictionary] = resolver.resolve_card(BARRAGE_SHOT, source, lethal_target)
 	_assert_equal(lethal_events.size(), 2, "多段攻击在目标死亡后停止后续段数")

@@ -1,12 +1,15 @@
 # 可玩战斗界面：连接战斗核心、牌堆和拖拽输入，并按射门动画顺序呈现竖屏战斗反馈。
 extends Control
 
+signal attack_impact_audio_triggered
+
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
 const BALL_FLIGHT_SCENE := preload("res://scenes/ball_flight.tscn")
+const HIT_AUDIO_STREAM := preload("res://sound/sounds/hit.mp3")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const BEAR := preload("res://data/enemies/enemy_bear.tres")
 const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
@@ -62,6 +65,8 @@ var _pending_battle_result = null
 # 当前出牌对应的音频拍点；所有分段发射和命中都从同一锚点计算，避免逐帧计时累积漂移。
 var _resolution_beat_anchor_time := 0.0
 var _visual_rng := RandomNumberGenerator.new()
+# 实战命中音统一由常驻播放器输出；多声部允许攻击间隔短于音效长度时每段仍清晰触发。
+var _attack_hit_audio: AudioStreamPlayer
 var _skills_by_type := {
 	0: SUPER_ATTACK,
 	1: SUPER_DEFENSE,
@@ -71,6 +76,12 @@ var _skills_by_type := {
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
 func _ready() -> void:
+	_attack_hit_audio = AudioStreamPlayer.new()
+	_attack_hit_audio.name = "AttackHitAudio"
+	_attack_hit_audio.stream = HIT_AUDIO_STREAM
+	_attack_hit_audio.bus = &"SFX"
+	_attack_hit_audio.max_polyphony = 8
+	add_child(_attack_hit_audio)
 	run_state = get_node_or_null("/root/RunState")
 	# 独立场景测试没有 Autoload 时创建局部状态，正式游戏始终使用全局实例。
 	if run_state == null:
@@ -495,7 +506,8 @@ func _play_shot_event(
 	)
 	# 命中任务只等待 BGM 时间轴；动画完成信号不会阻塞音效、扣血或受击反馈。
 	await _wait_for_shot_launch(hit_music_time)
-	flight.play_impact_feedback()
+	_play_attack_impact_audio()
+	flight.notify_impact()
 	var damage_committed := controller.commit_deferred_damage(event)
 	if damage_committed:
 		_apply_effect_feedback(event)
@@ -505,6 +517,12 @@ func _play_shot_event(
 	completion.remaining -= 1
 	if free_after:
 		flight.queue_free()
+
+
+# 每一段到达目标拍点都独立触发一次；不读取动画完成状态，也不复用临时足球的播放器。
+func _play_attack_impact_audio() -> void:
+	_attack_hit_audio.play()
+	attack_impact_audio_triggered.emit()
 
 
 # 足球动画作为纯视觉协程运行；最后一个参数关闭动画结束时的自动命中音。

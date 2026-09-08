@@ -22,7 +22,11 @@ func _initialize() -> void:
 func _run() -> void:
 	var service := REWARD_SERVICE.new()
 	_run_state.start_new_run(301)
-	_assert_equal(_run_state.deck_card_ids.size(), 8, "新游戏初始牌库")
+	_assert_equal(_run_state.deck_card_ids.size(), 12, "新游戏包含十二张伤害卡牌")
+	_assert_equal(_unique_string_count(_run_state.deck_card_ids), 12, "初始攻击牌各加入一张")
+	_assert_true(not _run_state.deck_card_ids.has("card_gloves"), "初始牌组移除纯防御牌")
+	_assert_true(not _run_state.deck_card_ids.has("card_sports_drink"), "初始牌组移除治疗牌")
+	_assert_true(not _run_state.deck_card_ids.has("card_towel"), "初始牌组移除回能牌")
 	_assert_equal(_run_state.owned_item_ids.size(), 0, "新游戏清空战利品")
 
 	var first_rng := RandomNumberGenerator.new()
@@ -34,7 +38,7 @@ func _run() -> void:
 	_assert_equal(first_cards.size(), 3, "普通战斗生成三张卡牌")
 	_assert_equal(_definition_ids(first_cards, "card_id"), _definition_ids(second_cards, "card_id"), "相同seed奖励一致")
 	_run_state.add_card(first_cards[0].card_id)
-	_assert_equal(_run_state.deck_card_ids.size(), 9, "奖励卡加入本局牌库")
+	_assert_equal(_run_state.deck_card_ids.size(), 13, "奖励卡加入本局牌库")
 
 	_assert_true(_run_state.add_item(GOLDEN_BOOT), "首次获得金靴")
 	_assert_true(not _run_state.add_item(GOLDEN_BOOT), "已拥有战利品不能重复获得")
@@ -55,7 +59,7 @@ func _run() -> void:
 	battle.free()
 
 	_run_state.start_new_run(303)
-	_assert_equal(_run_state.deck_card_ids.size(), 8, "再次新游戏移除奖励卡")
+	_assert_equal(_run_state.deck_card_ids.size(), 12, "再次新游戏恢复十二张初始攻击牌")
 	_assert_equal(_run_state.damage_modifiers.all, 0, "再次新游戏清除伤害加成")
 	_assert_equal(_run_state.player_hp, 100, "再次新游戏恢复生命")
 	_run_state.free()
@@ -73,6 +77,14 @@ func _definition_ids(definitions: Array[Resource], property_name: String) -> Arr
 	for definition in definitions:
 		ids.append(definition.get(property_name))
 	return ids
+
+
+# 统计稳定卡牌ID数量，确保初始牌组没有用重复牌挤占攻击牌位置。
+func _unique_string_count(values: Array[String]) -> int:
+	var unique_values := {}
+	for value in values:
+		unique_values[value] = true
+	return unique_values.size()
 
 
 # 通用相等断言。
