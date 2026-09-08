@@ -5,14 +5,19 @@ extends Node2D
 signal shot_started(actual_shot_type: int)
 
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
+const BALL_TEXTURE := preload("res://assets/football.png")
+const BALL_SHADER := preload("res://shaders/ball_texture.gdshader")
 const BASE_BALL_SCALE := Vector2(0.32, 0.32)
 const STRAIGHT_DURATION := 0.5
 const BANANA_DURATION := 0.75
 const LOB_DURATION := 1.0
 const SPINS_PER_SECOND := 3.0
+const BALL_DIAMETER := 134.0
+const MESH_SEGMENTS := 12
+const BANANA_BEND_PIXELS := 30.0
 
 @onready var deform_pivot: Node2D = $DeformPivot
-@onready var ball_sprite: Sprite2D = $DeformPivot/BallSprite
+@onready var ball_slices: Node2D = $DeformPivot/BallSlices
 
 # 测试可提高播放速度，但正式场景保持 1.0，确保时长与 Unity 原版一致。
 var playback_speed := 1.0
@@ -22,6 +27,12 @@ var last_banana_direction := 0
 var _start_position := Vector2.ZERO
 var _control_position := Vector2.ZERO
 var _end_position := Vector2.ZERO
+var _ball_material: ShaderMaterial
+var _texture_angle := 0.0:
+	set(value):
+		_texture_angle = value
+		if is_instance_valid(_ball_material):
+			_ball_material.set_shader_parameter("texture_angle", _texture_angle)
 var _path_progress := 0.0:
 	set(value):
 		_path_progress = value
@@ -31,6 +42,15 @@ var _path_progress := 0.0:
 			_end_position,
 			_path_progress
 		)
+
+
+# 每个足球实例持有独立材质，确保并发或多段射门时纹理角度互不干扰。
+func _ready() -> void:
+	_ball_material = ShaderMaterial.new()
+	_ball_material.shader = BALL_SHADER
+	_ball_material.set_shader_parameter("ball_texture", BALL_TEXTURE)
+	_ball_material.set_shader_parameter("texture_angle", 0.0)
+	_build_ball_mesh(0)
 
 
 # 播放一次射门并等待足球抵达目标；随机射门只影响表现，不消耗战斗核心随机数。
@@ -56,7 +76,8 @@ func play_shot(
 	)
 	_path_progress = 0.0
 	visible = true
-	ball_sprite.rotation = 0.0
+	_texture_angle = 0.0
+	_build_ball_mesh(last_banana_direction if last_actual_shot_type == CARD_DEFINITION.ShotType.BANANA else 0)
 	deform_pivot.scale = BASE_BALL_SCALE * (2.0 if super_shot else 1.0)
 	shot_started.emit(last_actual_shot_type)
 
@@ -67,8 +88,8 @@ func play_shot(
 	var spin_direction := get_spin_direction(last_actual_shot_type, last_banana_direction)
 	if not is_zero_approx(spin_direction):
 		motion_tween.tween_property(
-			ball_sprite,
-			"rotation",
+			self,
+			"_texture_angle",
 			TAU * SPINS_PER_SECOND * get_shot_duration(last_actual_shot_type) * spin_direction,
 			duration
 		)
@@ -88,15 +109,41 @@ static func get_shot_duration(shot_type: int) -> float:
 			return STRAIGHT_DURATION
 
 
-# 直球不自旋；左右香蕉球采用相反侧旋，挑射保留原版向前旋转。
+# 直球只旋转内层纹理、外层形变轴保持水平；左右香蕉球采用相反侧旋，挑射保留向前旋转。
 static func get_spin_direction(shot_type: int, banana_direction: int) -> float:
 	match shot_type:
+		CARD_DEFINITION.ShotType.STRAIGHT:
+			return 1.0
 		CARD_DEFINITION.ShotType.BANANA:
 			return -1.0 if banana_direction < 0 else 1.0
 		CARD_DEFINITION.ShotType.LOB:
 			return 1.0
 		_:
 			return 0.0
+
+
+# 所有压扁形变保持 X+Y=2：一轴减少多少，另一轴就增加多少，避免视觉面积剧烈波动。
+static func get_deform_ratio(shot_type: int) -> Vector2:
+	match shot_type:
+		CARD_DEFINITION.ShotType.STRAIGHT:
+			return _balanced_ratio(0.7)
+		CARD_DEFINITION.ShotType.BANANA:
+			return _balanced_ratio(0.8)
+		_:
+			return Vector2.ONE
+
+
+# 根据指定 X 比例计算守恒的 Y 比例，后续新增形变统一通过这里生成。
+static func _balanced_ratio(x_ratio: float) -> Vector2:
+	var safe_x := clampf(x_ratio, 0.1, 1.9)
+	return Vector2(safe_x, 2.0 - safe_x)
+
+
+# 月牙弯曲在上下边缘归零、球心达到最大值；方向参数保证左右效果严格镜像。
+static func sample_banana_bend(normalized_y: float, direction: int) -> float:
+	var centered_y := clampf(normalized_y, 0.0, 1.0) * 2.0 - 1.0
+	var center_weight := 1.0 - centered_y * centered_y
+	return BANANA_BEND_PIXELS * center_weight * signi(direction)
 
 
 # 二次贝塞尔采样保持为纯函数，便于验证起点、终点和曲线路径边界。
@@ -161,13 +208,18 @@ func _build_control_point(
 			)
 
 
-# 直球只做一次挤压再恢复且不旋转；香蕉球保持圆形侧旋；挑射放大后在落点前恢复。
+# 直球和香蕉球使用守恒比例全程压扁；挑射的等比缩放属于远近变化，不计入形变守恒。
 func _play_scale_animation(shot_type: int, duration: float, super_shot: bool) -> void:
 	var base_scale := BASE_BALL_SCALE * (2.0 if super_shot else 1.0)
 	match shot_type:
 		CARD_DEFINITION.ShotType.BANANA:
-			# 侧旋时保持圆形，避免非等比缩放轴与球面旋转叠加成“旋转的扁饼”。
-			deform_pivot.scale = base_scale
+			var banana_scale_tween := create_tween()
+			banana_scale_tween.tween_property(
+				deform_pivot,
+				"scale",
+				base_scale * get_deform_ratio(shot_type),
+				minf(0.1 / maxf(playback_speed, 0.01), duration)
+			)
 		CARD_DEFINITION.ShotType.LOB:
 			var lob_scale_tween := create_tween()
 			lob_scale_tween.tween_property(deform_pivot, "scale", base_scale * 2.0, duration * 0.85)
@@ -177,12 +229,37 @@ func _play_scale_animation(shot_type: int, duration: float, super_shot: bool) ->
 			straight_scale_tween.tween_property(
 				deform_pivot,
 				"scale",
-				base_scale * Vector2(0.7, 1.3),
-				minf(0.12 / maxf(playback_speed, 0.01), duration * 0.5)
+				base_scale * get_deform_ratio(shot_type),
+				minf(0.12 / maxf(playback_speed, 0.01), duration)
 			)
-			straight_scale_tween.tween_property(
-				deform_pivot,
-				"scale",
-				base_scale,
-				minf(0.13 / maxf(playback_speed, 0.01), duration * 0.5)
-			)
+
+
+# 生成多条连续横向网格片；香蕉球只移动各切片边界，纹理旋转不会改变月牙外轮廓。
+func _build_ball_mesh(banana_direction: int) -> void:
+	for child in ball_slices.get_children():
+		child.free()
+	for row in range(MESH_SEGMENTS):
+		var top_ratio := float(row) / float(MESH_SEGMENTS)
+		var bottom_ratio := float(row + 1) / float(MESH_SEGMENTS)
+		var top_y := (top_ratio - 0.5) * BALL_DIAMETER
+		var bottom_y := (bottom_ratio - 0.5) * BALL_DIAMETER
+		var top_bend := sample_banana_bend(top_ratio, banana_direction)
+		var bottom_bend := sample_banana_bend(bottom_ratio, banana_direction)
+		var half_size := BALL_DIAMETER * 0.5
+		var slice := Polygon2D.new()
+		slice.polygon = PackedVector2Array([
+			Vector2(-half_size + top_bend, top_y),
+			Vector2(half_size + top_bend, top_y),
+			Vector2(half_size + bottom_bend, bottom_y),
+			Vector2(-half_size + bottom_bend, bottom_y),
+		])
+		# Polygon2D 使用纹理像素坐标；所有切片共享整球 UV，旋转后花纹仍连续。
+		slice.uv = PackedVector2Array([
+			Vector2(0.0, top_ratio * BALL_DIAMETER),
+			Vector2(BALL_DIAMETER, top_ratio * BALL_DIAMETER),
+			Vector2(BALL_DIAMETER, bottom_ratio * BALL_DIAMETER),
+			Vector2(0.0, bottom_ratio * BALL_DIAMETER),
+		])
+		slice.texture = BALL_TEXTURE
+		slice.material = _ball_material
+		ball_slices.add_child(slice)
