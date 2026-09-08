@@ -23,6 +23,7 @@ const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const EFFECT_DEFINITION := preload("res://scripts/cards/effect_definition.gd")
+const RHYTHM_CLOCK := preload("res://scripts/battle/rhythm_clock.gd")
 
 var _failed := false
 
@@ -45,6 +46,7 @@ func _run() -> void:
 	_test_remaining_migrated_cards()
 	_test_effect_order()
 	_test_deterministic_seed()
+	_test_rhythm_judgement_and_damage()
 
 	if _failed:
 		quit(1)
@@ -117,6 +119,47 @@ func _test_deterministic_seed() -> void:
 	_assert_equal(first_explosion.enemy.health, second_explosion.enemy.health, "固定 seed 的爆炸球攻击结果")
 	first_explosion.free()
 	second_explosion.free()
+
+
+# 验证 100 BPM 最近拍判定、提前/延后对称，以及 Miss 只缩放对敌伤害而不削弱自身效果。
+func _test_rhythm_judgement_and_damage() -> void:
+	var clock = RHYTHM_CLOCK.new()
+	clock.bpm = 100.0
+	clock.first_beat_offset = 0.0
+	clock.perfect_window_ms = 60.0
+	clock.good_window_ms = 140.0
+	_assert_equal(clock.judge_at(0.05).grade, clock.JudgementGrade.PERFECT, "节拍后50ms为Perfect")
+	_assert_equal(clock.judge_at(0.10).grade, clock.JudgementGrade.GOOD, "节拍后100ms为Good")
+	_assert_equal(clock.judge_at(0.20).grade, clock.JudgementGrade.MISS, "节拍后200ms为Miss")
+	_assert_equal(clock.judge_at(0.55).grade, clock.JudgementGrade.PERFECT, "下一拍前50ms为Perfect")
+	_assert_equal(roundi(clock.judge_at(0.55).error_ms), -50, "提前判定保留负误差")
+
+	var miss_result: Dictionary = clock.judge_at(0.20)
+	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
+	var source = COMBATANT_STATE.new("节奏测试球员", 20, 3)
+	var target = COMBATANT_STATE.new("节奏测试目标", 20)
+	var shot_events: Array[Dictionary] = resolver.resolve_card(
+		STRAIGHT_SHOT,
+		source,
+		target,
+		null,
+		{},
+		miss_result
+	)
+	_assert_equal(target.health, 17, "Miss使6点对敌伤害减半")
+	_assert_equal(shot_events[0].rhythm_multiplier, 0.5, "伤害事件记录节奏倍率")
+
+	var self_damage_source = COMBATANT_STATE.new("自伤测试球员", 20, 3)
+	var self_damage_target = COMBATANT_STATE.new("自伤测试目标", 20)
+	resolver.resolve_card(SPIKED_BALL, self_damage_source, self_damage_target, null, {}, miss_result)
+	_assert_equal(self_damage_source.health, 17, "Miss不缩放卡牌自伤")
+	_assert_equal(self_damage_target.health, 17, "Miss缩放同张卡牌的对敌伤害")
+
+	var healing_source = COMBATANT_STATE.new("治疗测试球员", 20, 3)
+	healing_source.health = 10
+	resolver.resolve_card(SPORTS_DRINK, healing_source, target, null, {}, miss_result)
+	_assert_equal(healing_source.health, 16, "Miss不缩放治疗效果")
+	clock.free()
 
 
 # 验证复合卡牌严格按效果数组顺序执行。

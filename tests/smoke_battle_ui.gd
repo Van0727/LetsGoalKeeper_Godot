@@ -1,4 +1,4 @@
-# 阶段 3 战斗界面冒烟测试：验证起手、结算锁、回合抽弃牌与胜负界面。
+# 战斗界面冒烟测试：验证节拍入口、起手、结算锁、回合抽弃牌与胜负界面。
 extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
@@ -28,6 +28,9 @@ func _run() -> void:
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")
 	_assert_equal(battle_screen.controller.player.energy, 3, "玩家初始能量")
+	_assert_equal(battle_screen.rhythm_clock.bpm, 100.0, "战斗使用基础鼓点的100 BPM配置")
+	_assert_true(battle_screen.rhythm_clock.music != null, "战斗已绑定基础鼓点BGM")
+	_assert_true(battle_screen.rhythm_feedback.visible, "战斗显示节拍反馈控件")
 	# 新竖屏布局必须保持敌人在手牌上方、玩家生命栏在手牌下方，防止后续内容撑高造成重叠。
 	var enemy_rect: Rect2 = battle_screen.enemy_display.get_global_rect()
 	var first_card_rect: Rect2 = battle_screen.hand_layer.get_child(0).get_global_rect()

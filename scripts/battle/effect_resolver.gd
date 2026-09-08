@@ -14,9 +14,16 @@ func resolve_card(
 		source,
 		opponent,
 		rng: RandomNumberGenerator = null,
-		damage_modifiers: Dictionary = {}
+		damage_modifiers: Dictionary = {},
+		rhythm_result: Dictionary = {}
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
+	# 节奏倍率只作用于对手受到的直接伤害；自伤、治疗、护盾和状态保持卡牌原始规则。
+	var rhythm_multiplier := clampf(
+		float(rhythm_result.get("effect_multiplier", 1.0)),
+		0.0,
+		10.0
+	)
 	for effect in card.effects:
 		# 概率事件保留掷骰明细，确保日志、测试和以后回放都能解释结果。
 		var chance := clampi(effect.chance_percent, 0, 100)
@@ -36,7 +43,16 @@ func resolve_card(
 		var recipient = source if effect.target == EFFECT_DEFINITION.Target.SELF else opponent
 		match effect.effect_type:
 			EFFECT_DEFINITION.EffectType.DAMAGE:
-				_resolve_damage(effect, card.shot_type, source, recipient, events, damage_modifiers)
+				var applied_rhythm_multiplier := rhythm_multiplier if recipient == opponent else 1.0
+				_resolve_damage(
+					effect,
+					card.shot_type,
+					source,
+					recipient,
+					events,
+					damage_modifiers,
+					applied_rhythm_multiplier
+				)
 			EFFECT_DEFINITION.EffectType.SHIELD:
 				var gained: int = recipient.gain_shield(effect.amount)
 				events.append({
@@ -93,14 +109,17 @@ func _resolve_damage(
 		source,
 		recipient,
 		events: Array[Dictionary],
-		damage_modifiers: Dictionary
+		damage_modifiers: Dictionary,
+		rhythm_multiplier: float
 ) -> void:
 	for hit_index in range(effect.hits):
 		# 能量加成读取费用支付后的运行时能量，不回写 EffectDefinition。
 		var energy_bonus: int = source.energy * effect.amount_per_energy
 		var item_bonus := _get_shot_damage_bonus(shot_type, damage_modifiers)
 		var scaled_amount: int = effect.amount + energy_bonus + item_bonus
-		var damage := maxi(roundi(scaled_amount * source.strength_multiplier), 0)
+		var damage := maxi(roundi(
+			scaled_amount * source.strength_multiplier * rhythm_multiplier
+		), 0)
 		var result: Dictionary = recipient.take_damage(damage)
 		events.append({
 			"type": "damage",
@@ -108,6 +127,7 @@ func _resolve_damage(
 			"base_amount": effect.amount,
 			"energy_bonus": energy_bonus,
 			"item_bonus": item_bonus,
+			"rhythm_multiplier": rhythm_multiplier,
 			"absorbed": result.absorbed,
 			"health_damage": result.health_damage,
 			"hit": hit_index + 1,

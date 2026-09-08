@@ -134,8 +134,8 @@ func player_heal(amount := 6) -> bool:
 	return true
 
 
-# 检查行动阶段与费用，支付成功后按顺序结算整张卡牌。
-func play_card(card: Resource) -> bool:
+# 检查行动阶段与费用，支付成功后按顺序结算整张卡牌；节奏上下文只影响允许缩放的伤害。
+func play_card(card: Resource, rhythm_result: Dictionary = {}) -> bool:
 	if not _can_player_act():
 		return false
 	if card == null:
@@ -146,7 +146,19 @@ func play_card(card: Resource) -> bool:
 		return false
 
 	_log("打出 %s，支付 %d 能量" % [card.display_name, card.cost])
-	var events := _effect_resolver.resolve_card(card, player, enemy, _rng, damage_modifiers)
+	if not rhythm_result.is_empty():
+		_log("节奏判定：%s（%+.0fms）" % [
+			rhythm_result.get("grade_name", "Miss"),
+			float(rhythm_result.get("error_ms", 0.0)),
+		])
+	var events := _effect_resolver.resolve_card(
+		card,
+		player,
+		enemy,
+		_rng,
+		damage_modifiers,
+		rhythm_result
+	)
 	for event in events:
 		_log_effect_event(event)
 		effect_resolved.emit(event)
@@ -201,13 +213,17 @@ func play_active_skill(skill: Resource) -> bool:
 	return true
 
 
-# 从指定手牌位置出牌；只有结算成功才移动卡牌并补牌。
-func play_card_from_hand(deck_state, hand_index: int) -> bool:
+# 从指定手牌位置出牌；节奏结果与卡牌一并提交，只有结算成功才移动卡牌并补牌。
+func play_card_from_hand(
+		deck_state,
+		hand_index: int,
+		rhythm_result: Dictionary = {}
+) -> bool:
 	if hand_index < 0 or hand_index >= deck_state.hand.size():
 		_log("无效手牌位置")
 		return false
 	var card: Resource = deck_state.hand[hand_index]
-	if not play_card(card):
+	if not play_card(card, rhythm_result):
 		return false
 	deck_state.play_card_at(hand_index)
 	return true

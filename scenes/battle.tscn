@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
@@ -6,6 +6,9 @@
 [ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="4_pause"]
 [ext_resource type="Script" path="res://scripts/battle/drag_threshold_guide.gd" id="5_guide"]
 [ext_resource type="PackedScene" path="res://scenes/ball_flight.tscn" id="6_ball"]
+[ext_resource type="Script" path="res://scripts/battle/rhythm_clock.gd" id="7_rhythm_clock"]
+[ext_resource type="Script" path="res://scripts/battle/rhythm_feedback.gd" id="8_rhythm_feedback"]
+[ext_resource type="AudioStream" path="res://sound/beats/basicDrum_2.mp3" id="9_music"]
 
 [sub_resource type="StyleBoxFlat" id="Style_pitch"]
 bg_color = Color(0.17, 0.29, 0.45, 1)
@@ -204,6 +207,42 @@ text = "能量 3 / 3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="RhythmFeedback" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 92.0
+offset_top = 274.0
+offset_right = -6.0
+offset_bottom = 322.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("8_rhythm_feedback")
+
+[node name="BeatLabel" type="Label" parent="RhythmFeedback"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 1.0
+offset_right = 136.0
+offset_bottom = 21.0
+theme_override_colors/font_color = Color(0.55, 0.84, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "BEAT  1/4"
+
+[node name="JudgementLabel" type="Label" parent="RhythmFeedback"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 50.0
+offset_top = 19.0
+offset_right = 258.0
+offset_bottom = 47.0
+pivot_offset = Vector2(70, 14)
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 14
+text = "Perfect · 准拍"
+
 [node name="StatusLabel" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
@@ -283,6 +322,16 @@ layout_mode = 2
 [node name="BattleController" type="Node" parent="."]
 unique_name_in_owner = true
 script = ExtResource("2_controller")
+
+[node name="RhythmClock" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("7_rhythm_clock")
+music = ExtResource("9_music")
+bpm = 100.0
+first_beat_offset = 0.0
+beats_per_bar = 4
+perfect_window_ms = 60.0
+good_window_ms = 140.0
 
 [node name="GMOverlay" type="ColorRect" parent="."]
 unique_name_in_owner = true

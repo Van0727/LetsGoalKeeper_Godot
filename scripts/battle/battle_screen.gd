@@ -26,6 +26,9 @@ const REST_ROOM_TYPE := 3
 @onready var drag_threshold_guide: Control = %DragThresholdGuide
 # 使用基础节点类型避免首次导入时全局类缓存尚未登记 BallFlight 而阻塞战斗场景解析。
 @onready var ball_flight: Node2D = %BallFlight
+# 节拍时钟和反馈控件使用基础类型，避免首次导入新增全局类时出现脚本缓存顺序问题。
+@onready var rhythm_clock: Node = %RhythmClock
+@onready var rhythm_feedback: Control = %RhythmFeedback
 @onready var shot_type_label: Label = %ShotTypeLabel
 @onready var turn_label: Label = %TurnLabel
 @onready var intent_label: Label = %IntentLabel
@@ -76,10 +79,17 @@ func _ready() -> void:
 	controller.effect_resolved.connect(_on_effect_resolved)
 	controller.battle_finished.connect(_on_battle_finished)
 	ball_flight.shot_started.connect(_on_shot_started)
+	rhythm_clock.beat_reached.connect(_on_rhythm_beat_reached)
 	# 参考布局把敌人作为上方视觉焦点，玩家状态则压缩到底部生命栏。
 	enemy_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.ENEMY)
 	player_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.PLAYER_BAR)
 	start_new_battle()
+
+
+# 节拍圆环每帧读取音频时钟，仅作为视觉提示；松手判定不会依赖这段 UI 更新。
+func _process(_delta: float) -> void:
+	if rhythm_clock != null and rhythm_feedback != null:
+		rhythm_feedback.set_beat_progress(rhythm_clock.get_beat_progress())
 
 
 # 战斗背景固定为参考界面的蓝灰球场色，避免章节色把上下信息区切成不同底色。
@@ -97,6 +107,7 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_pending_effect_events.clear()
 	_pending_battle_result = null
 	_is_presenting_resolution = false
+	rhythm_clock.start_music()
 	status_label.text = "拖动卡牌到绿色区域出牌"
 	_input_locked = true
 	var starting_deck: Array[Resource] = []
@@ -138,8 +149,8 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 		status_label.text = "%s被动：%s" % [selected_enemy.display_name, selected_enemy.passive_description]
 
 
-# 尝试打出指定手牌；锁在核心结算与手牌重建完成前，拦截同帧重复输入。
-func try_play_hand_card(hand_index: int) -> bool:
+# 尝试打出指定手牌；可选节奏上下文让自动测试和非拖拽入口继续使用完整基础伤害。
+func try_play_hand_card(hand_index: int, rhythm_result: Dictionary = {}) -> bool:
 	if _input_locked or controller.phase != BATTLE_CONTROLLER.Phase.PLAYER_TURN:
 		return false
 	if hand_index < 0 or hand_index >= deck_state.hand.size():
@@ -150,7 +161,7 @@ func try_play_hand_card(hand_index: int) -> bool:
 	_pending_effect_events.clear()
 	_pending_battle_result = null
 	_update_input_state()
-	var played := controller.play_card_from_hand(deck_state, hand_index)
+	var played := controller.play_card_from_hand(deck_state, hand_index, rhythm_result)
 	if not played:
 		_is_presenting_resolution = false
 		_input_locked = false
@@ -163,10 +174,12 @@ func try_play_hand_card(hand_index: int) -> bool:
 	return true
 
 
-# 出牌信号携带卡牌运行视图，稳定索引用于定位对应手牌定义。
+# 有效松手时立即采样音频播放头；判定结果先反馈给玩家，再作为只读上下文提交结算。
 func _on_card_played(card_view: DraggableCard) -> void:
 	if card_view is BattleCardView:
-		try_play_hand_card(card_view.hand_index)
+		var rhythm_result: Dictionary = rhythm_clock.judge_now()
+		rhythm_feedback.show_judgement(rhythm_result)
+		try_play_hand_card(card_view.hand_index, rhythm_result)
 
 
 # 拖拽开始时只显示横向虚线；尚未越线前不显示释放提示。
@@ -188,6 +201,11 @@ func _on_card_drag_finished(_card_view: DraggableCard, valid_drop: bool) -> void
 	drag_threshold_guide.end_drag()
 	if not valid_drop:
 		status_label.text = "未越过出牌线，卡牌已返回手牌"
+
+
+# 音频跨过新拍点时触发一次表现脉冲，并显示当前小节内的拍位。
+func _on_rhythm_beat_reached(beat_index: int, _bar_index: int) -> void:
+	rhythm_feedback.pulse_beat(beat_index, rhythm_clock.beats_per_bar)
 
 
 # 结束回合先弃掉剩余手牌，再执行敌人行动；存活时进入新回合并重新抽三张。
@@ -465,6 +483,7 @@ func _on_battle_finished(victory: bool) -> void:
 func _finalize_battle_result(victory: bool) -> void:
 	_gm_menu_open = false
 	gm_overlay.hide()
+	rhythm_clock.stop_music()
 	_last_victory = victory
 	run_state.record_battle_health(controller.player.health)
 	# 失败不提交房间完成，清除进行中上下文；胜利则保留到两步奖励全部领取后再提交。
