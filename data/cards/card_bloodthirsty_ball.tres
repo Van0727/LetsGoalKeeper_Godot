@@ -25,5 +25,7 @@ description = "造成6点伤害，然后恢复3点生命"
 cost = 1
 card_type = 0
 shot_type = 1
+attack_delay_beats = 1.0
+multi_hit_interval_beats = 0.5
 rarity = 0
 effects = Array[Resource]([SubResource("Effect_damage"), SubResource("Effect_heal")])

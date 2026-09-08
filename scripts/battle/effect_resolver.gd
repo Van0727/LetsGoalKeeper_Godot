@@ -47,6 +47,8 @@ func resolve_card(
 				_resolve_damage(
 					effect,
 					card.shot_type,
+					card.attack_delay_beats,
+					card.multi_hit_interval_beats,
 					source,
 					recipient,
 					events,
@@ -106,6 +108,8 @@ func resolve_card(
 func _resolve_damage(
 		effect: Resource,
 		shot_type: int,
+		attack_delay_beats: float,
+		multi_hit_interval_beats: float,
 		source,
 		recipient,
 		events: Array[Dictionary],
@@ -133,6 +137,9 @@ func _resolve_damage(
 			"hit": hit_index + 1,
 			"hits": effect.hits,
 			"shot_type": shot_type,
+			# 表现层读取事件快照，避免结算期间修改 Resource 导致已发出的球改变时序。
+			"attack_delay_beats": maxf(attack_delay_beats, 0.0),
+			"multi_hit_interval_beats": maxf(multi_hit_interval_beats, 0.0),
 			"target": recipient,
 			"health_after": recipient.health,
 			"shield_after": recipient.shield,

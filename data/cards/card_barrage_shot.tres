@@ -18,5 +18,7 @@ description = "连续攻击3次，每次造成3点伤害"
 cost = 2
 card_type = 0
 shot_type = 4
+attack_delay_beats = 1.0
+multi_hit_interval_beats = 0.5
 rarity = 0
 effects = Array[Resource]([SubResource("Effect_damage")])

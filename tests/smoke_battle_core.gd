@@ -148,6 +148,8 @@ func _test_rhythm_judgement_and_damage() -> void:
 	)
 	_assert_equal(target.health, 17, "Miss使6点对敌伤害减半")
 	_assert_equal(shot_events[0].rhythm_multiplier, 0.5, "伤害事件记录节奏倍率")
+	_assert_equal(shot_events[0].attack_delay_beats, 1.0, "伤害事件携带一拍飞行延迟")
+	_assert_equal(shot_events[0].multi_hit_interval_beats, 0.5, "伤害事件携带半拍多段间隔")
 
 	var self_damage_source = COMBATANT_STATE.new("自伤测试球员", 20, 3)
 	var self_damage_target = COMBATANT_STATE.new("自伤测试目标", 20)

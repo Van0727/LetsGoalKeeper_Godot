@@ -63,7 +63,8 @@ func play_shot(
 		start_position: Vector2,
 		end_position: Vector2,
 		rng: RandomNumberGenerator,
-		super_shot := false
+		super_shot := false,
+		flight_duration_seconds := -1.0
 ) -> void:
 	var visual_rng := rng if rng != null else RandomNumberGenerator.new()
 	var resolved := _resolve_visual_shot(shot_type, visual_rng)
@@ -87,7 +88,13 @@ func play_shot(
 	kick_audio.play()
 	shot_started.emit(last_actual_shot_type)
 
-	var duration := get_shot_duration(last_actual_shot_type) / maxf(playback_speed, 0.01)
+	# 负值保留旧调用方的球种默认时长；攻击卡传入按 BPM 换算后的配置时长。
+	var configured_duration := (
+		get_shot_duration(last_actual_shot_type)
+		if flight_duration_seconds < 0.0
+		else flight_duration_seconds
+	)
+	var duration := maxf(configured_duration, 0.001) / maxf(playback_speed, 0.01)
 	var motion_tween := create_tween().set_parallel(true)
 	motion_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	motion_tween.tween_property(self, "_path_progress", 1.0, duration)
@@ -96,7 +103,7 @@ func play_shot(
 		motion_tween.tween_property(
 			self,
 			"_texture_angle",
-			TAU * SPINS_PER_SECOND * get_shot_duration(last_actual_shot_type) * spin_direction,
+			TAU * SPINS_PER_SECOND * configured_duration * spin_direction,
 			duration
 		)
 	_play_scale_animation(last_actual_shot_type, duration, super_shot)

@@ -72,6 +72,8 @@ func _test_card_definitions() -> void:
 	_assert_equal(LOB_SHOT.cost, 1, "挑射费用")
 	_assert_equal(LOB_SHOT.effects[0].amount, 6, "挑射伤害")
 	_assert_equal(BARRAGE_SHOT.effects[0].hits, 3, "连续射门攻击段数")
+	_assert_equal(BARRAGE_SHOT.attack_delay_beats, 1.0, "攻击牌默认延迟为1拍")
+	_assert_equal(BARRAGE_SHOT.multi_hit_interval_beats, 0.5, "多段攻击默认间隔为半拍")
 	_assert_equal(ATTACK_AND_DEFEND.effects.size(), 2, "攻守兼备效果数量")
 	_assert_equal(EXPLOSION_BALL.cost, 1, "爆炸球费用")
 	_assert_equal(EXPLOSION_BALL.effects[0].chance_percent, 50, "爆炸球触发概率")

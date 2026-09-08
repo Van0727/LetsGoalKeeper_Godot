@@ -18,5 +18,7 @@ description = "造成6点伤害"
 cost = 1
 card_type = 0
 shot_type = 2
+attack_delay_beats = 1.0
+multi_hit_interval_beats = 0.5
 rarity = 0
 effects = Array[Resource]([SubResource("Effect_damage")])

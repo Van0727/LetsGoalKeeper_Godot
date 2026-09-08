@@ -6,6 +6,7 @@ const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
+const BALL_FLIGHT_SCENE := preload("res://scenes/ball_flight.tscn")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const BEAR := preload("res://data/enemies/enemy_bear.tres")
 const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
@@ -400,22 +401,20 @@ func _on_effect_resolved(event: Dictionary) -> void:
 	_apply_effect_feedback(event)
 
 
-# 按核心事件顺序串行播放；敌方伤害先飞球，命中后再刷新该段生命与受击反馈。
+# 按核心事件顺序播放；连续攻击按配置的发射间隔并发飞行，每一段命中时才刷新对应快照。
 func _play_pending_resolution() -> void:
-	for event in _pending_effect_events:
-		if (
-			event.get("type", "") == "damage"
-			and event.get("target") == controller.enemy
-			and event.get("shot_type", 0) != 0
-		):
-			await ball_flight.play_shot(
-				event.get("shot_type", 0),
-				_get_player_shot_origin(),
-				enemy_display.get_portrait_global_center(),
-				_visual_rng
-			)
-			shot_type_label.hide()
+	var event_index := 0
+	while event_index < _pending_effect_events.size():
+		var event := _pending_effect_events[event_index]
+		if _is_enemy_shot_event(event):
+			var shot_events: Array[Dictionary] = []
+			while event_index < _pending_effect_events.size() and _is_enemy_shot_event(_pending_effect_events[event_index]):
+				shot_events.append(_pending_effect_events[event_index])
+				event_index += 1
+			await _play_shot_group(shot_events)
+			continue
 		_apply_effect_feedback(event)
+		event_index += 1
 	_pending_effect_events.clear()
 	_is_presenting_resolution = false
 	if _pending_battle_result != null:
@@ -425,6 +424,58 @@ func _play_pending_resolution() -> void:
 		return
 	status_label.text = "卡牌已结算"
 	_finish_resolution()
+
+
+# 仅把带弹道的对敌伤害纳入飞球队列；自伤和非攻击效果仍保持即时、严格的数组顺序。
+func _is_enemy_shot_event(event: Dictionary) -> bool:
+	return (
+		event.get("type", "") == "damage"
+		and event.get("target") == controller.enemy
+		and event.get("shot_type", 0) != 0
+	)
+
+
+# 相邻段从出牌时刻起按固定拍数错开发射；每个实例独立飞行，全部命中后才继续后续效果。
+func _play_shot_group(events: Array[Dictionary]) -> void:
+	var completion := {"remaining": events.size()}
+	var beat_duration: float = rhythm_clock.get_beat_duration()
+	for index in range(events.size()):
+		var event := events[index]
+		var flight := ball_flight if index == 0 else BALL_FLIGHT_SCENE.instantiate()
+		if index > 0:
+			add_child(flight)
+			flight.playback_speed = ball_flight.playback_speed
+			flight.shot_started.connect(_on_shot_started)
+		_play_shot_event(flight, event, beat_duration, completion, index > 0)
+		if index < events.size() - 1:
+			var interval_seconds := beat_duration * float(event.get("multi_hit_interval_beats", 0.5))
+			await get_tree().create_timer(interval_seconds / maxf(ball_flight.playback_speed, 0.01)).timeout
+	while completion.remaining > 0:
+		await get_tree().process_frame
+	shot_type_label.hide()
+
+
+# 单段协程在命中后应用该段生命快照；临时实例完成后立即释放，常驻首实例供下次复用。
+func _play_shot_event(
+		flight: Node2D,
+		event: Dictionary,
+		beat_duration: float,
+		completion: Dictionary,
+		free_after: bool
+) -> void:
+	var flight_seconds := beat_duration * float(event.get("attack_delay_beats", 1.0))
+	await flight.play_shot(
+		event.get("shot_type", 0),
+		_get_player_shot_origin(),
+		enemy_display.get_portrait_global_center(),
+		_visual_rng,
+		false,
+		flight_seconds
+	)
+	_apply_effect_feedback(event)
+	completion.remaining -= 1
+	if free_after:
+		flight.queue_free()
 
 
 # 玩家当前仅显示底部状态条，足球从状态条上沿中央发出，避免依赖隐藏头像的位置。
