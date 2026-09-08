@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ball_flight.tscn" id="6_ball"]
 [ext_resource type="Script" path="res://scripts/battle/rhythm_clock.gd" id="7_rhythm_clock"]
 [ext_resource type="Script" path="res://scripts/battle/rhythm_feedback.gd" id="8_rhythm_feedback"]
-[ext_resource type="AudioStream" path="res://sound/beats/basicDrum_2.mp3" id="9_music"]
+[ext_resource type="AudioStream" path="res://sound/beats/bg_basicDrum2_bpm100.mp3" id="9_music"]
 
 [sub_resource type="StyleBoxFlat" id="Style_pitch"]
 bg_color = Color(0.17, 0.29, 0.45, 1)

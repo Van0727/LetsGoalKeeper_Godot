@@ -134,8 +134,12 @@ func player_heal(amount := 6) -> bool:
 	return true
 
 
-# 检查行动阶段与费用，支付成功后按顺序结算整张卡牌；节奏上下文只影响允许缩放的伤害。
-func play_card(card: Resource, rhythm_result: Dictionary = {}) -> bool:
+# 检查行动阶段与费用；真实界面可把对敌射门标为待命中，测试和无动画入口默认保持同步结算。
+func play_card(
+		card: Resource,
+		rhythm_result: Dictionary = {},
+		defer_enemy_shot_damage := false
+) -> bool:
 	if not _can_player_act():
 		return false
 	if card == null:
@@ -157,12 +161,15 @@ func play_card(card: Resource, rhythm_result: Dictionary = {}) -> bool:
 		enemy,
 		_rng,
 		damage_modifiers,
-		rhythm_result
+		rhythm_result,
+		defer_enemy_shot_damage
 	)
 	for event in events:
-		_log_effect_event(event)
+		if not event.get("deferred_damage", false):
+			_log_effect_event(event)
 		effect_resolved.emit(event)
-		_resolve_reactive_passive(event)
+		if not event.get("deferred_damage", false):
+			_resolve_reactive_passive(event)
 		if player.is_dead():
 			break
 	combo_state.register_card(card.card_type)
@@ -217,15 +224,41 @@ func play_active_skill(skill: Resource) -> bool:
 func play_card_from_hand(
 		deck_state,
 		hand_index: int,
-		rhythm_result: Dictionary = {}
+		rhythm_result: Dictionary = {},
+		defer_enemy_shot_damage := false
 ) -> bool:
 	if hand_index < 0 or hand_index >= deck_state.hand.size():
 		_log("无效手牌位置")
 		return false
 	var card: Resource = deck_state.hand[hand_index]
-	if not play_card(card, rhythm_result):
+	if not play_card(card, rhythm_result, defer_enemy_shot_damage):
 		return false
 	deck_state.play_card_at(hand_index)
+	return true
+
+
+# 足球抵达目标拍点时提交单段待命中伤害；护盾、反伤和胜负都从这一帧的真实状态计算。
+func commit_deferred_damage(event: Dictionary) -> bool:
+	if not event.get("deferred_damage", false):
+		return false
+	var target = event.get("target")
+	if target == null or target.is_dead() or phase == Phase.FINISHED:
+		return false
+	var result: Dictionary = target.take_damage(int(event.get("amount", 0)))
+	event.absorbed = result.absorbed
+	event.health_damage = result.health_damage
+	event.health_after = target.health
+	event.shield_after = target.shield
+	event.deferred_damage = false
+	_log_effect_event(event)
+	_resolve_reactive_passive(event)
+	# 命中造成双方同时死亡时仍按玩家失败裁定，与同步卡牌结算规则一致。
+	if player.is_dead():
+		_finish_battle(false)
+	elif enemy.is_dead():
+		_finish_battle(true)
+	else:
+		state_changed.emit()
 	return true
 
 

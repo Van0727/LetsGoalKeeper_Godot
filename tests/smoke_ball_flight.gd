@@ -63,6 +63,8 @@ func _initialize() -> void:
 		"直球飞行结束保持0.7乘1.3形变"
 	)
 	_assert_equal(impact_count[0], 1, "每次足球抵达目标只发送一次命中信号")
+	ball.play_impact_feedback()
+	_assert_equal(impact_count[0], 2, "命中音效可以脱离飞行动画独立触发")
 	# 测试结束前主动停止仍在播放的命中音，避免无窗口运行退出时保留音频播放实例。
 	ball.kick_audio.stop()
 	ball.hit_audio.stop()

@@ -1,8 +1,10 @@
-# 阶段 9 设置冒烟测试：验证配置往返、损坏降级、数值边界和设置界面绑定。
+# 设置功能冒烟测试：验证配置往返、损坏降级、数值边界、音频总线应用和设置界面绑定。
 extends SceneTree
 
 const SETTINGS_SERVICE_SCRIPT := preload("res://autoload/settings_service.gd")
 const SETTINGS_SCENE := preload("res://scenes/settings_screen.tscn")
+const BALL_FLIGHT_SCENE := preload("res://scenes/ball_flight.tscn")
+const RHYTHM_CLOCK_SCRIPT := preload("res://scripts/battle/rhythm_clock.gd")
 
 var _failed := false
 var _path := "res://tests/.smoke_settings_%d.cfg" % OS.get_process_id()
@@ -16,6 +18,7 @@ func _run() -> void:
 	_cleanup()
 	_test_round_trip_and_boundaries()
 	_test_corrupt_config_fallback()
+	await _test_audio_bus_routing()
 	await _test_settings_screen()
 	_cleanup()
 	if _failed:
@@ -71,6 +74,20 @@ func _test_corrupt_config_fallback() -> void:
 	_assert_equal(service.master_volume, 1.0, "损坏配置恢复默认音量")
 	_assert_equal(service.language, "zh_CN", "损坏配置恢复默认语言")
 	service.free()
+
+
+# 音乐与战斗音效必须进入各自总线，否则设置页只能调节主音量，两个分类滑块不会产生实际效果。
+func _test_audio_bus_routing() -> void:
+	var rhythm_clock = RHYTHM_CLOCK_SCRIPT.new()
+	root.add_child(rhythm_clock)
+	var ball_flight = BALL_FLIGHT_SCENE.instantiate()
+	root.add_child(ball_flight)
+	await process_frame
+	_assert_equal(rhythm_clock._audio_player.bus, &"Music", "战斗音乐进入 Music 总线")
+	_assert_equal(ball_flight.kick_audio.bus, &"SFX", "踢球音效进入 SFX 总线")
+	_assert_equal(ball_flight.hit_audio.bus, &"SFX", "命中音效进入 SFX 总线")
+	rhythm_clock.free()
+	ball_flight.free()
 
 
 # 正式场景应从 Autoload 映射全部控件，保证主菜单入口打开后可以立即操作。

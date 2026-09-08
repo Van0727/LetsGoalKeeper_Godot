@@ -64,7 +64,11 @@ func play_shot(
 		end_position: Vector2,
 		rng: RandomNumberGenerator,
 		super_shot := false,
-		flight_duration_seconds := -1.0
+		flight_duration_seconds := -1.0,
+		timing_clock = null,
+		launch_music_time := -1.0,
+		hit_music_time := -1.0,
+		play_impact_on_animation_end := true
 ) -> void:
 	var visual_rng := rng if rng != null else RandomNumberGenerator.new()
 	var resolved := _resolve_visual_shot(shot_type, visual_rng)
@@ -95,23 +99,62 @@ func play_shot(
 		else flight_duration_seconds
 	)
 	var duration := maxf(configured_duration, 0.001) / maxf(playback_speed, 0.01)
-	var motion_tween := create_tween().set_parallel(true)
-	motion_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	motion_tween.tween_property(self, "_path_progress", 1.0, duration)
 	var spin_direction := get_spin_direction(last_actual_shot_type, last_banana_direction)
-	if not is_zero_approx(spin_direction):
-		motion_tween.tween_property(
-			self,
-			"_texture_angle",
-			TAU * SPINS_PER_SECOND * configured_duration * spin_direction,
-			duration
-		)
 	_play_scale_animation(last_actual_shot_type, duration, super_shot)
-	await motion_tween.finished
-	# 命中音先于 play_shot 返回；调用方随后在同帧刷新敌人血量和受击数字。
+	if timing_clock != null and is_equal_approx(playback_speed, 1.0) and hit_music_time >= 0.0:
+		await _play_music_synced_motion(
+			timing_clock,
+			launch_music_time,
+			hit_music_time,
+			configured_duration,
+			spin_direction
+		)
+	else:
+		var motion_tween := create_tween().set_parallel(true)
+		motion_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		motion_tween.tween_property(self, "_path_progress", 1.0, duration)
+		if not is_zero_approx(spin_direction):
+			motion_tween.tween_property(
+				self,
+				"_texture_angle",
+				TAU * SPINS_PER_SECOND * configured_duration * spin_direction,
+				duration
+			)
+		await motion_tween.finished
+	# 独立预览仍可在动画结束时自动播放；实战由音频时间轴在目标拍点主动调用。
+	if play_impact_on_animation_end:
+		play_impact_feedback()
+	visible = false
+
+
+# 命中音与命中信号可由战斗时间轴独立触发，不要求足球动画已经播放完成。
+func play_impact_feedback() -> void:
 	hit_audio.play()
 	shot_impacted.emit()
-	visible = false
+
+
+# 正式战斗每帧直接读取 BGM 播放头；掉帧后会跳到正确进度，并在目标音频拍点立即命中。
+func _play_music_synced_motion(
+		timing_clock,
+		launch_music_time: float,
+		hit_music_time: float,
+		configured_duration: float,
+		spin_direction: float
+) -> void:
+	var time_span := maxf(hit_music_time - launch_music_time, 0.001)
+	while timing_clock.get_music_time() < hit_music_time:
+		var linear_progress := clampf(
+			(timing_clock.get_music_time() - launch_music_time) / time_span,
+			0.0,
+			1.0
+		)
+		# 与原 Tween 的 Sine Ease-In 曲线一致，仅替换时间来源。
+		_path_progress = 1.0 - cos(linear_progress * PI * 0.5)
+		_texture_angle = (
+			TAU * SPINS_PER_SECOND * configured_duration * spin_direction * linear_progress
+		)
+		await get_tree().process_frame
+	_path_progress = 1.0
 
 
 # 返回各弹道的标准时长，供表现队列和测试共享同一份规则。

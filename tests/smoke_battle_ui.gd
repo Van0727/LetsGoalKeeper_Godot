@@ -30,6 +30,10 @@ func _run() -> void:
 	_assert_equal(battle_screen.controller.player.energy, 3, "玩家初始能量")
 	_assert_equal(battle_screen.rhythm_clock.bpm, 100.0, "战斗使用基础鼓点的100 BPM配置")
 	_assert_true(battle_screen.rhythm_clock.music != null, "战斗已绑定基础鼓点BGM")
+	_assert_true(
+		battle_screen.rhythm_clock.music.resource_path.ends_with("bg_basicDrum2_bpm100.mp3"),
+		"战斗绑定按命名约定标注100 BPM的新BGM"
+	)
 	_assert_true(battle_screen.rhythm_feedback.visible, "战斗显示节拍反馈控件")
 	# 新竖屏布局必须保持敌人在手牌上方、玩家生命栏在手牌下方，防止后续内容撑高造成重叠。
 	var enemy_rect: Rect2 = battle_screen.enemy_display.get_global_rect()

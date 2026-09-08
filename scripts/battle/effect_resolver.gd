@@ -15,7 +15,8 @@ func resolve_card(
 		opponent,
 		rng: RandomNumberGenerator = null,
 		damage_modifiers: Dictionary = {},
-		rhythm_result: Dictionary = {}
+		rhythm_result: Dictionary = {},
+		defer_enemy_shot_damage := false
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	# 节奏倍率只作用于对手受到的直接伤害；自伤、治疗、护盾和状态保持卡牌原始规则。
@@ -49,6 +50,7 @@ func resolve_card(
 					card.shot_type,
 					card.attack_delay_beats,
 					card.multi_hit_interval_beats,
+					defer_enemy_shot_damage and recipient == opponent and card.shot_type != 0,
 					source,
 					recipient,
 					events,
@@ -110,6 +112,7 @@ func _resolve_damage(
 		shot_type: int,
 		attack_delay_beats: float,
 		multi_hit_interval_beats: float,
+		defer_damage: bool,
 		source,
 		recipient,
 		events: Array[Dictionary],
@@ -124,7 +127,12 @@ func _resolve_damage(
 		var damage := maxi(roundi(
 			scaled_amount * source.strength_multiplier * rhythm_multiplier
 		), 0)
-		var result: Dictionary = recipient.take_damage(damage)
+		# 实战射门只生成待命中事件；实际护盾消耗、扣血和死亡判断由足球命中帧提交。
+		var result: Dictionary = (
+			{"absorbed": 0, "health_damage": 0}
+			if defer_damage
+			else recipient.take_damage(damage)
+		)
 		events.append({
 			"type": "damage",
 			"amount": damage,
@@ -140,11 +148,12 @@ func _resolve_damage(
 			# 表现层读取事件快照，避免结算期间修改 Resource 导致已发出的球改变时序。
 			"attack_delay_beats": maxf(attack_delay_beats, 0.0),
 			"multi_hit_interval_beats": maxf(multi_hit_interval_beats, 0.0),
+			"deferred_damage": defer_damage,
 			"target": recipient,
 			"health_after": recipient.health,
 			"shield_after": recipient.shield,
 		})
-		if recipient.is_dead():
+		if not defer_damage and recipient.is_dead():
 			break
 
 

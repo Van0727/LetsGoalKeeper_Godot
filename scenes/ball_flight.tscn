@@ -16,8 +16,10 @@ script = ExtResource("1_ball")
 
 [node name="KickAudio" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("2_kick")
+bus = &"SFX"
 max_polyphony = 4
 
 [node name="HitAudio" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("3_hit")
+bus = &"SFX"
 max_polyphony = 4

@@ -59,6 +59,8 @@ var _is_presenting_resolution := false
 var _gm_menu_open := false
 var _pending_effect_events: Array[Dictionary] = []
 var _pending_battle_result = null
+# 当前出牌对应的音频拍点；所有分段发射和命中都从同一锚点计算，避免逐帧计时累积漂移。
+var _resolution_beat_anchor_time := 0.0
 var _visual_rng := RandomNumberGenerator.new()
 var _skills_by_type := {
 	0: SUPER_ATTACK,
@@ -161,8 +163,13 @@ func try_play_hand_card(hand_index: int, rhythm_result: Dictionary = {}) -> bool
 	_is_presenting_resolution = true
 	_pending_effect_events.clear()
 	_pending_battle_result = null
+	var timing_result := rhythm_result
+	if timing_result.is_empty():
+		timing_result = rhythm_clock.judge_at(rhythm_clock.get_music_time())
+	_resolution_beat_anchor_time = float(timing_result.get("target_time", rhythm_clock.get_music_time()))
 	_update_input_state()
-	var played := controller.play_card_from_hand(deck_state, hand_index, rhythm_result)
+	# 实战界面只在足球抵达目标拍点时提交伤害；出牌阶段仍立即支付费用并移入弃牌堆。
+	var played := controller.play_card_from_hand(deck_state, hand_index, rhythm_result, true)
 	if not played:
 		_is_presenting_resolution = false
 		_input_locked = false
@@ -438,44 +445,90 @@ func _is_enemy_shot_event(event: Dictionary) -> bool:
 # 相邻段从出牌时刻起按固定拍数错开发射；每个实例独立飞行，全部命中后才继续后续效果。
 func _play_shot_group(events: Array[Dictionary]) -> void:
 	var completion := {"remaining": events.size()}
-	var beat_duration: float = rhythm_clock.get_beat_duration()
 	for index in range(events.size()):
 		var event := events[index]
+		var interval_beats: float = float(event.get("multi_hit_interval_beats", 0.5))
+		var launch_music_time: float = _resolution_beat_anchor_time + rhythm_clock.beats_to_seconds(
+			interval_beats * index
+		)
+		await _wait_for_shot_launch(launch_music_time)
 		var flight := ball_flight if index == 0 else BALL_FLIGHT_SCENE.instantiate()
 		if index > 0:
 			add_child(flight)
 			flight.playback_speed = ball_flight.playback_speed
 			flight.shot_started.connect(_on_shot_started)
-		_play_shot_event(flight, event, beat_duration, completion, index > 0)
-		if index < events.size() - 1:
-			var interval_seconds := beat_duration * float(event.get("multi_hit_interval_beats", 0.5))
-			await get_tree().create_timer(interval_seconds / maxf(ball_flight.playback_speed, 0.01)).timeout
+		_play_shot_event(flight, event, launch_music_time, completion, index > 0)
 	while completion.remaining > 0:
 		await get_tree().process_frame
 	shot_type_label.hide()
+
+
+# 正式播放等待音频时间轴到达发射点；高速冒烟测试继续按压缩后的画面时间执行。
+func _wait_for_shot_launch(target_music_time: float) -> void:
+	if ball_flight.playback_speed > 1.0:
+		var remaining := maxf(target_music_time - rhythm_clock.get_music_time(), 0.0)
+		if remaining > 0.0:
+			await get_tree().create_timer(remaining / ball_flight.playback_speed).timeout
+		return
+	while rhythm_clock.get_music_time() < target_music_time:
+		await get_tree().process_frame
 
 
 # 单段协程在命中后应用该段生命快照；临时实例完成后立即释放，常驻首实例供下次复用。
 func _play_shot_event(
 		flight: Node2D,
 		event: Dictionary,
-		beat_duration: float,
+		launch_music_time: float,
 		completion: Dictionary,
 		free_after: bool
 ) -> void:
-	var flight_seconds := beat_duration * float(event.get("attack_delay_beats", 1.0))
+	var flight_seconds: float = rhythm_clock.beats_to_seconds(float(event.get("attack_delay_beats", 1.0)))
+	var hit_music_time: float = launch_music_time + flight_seconds
+	var visual_state := {"finished": false}
+	_play_shot_visual(
+		flight,
+		event,
+		flight_seconds,
+		launch_music_time,
+		hit_music_time,
+		visual_state
+	)
+	# 命中任务只等待 BGM 时间轴；动画完成信号不会阻塞音效、扣血或受击反馈。
+	await _wait_for_shot_launch(hit_music_time)
+	flight.play_impact_feedback()
+	var damage_committed := controller.commit_deferred_damage(event)
+	if damage_committed:
+		_apply_effect_feedback(event)
+	# 临时足球仍由自己的动画生命周期清理，但这段等待发生在命中效果全部触发之后。
+	while not visual_state.finished:
+		await get_tree().process_frame
+	completion.remaining -= 1
+	if free_after:
+		flight.queue_free()
+
+
+# 足球动画作为纯视觉协程运行；最后一个参数关闭动画结束时的自动命中音。
+func _play_shot_visual(
+		flight: Node2D,
+		event: Dictionary,
+		flight_seconds: float,
+		launch_music_time: float,
+		hit_music_time: float,
+		visual_state: Dictionary
+) -> void:
 	await flight.play_shot(
 		event.get("shot_type", 0),
 		_get_player_shot_origin(),
 		enemy_display.get_portrait_global_center(),
 		_visual_rng,
 		false,
-		flight_seconds
+		flight_seconds,
+		rhythm_clock,
+		launch_music_time,
+		hit_music_time,
+		false
 	)
-	_apply_effect_feedback(event)
-	completion.remaining -= 1
-	if free_after:
-		flight.queue_free()
+	visual_state.finished = true
 
 
 # 玩家当前仅显示底部状态条，足球从状态条上沿中央发出，避免依赖隐藏头像的位置。

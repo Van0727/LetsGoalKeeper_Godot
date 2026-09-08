@@ -126,6 +126,13 @@ func _test_rhythm_judgement_and_damage() -> void:
 	var clock = RHYTHM_CLOCK.new()
 	clock.bpm = 100.0
 	clock.first_beat_offset = 0.0
+	_assert_equal(clock.get_bpm_from_music_path("res://sound/beats/bg_basicDrum2_bpm100.mp3"), 100.0, "从BGM名称读取整数BPM")
+	_assert_equal(clock.get_bpm_from_music_path("res://sound/beats/boss_bpm127.5.ogg"), 127.5, "从BGM名称读取小数BPM")
+	_assert_equal(clock.get_bpm_from_music_path("res://sound/beats/no_bpm.mp3"), -1.0, "无数值BPM名称返回无效值")
+	_assert_equal(clock.get_beat_duration(), 0.6, "100 BPM的一拍为0.6秒")
+	_assert_equal(clock.beats_to_seconds(0.25), 0.15, "100 BPM的四分之一拍为0.15秒")
+	_assert_equal(clock.beats_to_seconds(0.5), 0.3, "100 BPM的半拍为0.3秒")
+	_assert_equal(clock.beats_to_seconds(2.0), 1.2, "100 BPM的两拍为1.2秒")
 	clock.perfect_window_ms = 60.0
 	clock.good_window_ms = 140.0
 	_assert_equal(clock.judge_at(0.05).grade, clock.JudgementGrade.PERFECT, "节拍后50ms为Perfect")
@@ -133,6 +140,7 @@ func _test_rhythm_judgement_and_damage() -> void:
 	_assert_equal(clock.judge_at(0.20).grade, clock.JudgementGrade.MISS, "节拍后200ms为Miss")
 	_assert_equal(clock.judge_at(0.55).grade, clock.JudgementGrade.PERFECT, "下一拍前50ms为Perfect")
 	_assert_equal(roundi(clock.judge_at(0.55).error_ms), -50, "提前判定保留负误差")
+	_assert_equal(clock.judge_at(0.55).target_time, 0.6, "判定结果保留最近拍点供命中同步")
 
 	var miss_result: Dictionary = clock.judge_at(0.20)
 	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
@@ -150,6 +158,25 @@ func _test_rhythm_judgement_and_damage() -> void:
 	_assert_equal(shot_events[0].rhythm_multiplier, 0.5, "伤害事件记录节奏倍率")
 	_assert_equal(shot_events[0].attack_delay_beats, 1.0, "伤害事件携带一拍飞行延迟")
 	_assert_equal(shot_events[0].multi_hit_interval_beats, 0.5, "伤害事件携带半拍多段间隔")
+
+	# 真实飞球模式在命中前不得改变生命；提交命中事件后才扣血并更新事件快照。
+	var deferred_source = COMBATANT_STATE.new("延迟测试球员", 20, 3)
+	var deferred_target = COMBATANT_STATE.new("延迟测试目标", 20)
+	var deferred_events: Array[Dictionary] = resolver.resolve_card(
+		STRAIGHT_SHOT, deferred_source, deferred_target, null, {}, {}, true
+	)
+	_assert_equal(deferred_target.health, 20, "足球命中前不提前扣除敌人生命")
+	_assert_true(deferred_events[0].deferred_damage, "射门伤害标记为待命中")
+	var deferred_battle = BATTLE_CONTROLLER.new()
+	deferred_battle.setup(9102)
+	var queued_events: Array[Dictionary] = []
+	deferred_battle.effect_resolved.connect(func(event: Dictionary) -> void: queued_events.append(event))
+	_assert_true(deferred_battle.play_card(STRAIGHT_SHOT, {}, true), "控制器接受待命中射门")
+	_assert_equal(deferred_battle.enemy.health, 30, "控制器在命中前保持敌人生命")
+	_assert_true(deferred_battle.commit_deferred_damage(queued_events[0]), "目标拍点提交待命中伤害")
+	_assert_equal(deferred_battle.enemy.health, 24, "目标拍点正式扣除6点生命")
+	_assert_equal(queued_events[0].health_after, 24, "命中事件记录扣血后的真实快照")
+	deferred_battle.free()
 
 	var self_damage_source = COMBATANT_STATE.new("自伤测试球员", 20, 3)
 	var self_damage_target = COMBATANT_STATE.new("自伤测试目标", 20)
