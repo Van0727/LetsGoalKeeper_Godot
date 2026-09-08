@@ -1,4 +1,4 @@
-# 足球飞行冒烟测试：验证弹道时长、守恒压扁、左右月牙网格、纹理旋转和贝塞尔端点。
+# 足球飞行冒烟测试：验证起脚/命中音效、弹道时长、守恒压扁、月牙网格、旋转和贝塞尔端点。
 extends SceneTree
 
 const BALL_FLIGHT := preload("res://scripts/battle/ball_flight.gd")
@@ -48,6 +48,10 @@ func _initialize() -> void:
 	_assert_equal(ball.rotation, 0.0, "弹道节点不旋转")
 	_assert_equal(ball.get_node("DeformPivot").rotation, 0.0, "直球形变轴保持水平")
 	_assert_equal(ball.get_node("DeformPivot/BallSlices").get_child_count(), 12, "足球由十二条连续网格片组成")
+	_assert_true(ball.kick_audio.stream != null, "足球起飞播放器已绑定kick音效")
+	_assert_true(ball.hit_audio.stream != null, "足球命中播放器已绑定hit音效")
+	var impact_count := [0]
+	ball.shot_impacted.connect(func() -> void: impact_count[0] += 1)
 	await ball.play_shot(
 		CARD_DEFINITION.ShotType.STRAIGHT,
 		Vector2(180.0, 560.0),
@@ -58,7 +62,12 @@ func _initialize() -> void:
 		ball.get_node("DeformPivot").scale.is_equal_approx(Vector2(0.224, 0.416)),
 		"直球飞行结束保持0.7乘1.3形变"
 	)
+	_assert_equal(impact_count[0], 1, "每次足球抵达目标只发送一次命中信号")
+	# 测试结束前主动停止仍在播放的命中音，避免无窗口运行退出时保留音频播放实例。
+	ball.kick_audio.stop()
+	ball.hit_audio.stop()
 	ball.free()
+	await process_frame
 	var start := Vector2(180.0, 566.0)
 	var control := Vector2(80.0, 260.0)
 	var end := Vector2(180.0, 170.0)

@@ -1,8 +1,10 @@
-# 足球飞行表现组件：复刻 Unity 原版的贝塞尔弹道、旋转、挤压和挑射缩放，不参与伤害计算。
+# 足球飞行表现组件：复刻 Unity 原版的弹道与形变，并在起脚、命中帧播放对应音效，不参与伤害计算。
 class_name BallFlight
 extends Node2D
 
 signal shot_started(actual_shot_type: int)
+# 命中信号在飞行动画完成、战斗界面刷新受击反馈之前发出，供后续震屏或粒子效果复用。
+signal shot_impacted
 
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const BALL_TEXTURE := preload("res://assets/football.png")
@@ -18,6 +20,8 @@ const BANANA_BEND_PIXELS := 30.0
 
 @onready var deform_pivot: Node2D = $DeformPivot
 @onready var ball_slices: Node2D = $DeformPivot/BallSlices
+@onready var kick_audio: AudioStreamPlayer = $KickAudio
+@onready var hit_audio: AudioStreamPlayer = $HitAudio
 
 # 测试可提高播放速度，但正式场景保持 1.0，确保时长与 Unity 原版一致。
 var playback_speed := 1.0
@@ -79,6 +83,8 @@ func play_shot(
 	_texture_angle = 0.0
 	_build_ball_mesh(last_banana_direction if last_actual_shot_type == CARD_DEFINITION.ShotType.BANANA else 0)
 	deform_pivot.scale = BASE_BALL_SCALE * (2.0 if super_shot else 1.0)
+	# 起脚音必须与足球出现和 shot_started 同帧发生，不能等待伤害结算或下一次音频拍点。
+	kick_audio.play()
 	shot_started.emit(last_actual_shot_type)
 
 	var duration := get_shot_duration(last_actual_shot_type) / maxf(playback_speed, 0.01)
@@ -95,6 +101,9 @@ func play_shot(
 		)
 	_play_scale_animation(last_actual_shot_type, duration, super_shot)
 	await motion_tween.finished
+	# 命中音先于 play_shot 返回；调用方随后在同帧刷新敌人血量和受击数字。
+	hit_audio.play()
+	shot_impacted.emit()
 	visible = false
 
 

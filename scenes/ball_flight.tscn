@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/ball_flight.gd" id="1_ball"]
+[ext_resource type="AudioStream" path="res://sound/sounds/kick.mp3" id="2_kick"]
+[ext_resource type="AudioStream" path="res://sound/sounds/hit.mp3" id="3_hit"]
 
 [node name="BallFlight" type="Node2D"]
 unique_name_in_owner = true
@@ -11,3 +13,11 @@ script = ExtResource("1_ball")
 [node name="DeformPivot" type="Node2D" parent="."]
 
 [node name="BallSlices" type="Node2D" parent="DeformPivot"]
+
+[node name="KickAudio" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("2_kick")
+max_polyphony = 4
+
+[node name="HitAudio" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_hit")
+max_polyphony = 4
