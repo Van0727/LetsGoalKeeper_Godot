@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/settings_screen.gd" id="1_settings"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_metronome"]
+allow_unpress = false
 
 [node name="SettingsScreen" type="Control"]
 layout_mode = 3
@@ -27,15 +30,15 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
-offset_top = 28.0
+offset_top = 16.0
 offset_right = -24.0
-offset_bottom = -28.0
+offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Layout" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 7
 
 [node name="Title" type="Label" parent="Margin/Layout"]
 layout_mode = 2
@@ -95,6 +98,30 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 
+[node name="MetronomeLabel" type="Label" parent="Margin/Layout"]
+layout_mode = 2
+text = "节拍器样式"
+
+[node name="MetronomeOptions" type="HBoxContainer" parent="Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="CircleMetronomeCheck" type="CheckBox" parent="Margin/Layout/MetronomeOptions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 38)
+layout_mode = 2
+button_group = SubResource("ButtonGroup_metronome")
+text = "圆圈"
+
+[node name="WaveformMetronomeCheck" type="CheckBox" parent="Margin/Layout/MetronomeOptions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(112, 38)
+layout_mode = 2
+button_pressed = true
+button_group = SubResource("ButtonGroup_metronome")
+text = "波形"
+
 [node name="StatusLabel" type="Label" parent="Margin/Layout"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 24)
@@ -113,4 +140,6 @@ text = "返回主菜单"
 [connection signal="value_changed" from="Margin/Layout/SfxSlider" to="." method="_on_volume_changed"]
 [connection signal="item_selected" from="Margin/Layout/LanguageOption" to="." method="_on_language_selected"]
 [connection signal="item_selected" from="Margin/Layout/WindowOption" to="." method="_on_window_selected"]
+[connection signal="pressed" from="Margin/Layout/MetronomeOptions/CircleMetronomeCheck" to="." method="_on_circle_metronome_pressed"]
+[connection signal="pressed" from="Margin/Layout/MetronomeOptions/WaveformMetronomeCheck" to="." method="_on_waveform_metronome_pressed"]
 [connection signal="pressed" from="Margin/Layout/BackButton" to="." method="_on_back_pressed"]

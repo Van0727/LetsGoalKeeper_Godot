@@ -12,6 +12,7 @@ const MISS_COLOR := Color(1.0, 0.42, 0.42, 1.0)
 var _beat_progress := 0.0
 var _beat_flash := 0.0
 var _feedback_tween: Tween
+var _circle_enabled := true
 
 
 # 初始只显示 BPM 提示，判定文字留空直到玩家首次有效出牌。
@@ -31,6 +32,12 @@ func _process(delta: float) -> void:
 # 战斗界面每帧传入音频时钟进度，使圆环在下个目标拍点前收缩。
 func set_beat_progress(progress: float) -> void:
 	_beat_progress = clampf(progress, 0.0, 1.0)
+	queue_redraw()
+
+
+# 波形样式下只隐藏圆圈绘制，拍位与判定文字继续显示并提供相同反馈信息。
+func set_circle_enabled(enabled: bool) -> void:
+	_circle_enabled = enabled
 	queue_redraw()
 
 
@@ -65,9 +72,11 @@ func show_judgement(result: Dictionary) -> void:
 
 # 圆环从外圈向固定目标圈收缩；刚过拍点时闪光补足进度瞬间归零的视觉反馈。
 func _draw() -> void:
-	var center := Vector2(24.0, size.y * 0.5)
-	var target_radius := 7.0
-	var moving_radius := lerpf(25.0, target_radius, _beat_progress)
+	if not _circle_enabled:
+		return
+	var center := size * 0.5
+	var target_radius := 18.0
+	var moving_radius := lerpf(42.0, target_radius, _beat_progress)
 	var base_color := Color(0.45, 0.82, 1.0, 0.65 + _beat_flash * 0.35)
 	draw_circle(center, target_radius, Color(0.12, 0.26, 0.36, 0.9), false, 2.0)
 	draw_circle(center, moving_radius, base_color, false, 2.5 + _beat_flash * 1.5)

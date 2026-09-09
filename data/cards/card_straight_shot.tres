@@ -13,4 +13,5 @@ card_id = "card_straight_shot"
 display_name = "射门"
 description = "造成6点伤害"
 shot_type = 1
+attack_delay_beats = 0.5
 effects = Array[Resource]([SubResource("Resource_bce7s")])

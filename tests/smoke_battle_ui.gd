@@ -15,6 +15,8 @@ func _initialize() -> void:
 # 实例化真实战斗场景并覆盖阶段 3 的关键交互状态。
 func _run() -> void:
 	root.size = Vector2i(360, 640)
+	var settings_service: Node = root.get_node("SettingsService")
+	settings_service.set_metronome_style(settings_service.MetronomeStyle.WAVEFORM)
 	var battle_screen := BATTLE_SCENE.instantiate()
 	root.add_child(battle_screen)
 	await process_frame
@@ -36,6 +38,18 @@ func _run() -> void:
 	)
 	_assert_true(battle_screen.rhythm_feedback.visible, "战斗显示节拍反馈控件")
 	_assert_true(battle_screen.rhythm_waveform.visible, "战斗中央显示节奏波形")
+	_assert_true(not battle_screen.rhythm_feedback._circle_enabled, "默认波形样式不绘制圆圈")
+	settings_service.set_metronome_style(settings_service.MetronomeStyle.CIRCLE)
+	_assert_true(not battle_screen.rhythm_waveform.visible, "圆圈样式隐藏波形")
+	_assert_true(battle_screen.rhythm_feedback._circle_enabled, "圆圈样式启用圆环绘制")
+	_assert_true(battle_screen.rhythm_feedback.size.x > 250.0, "放大圆圈控件覆盖中央主要宽度")
+	_assert_true(
+		absf(battle_screen.rhythm_feedback.get_global_rect().get_center().x - 180.0) < 1.0,
+		"放大圆圈控件位于屏幕横向中央"
+	)
+	settings_service.set_metronome_style(settings_service.MetronomeStyle.WAVEFORM)
+	_assert_true(battle_screen.rhythm_waveform.visible, "切回波形后恢复波形显示")
+	_assert_true(not battle_screen.rhythm_feedback._circle_enabled, "切回波形后关闭圆环绘制")
 	_assert_equal(
 		battle_screen.rhythm_waveform.mouse_filter,
 		Control.MOUSE_FILTER_IGNORE,
@@ -43,6 +57,7 @@ func _run() -> void:
 	)
 	_assert_true(battle_screen.rhythm_waveform.size.x > 250.0, "节奏波形覆盖中央主要宽度")
 	battle_screen._on_rhythm_beat_reached(0, 0)
+	var first_wave_shape: PackedFloat32Array = battle_screen.rhythm_waveform._bar_heights.duplicate()
 	_assert_equal(battle_screen.rhythm_waveform._visual_amplitude, 0.0, "拍点从零振幅开始快速起峰")
 	battle_screen.rhythm_waveform._process(0.045)
 	_assert_true(battle_screen.rhythm_waveform._visual_amplitude > 0.99, "波形在短促起峰后上下完全展开")
@@ -52,8 +67,11 @@ func _run() -> void:
 	battle_screen.rhythm_waveform._process(0.5)
 	_assert_equal(battle_screen.rhythm_waveform._visual_amplitude, 0.0, "波形衰减结束后严格归零")
 	battle_screen._on_rhythm_beat_reached(1, 0)
+	var second_wave_shape: PackedFloat32Array = battle_screen.rhythm_waveform._bar_heights.duplicate()
 	battle_screen.rhythm_waveform._process(0.045)
 	_assert_true(battle_screen.rhythm_waveform._visual_amplitude > 0.99, "下一拍重新触发完整起峰")
+	_assert_true(first_wave_shape != second_wave_shape, "连续拍点会生成不同的波形轮廓")
+	_assert_wave_shape_rules(second_wave_shape)
 	_assert_true(battle_screen._attack_hit_audio.stream != null, "战斗持有统一命中音效资源")
 	_assert_equal(battle_screen._attack_hit_audio.max_polyphony, 8, "多段命中音效支持重叠播放")
 	# 三段攻击必须逐段调用统一播放器，不能因复用足球节点而吞掉后续触发。
@@ -142,6 +160,30 @@ func _wait_for_resolution(battle_screen) -> void:
 			return
 		await process_frame
 	_assert_true(false, "卡牌动画队列在限定帧数内完成")
+
+
+# 随机轮廓必须保持中部占主导、最高点留在中区，并确保所有竖条高度处于绘制安全范围。
+func _assert_wave_shape_rules(heights: PackedFloat32Array) -> void:
+	_assert_equal(heights.size(), 72, "随机波形保持固定竖条数量")
+	var side_total := 0.0
+	var side_count := 0
+	var center_total := 0.0
+	var center_count := 0
+	var highest_index := 0
+	for index in range(heights.size()):
+		_assert_true(heights[index] >= 0.0 and heights[index] <= 1.0, "随机竖条高度保持在安全范围")
+		if heights[index] > heights[highest_index]:
+			highest_index = index
+		var normalized_x := (float(index) + 0.5) / float(heights.size())
+		if normalized_x >= 0.28 and normalized_x <= 0.72:
+			center_total += heights[index]
+			center_count += 1
+		else:
+			side_total += heights[index]
+			side_count += 1
+	_assert_true(center_total / center_count > side_total / side_count, "波形中间区域平均高度高于左右区域")
+	var highest_x := (float(highest_index) + 0.5) / float(heights.size())
+	_assert_true(highest_x >= 0.28 and highest_x <= 0.72, "波形最高点保持在中间区域")
 
 
 # 通用相等断言，失败时保留实际值便于定位 UI 状态不同步。

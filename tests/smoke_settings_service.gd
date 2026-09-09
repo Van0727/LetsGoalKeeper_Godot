@@ -17,6 +17,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_cleanup()
 	_test_round_trip_and_boundaries()
+	_test_legacy_config_defaults_to_waveform()
 	_test_corrupt_config_fallback()
 	await _test_audio_bus_routing()
 	await _test_settings_screen()
@@ -37,6 +38,7 @@ func _test_round_trip_and_boundaries() -> void:
 	source.set_audio_volumes(1.4, -0.2, 0.35)
 	source.set_language("en")
 	source.set_window_mode(source.WindowMode.FULLSCREEN)
+	source.set_metronome_style(source.MetronomeStyle.CIRCLE)
 	_assert_equal(source.master_volume, 1.0, "主音量上限")
 	_assert_equal(source.music_volume, 0.0, "音乐音量下限")
 	_assert_true(source.save_settings(), "设置可保存")
@@ -46,6 +48,7 @@ func _test_round_trip_and_boundaries() -> void:
 	_assert_equal(restored.sfx_volume, 0.35, "音效音量往返")
 	_assert_equal(restored.language, "en", "语言往返")
 	_assert_equal(restored.window_mode, restored.WindowMode.FULLSCREEN, "窗口模式往返")
+	_assert_equal(restored.metronome_style, restored.MetronomeStyle.CIRCLE, "节拍器样式往返")
 	restored.settings_return_scene = "res://scenes/battle.tscn"
 	_assert_equal(
 		restored.take_settings_return_scene("res://scenes/main_menu.tscn"),
@@ -61,6 +64,19 @@ func _test_round_trip_and_boundaries() -> void:
 	restored.free()
 
 
+# 版本号相同但尚未包含节拍器字段的旧配置必须继续可读，并自动采用新的波形默认值。
+func _test_legacy_config_defaults_to_waveform() -> void:
+	var config := ConfigFile.new()
+	config.set_value("meta", "settings_version", 1)
+	config.set_value("general", "language", "en")
+	_assert_equal(config.save(_path), OK, "旧版设置样本可写入")
+	var service = SETTINGS_SERVICE_SCRIPT.new()
+	service.settings_path = _path
+	_assert_true(service.load_settings(), "缺少节拍器字段的旧配置仍可读取")
+	_assert_equal(service.metronome_style, service.MetronomeStyle.WAVEFORM, "旧配置默认使用波形")
+	service.free()
+
+
 # 无法解析的配置不得保留旧内存值，必须恢复到可启动的默认设置。
 func _test_corrupt_config_fallback() -> void:
 	var file := FileAccess.open(_path, FileAccess.WRITE)
@@ -73,6 +89,7 @@ func _test_corrupt_config_fallback() -> void:
 	_assert_true(not service.load_settings(), "损坏配置安全降级")
 	_assert_equal(service.master_volume, 1.0, "损坏配置恢复默认音量")
 	_assert_equal(service.language, "zh_CN", "损坏配置恢复默认语言")
+	_assert_equal(service.metronome_style, service.MetronomeStyle.WAVEFORM, "损坏配置恢复默认波形")
 	service.free()
 
 
@@ -94,9 +111,12 @@ func _test_audio_bus_routing() -> void:
 func _test_settings_screen() -> void:
 	root.size = Vector2i(360, 640)
 	var global_service: Node = root.get_node("SettingsService")
+	# 设置页会即时保存；测试改用进程专属路径，禁止覆盖玩家真实 user://settings.cfg。
+	global_service.settings_path = _path
 	global_service.set_audio_volumes(0.75, 0.6, 0.4)
 	global_service.set_language("zh_CN")
 	global_service.set_window_mode(global_service.WindowMode.WINDOWED)
+	global_service.set_metronome_style(global_service.MetronomeStyle.WAVEFORM)
 	var screen := SETTINGS_SCENE.instantiate()
 	root.add_child(screen)
 	await process_frame
@@ -105,6 +125,12 @@ func _test_settings_screen() -> void:
 	_assert_equal(screen.sfx_slider.value, 40.0, "界面显示音效音量")
 	_assert_equal(screen.language_option.item_count, 2, "界面提供两种语言")
 	_assert_equal(screen.window_option.item_count, 2, "界面提供窗口与全屏")
+	_assert_true(screen.waveform_metronome_check.button_pressed, "设置界面默认选择波形")
+	_assert_true(not screen.circle_metronome_check.button_pressed, "圆圈与波形选项保持互斥")
+	screen.circle_metronome_check.button_pressed = true
+	screen._on_circle_metronome_pressed()
+	_assert_equal(global_service.metronome_style, global_service.MetronomeStyle.CIRCLE, "圆圈选项即时写入设置")
+	_assert_true(not screen.waveform_metronome_check.button_pressed, "选择圆圈后自动取消波形")
 	screen.free()
 
 

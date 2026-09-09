@@ -1,4 +1,4 @@
-# 全局设置服务：独立保存音量、语言和窗口模式，并负责把经过校验的值即时应用到引擎。
+# 全局设置服务：独立保存音量、语言、窗口模式和节拍器样式，并应用经过校验的值。
 extends Node
 
 signal settings_changed
@@ -15,6 +15,11 @@ enum WindowMode {
 	FULLSCREEN,
 }
 
+enum MetronomeStyle {
+	CIRCLE,
+	WAVEFORM,
+}
+
 # 测试可覆盖配置路径，正式运行使用独立于本局存档的 user://settings.cfg。
 var settings_path := DEFAULT_SETTINGS_PATH
 var master_volume := 1.0
@@ -22,6 +27,7 @@ var music_volume := 0.8
 var sfx_volume := 0.8
 var language := "zh_CN"
 var window_mode := WindowMode.WINDOWED
+var metronome_style := MetronomeStyle.WAVEFORM
 var last_error := ""
 # 暂停菜单进入设置时暂存来源场景；该字段不写配置，应用重启后自然清空。
 var settings_return_scene := ""
@@ -60,6 +66,10 @@ func load_settings() -> bool:
 	sfx_volume = _normalize_volume(config.get_value("audio", "sfx_volume", sfx_volume))
 	language = _normalize_language(config.get_value("general", "language", language))
 	window_mode = _normalize_window_mode(config.get_value("display", "window_mode", window_mode))
+	# 旧版配置没有该字段时沿用重置后的波形默认值，避免升级后意外切回圆圈。
+	metronome_style = _normalize_metronome_style(
+		config.get_value("general", "metronome_style", metronome_style)
+	)
 	last_error = ""
 	return true
 
@@ -72,6 +82,7 @@ func save_settings() -> bool:
 	config.set_value("audio", "music_volume", music_volume)
 	config.set_value("audio", "sfx_volume", sfx_volume)
 	config.set_value("general", "language", language)
+	config.set_value("general", "metronome_style", metronome_style)
 	config.set_value("display", "window_mode", window_mode)
 	var error := config.save(settings_path)
 	if error != OK:
@@ -105,6 +116,12 @@ func set_window_mode(mode: int) -> void:
 	settings_changed.emit()
 
 
+# 节拍器样式只接受圆圈或波形；战斗界面监听统一变更信号并即时切换可见组件。
+func set_metronome_style(style: int) -> void:
+	metronome_style = _normalize_metronome_style(style)
+	settings_changed.emit()
+
+
 # 将当前内存配置完整应用，供启动加载和设置界面恢复默认值复用。
 func apply_settings() -> void:
 	_ensure_audio_buses()
@@ -119,6 +136,7 @@ func _reset_defaults() -> void:
 	sfx_volume = 0.8
 	language = "zh_CN"
 	window_mode = WindowMode.WINDOWED
+	metronome_style = MetronomeStyle.WAVEFORM
 
 
 func _normalize_volume(value: Variant) -> float:
@@ -135,6 +153,11 @@ func _normalize_language(value: Variant) -> String:
 func _normalize_window_mode(value: Variant) -> int:
 	var mode := int(value)
 	return mode if mode in [WindowMode.WINDOWED, WindowMode.FULLSCREEN] else WindowMode.WINDOWED
+
+
+func _normalize_metronome_style(value: Variant) -> int:
+	var style := int(value)
+	return style if style in [MetronomeStyle.CIRCLE, MetronomeStyle.WAVEFORM] else MetronomeStyle.WAVEFORM
 
 
 # Music 与 SFX 挂到 Master 下，当前及后续播放器可直接选择对应总线。

@@ -90,6 +90,10 @@ func _ready() -> void:
 		run_state = RUN_STATE_SCRIPT.new()
 		add_child(run_state)
 	_apply_chapter_theme()
+	var settings_service := get_node_or_null("/root/SettingsService")
+	if settings_service != null:
+		settings_service.settings_changed.connect(_apply_metronome_style)
+	_apply_metronome_style()
 	controller.log_added.connect(_on_log_added)
 	controller.state_changed.connect(_on_state_changed)
 	controller.effect_resolved.connect(_on_effect_resolved)
@@ -106,6 +110,16 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if rhythm_clock != null and rhythm_feedback != null:
 		rhythm_feedback.set_beat_progress(rhythm_clock.get_beat_progress())
+
+
+# 圆圈和波形复用中央区域且严格互斥；缺少设置服务的独立场景测试默认展示波形。
+func _apply_metronome_style() -> void:
+	var settings_service := get_node_or_null("/root/SettingsService")
+	var use_circle := false
+	if settings_service != null:
+		use_circle = int(settings_service.metronome_style) == int(settings_service.MetronomeStyle.CIRCLE)
+	rhythm_feedback.set_circle_enabled(use_circle)
+	rhythm_waveform.visible = not use_circle
 
 
 # 战斗背景固定为参考界面的蓝灰球场色，避免章节色把上下信息区切成不同底色。

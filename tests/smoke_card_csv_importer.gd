@@ -15,6 +15,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var importer := CARD_CSV_IMPORTER_SCRIPT.new()
+	_test_attack_delay_float_validation(importer)
 	var missing_result: Dictionary = importer.import_cards("res://tables/cards_missing_for_test.csv", _output_directory)
 	_assert_true(not missing_result.ok, "缺失 CSV 明确失败且不会生成资源")
 	_assert_true(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_output_directory)), "校验失败前不创建输出目录")
@@ -30,6 +31,20 @@ func _run() -> void:
 		return
 	print("smoke_card_csv_importer: PASS")
 	quit()
+
+
+# 攻击延迟与攻击间隔共用浮点边界：验证小数和上限可用，负数与非数字会被拒绝。
+func _test_attack_delay_float_validation(importer: RefCounted) -> void:
+	var valid_errors: Array[String] = []
+	_assert_equal(importer._parse_float("0.0625", 0.0, 16.0, "攻击延迟拍数", 4, valid_errors), 0.0625, "攻击延迟支持十六分之一拍")
+	_assert_equal(importer._parse_float("16", 0.0, 16.0, "攻击延迟拍数", 4, valid_errors), 16.0, "攻击延迟兼容整数并接受上限")
+	_assert_true(valid_errors.is_empty(), "合法攻击延迟不会产生校验错误")
+	var negative_errors: Array[String] = []
+	_assert_true(importer._parse_float("-0.0001", 0.0, 16.0, "攻击延迟拍数", 4, negative_errors) < 0.0, "负攻击延迟被拒绝")
+	_assert_equal(negative_errors.size(), 1, "负攻击延迟产生一条明确错误")
+	var invalid_errors: Array[String] = []
+	_assert_true(importer._parse_float("一拍", 0.0, 16.0, "攻击延迟拍数", 4, invalid_errors) < 0.0, "非数字攻击延迟被拒绝")
+	_assert_equal(invalid_errors.size(), 1, "非数字攻击延迟产生一条明确错误")
 
 
 # 一组射门和助跑分别覆盖多段攻击、节拍间隔与百分比倍率的实际结算路径。

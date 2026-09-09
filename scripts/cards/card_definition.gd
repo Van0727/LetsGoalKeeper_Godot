@@ -32,9 +32,9 @@ enum Rarity {
 @export_range(0, 99, 1) var cost := 1
 @export var card_type := CardType.ATTACK
 @export var shot_type := ShotType.NONE
-# 攻击牌的时间统一以当前战斗 BPM 换算：每段足球从发射到命中使用延迟拍数，
-# 多段间隔表示相邻两段的发射间距，因此间隔短于延迟时允许多个足球同时在空中。
-@export_range(0.0, 16.0, 0.25, "or_greater") var attack_delay_beats := 1.0
+# 攻击牌的时间统一以当前战斗 BPM 换算：延迟与多段间隔都支持万分之一拍精度；
+# 每段足球从发射到命中使用延迟拍数，相邻两段按间隔发射，因此允许多个足球同时在空中。
+@export_range(0.0, 16.0, 0.0001, "or_greater") var attack_delay_beats := 1.0
 @export_range(0.0, 16.0, 0.0001, "or_greater") var multi_hit_interval_beats := 0.5
 @export var rarity := Rarity.COMMON
 @export var effects: Array[Resource] = []

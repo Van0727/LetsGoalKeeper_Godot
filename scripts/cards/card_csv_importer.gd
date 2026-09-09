@@ -13,7 +13,7 @@ const FIELD_NAMES := [
 	"interrupt_on_success", "source_file",
 ]
 const FIELD_TYPES := [
-	"uint16", "string", "string", "uint8", "uint8", "uint8", "uint8", "uint8", "float32",
+	"uint16", "string", "string", "uint8", "uint8", "uint8", "uint8", "float32", "float32",
 	"uint8", "uint8", "uint8", "uint16", "uint8", "uint8", "uint8", "uint8", "uint8", "string",
 ]
 
@@ -67,7 +67,7 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 	var card_type := _map_value(row[4], {1: CARD_DEFINITION.CardType.ATTACK, 2: CARD_DEFINITION.CardType.ABILITY, 3: CARD_DEFINITION.CardType.DEFENSE}, "卡牌类型", line_number, errors)
 	var shot_type := _map_value(row[5], {0: CARD_DEFINITION.ShotType.NONE, 1: CARD_DEFINITION.ShotType.STRAIGHT, 2: CARD_DEFINITION.ShotType.BANANA, 3: CARD_DEFINITION.ShotType.LOB, 4: CARD_DEFINITION.ShotType.RANDOM}, "射门类型", line_number, errors)
 	var rarity := _map_value(row[6], {1: CARD_DEFINITION.Rarity.COMMON, 2: CARD_DEFINITION.Rarity.BOSS}, "稀有度", line_number, errors)
-	var delay := _parse_uint(row[7], 0, 255, "攻击延迟拍数", line_number, errors)
+	var delay := _parse_float(row[7], 0.0, 16.0, "攻击延迟拍数", line_number, errors)
 	var interval := _parse_float(row[8], 0.0, 16.0, "多段攻击间隔拍数", line_number, errors)
 	var effect_index := _parse_uint(row[9], 1, 255, "效果序号", line_number, errors)
 	var effect_type := _map_value(row[10], {1: EFFECT_DEFINITION.EffectType.DAMAGE, 2: EFFECT_DEFINITION.EffectType.SHIELD, 3: EFFECT_DEFINITION.EffectType.HEAL, 4: EFFECT_DEFINITION.EffectType.ENERGY, 5: EFFECT_DEFINITION.EffectType.APPLY_STRENGTH, 6: EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS}, "效果类型", line_number, errors)

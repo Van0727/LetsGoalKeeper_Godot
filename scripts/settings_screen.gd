@@ -1,4 +1,4 @@
-# 设置界面：编辑音量、语言与窗口模式，改动即时生效并在离开前持久化。
+# 设置界面：编辑音量、语言、窗口模式与节拍器样式，改动即时生效并持久化。
 extends Control
 
 @onready var master_slider: HSlider = %MasterSlider
@@ -6,6 +6,8 @@ extends Control
 @onready var sfx_slider: HSlider = %SfxSlider
 @onready var language_option: OptionButton = %LanguageOption
 @onready var window_option: OptionButton = %WindowOption
+@onready var circle_metronome_check: CheckBox = %CircleMetronomeCheck
+@onready var waveform_metronome_check: CheckBox = %WaveformMetronomeCheck
 @onready var status_label: Label = %StatusLabel
 
 var settings_service: Node
@@ -27,6 +29,12 @@ func _ready() -> void:
 	sfx_slider.value = settings_service.sfx_volume * 100.0
 	_select_language(settings_service.language)
 	window_option.select(settings_service.window_mode)
+	circle_metronome_check.button_pressed = (
+		settings_service.metronome_style == settings_service.MetronomeStyle.CIRCLE
+	)
+	waveform_metronome_check.button_pressed = (
+		settings_service.metronome_style == settings_service.MetronomeStyle.WAVEFORM
+	)
 	_loading_ui = false
 
 
@@ -53,6 +61,21 @@ func _on_window_selected(index: int) -> void:
 	if _loading_ui:
 		return
 	settings_service.set_window_mode(index)
+	_save_and_report()
+
+
+# 两个 CheckBox 共享 ButtonGroup，因此一次只能保留一个选中项；点击后立即保存稳定枚举值。
+func _on_circle_metronome_pressed() -> void:
+	if _loading_ui:
+		return
+	settings_service.set_metronome_style(settings_service.MetronomeStyle.CIRCLE)
+	_save_and_report()
+
+
+func _on_waveform_metronome_pressed() -> void:
+	if _loading_ui:
+		return
+	settings_service.set_metronome_style(settings_service.MetronomeStyle.WAVEFORM)
 	_save_and_report()
 
 
