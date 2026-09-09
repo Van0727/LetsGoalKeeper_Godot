@@ -35,6 +35,25 @@ func _run() -> void:
 		"战斗绑定按命名约定标注100 BPM的新BGM"
 	)
 	_assert_true(battle_screen.rhythm_feedback.visible, "战斗显示节拍反馈控件")
+	_assert_true(battle_screen.rhythm_waveform.visible, "战斗中央显示节奏波形")
+	_assert_equal(
+		battle_screen.rhythm_waveform.mouse_filter,
+		Control.MOUSE_FILTER_IGNORE,
+		"节奏波形不拦截卡牌输入"
+	)
+	_assert_true(battle_screen.rhythm_waveform.size.x > 250.0, "节奏波形覆盖中央主要宽度")
+	battle_screen._on_rhythm_beat_reached(0, 0)
+	_assert_equal(battle_screen.rhythm_waveform._visual_amplitude, 0.0, "拍点从零振幅开始快速起峰")
+	battle_screen.rhythm_waveform._process(0.045)
+	_assert_true(battle_screen.rhythm_waveform._visual_amplitude > 0.99, "波形在短促起峰后上下完全展开")
+	battle_screen.rhythm_waveform._process(0.24)
+	var decaying_amplitude: float = battle_screen.rhythm_waveform._visual_amplitude
+	_assert_true(decaying_amplitude > 0.0 and decaying_amplitude < 1.0, "波形在两拍之间缓慢衰减")
+	battle_screen.rhythm_waveform._process(0.5)
+	_assert_equal(battle_screen.rhythm_waveform._visual_amplitude, 0.0, "波形衰减结束后严格归零")
+	battle_screen._on_rhythm_beat_reached(1, 0)
+	battle_screen.rhythm_waveform._process(0.045)
+	_assert_true(battle_screen.rhythm_waveform._visual_amplitude > 0.99, "下一拍重新触发完整起峰")
 	_assert_true(battle_screen._attack_hit_audio.stream != null, "战斗持有统一命中音效资源")
 	_assert_equal(battle_screen._attack_hit_audio.max_polyphony, 8, "多段命中音效支持重叠播放")
 	# 三段攻击必须逐段调用统一播放器，不能因复用足球节点而吞掉后续触发。

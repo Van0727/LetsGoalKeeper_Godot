@@ -1,4 +1,5 @@
-# 卡牌固定定义：只保存可复用的配置数据，不保存单场战斗中的运行状态。
+@tool
+# 卡牌固定定义：可由编辑器 CSV 导入器创建，只保存可复用配置，不保存单场战斗运行状态。
 class_name CardDefinition
 extends Resource
 
@@ -34,6 +35,6 @@ enum Rarity {
 # 攻击牌的时间统一以当前战斗 BPM 换算：每段足球从发射到命中使用延迟拍数，
 # 多段间隔表示相邻两段的发射间距，因此间隔短于延迟时允许多个足球同时在空中。
 @export_range(0.0, 16.0, 0.25, "or_greater") var attack_delay_beats := 1.0
-@export_range(0.0, 16.0, 0.25, "or_greater") var multi_hit_interval_beats := 0.5
+@export_range(0.0, 16.0, 0.0001, "or_greater") var multi_hit_interval_beats := 0.5
 @export var rarity := Rarity.COMMON
 @export var effects: Array[Resource] = []

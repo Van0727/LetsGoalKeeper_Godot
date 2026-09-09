@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://ipqwt1qch76o"]
 
-[ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
+[ext_resource type="Script" uid="uid://b8k6o71xb8bt6" path="res://scripts/main_menu.gd" id="1_menu"]
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=1486516308]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,17 +11,17 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=622102496]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.055, 0.082, 0.12, 1)
 mouse_filter = 2
+color = Color(0.055, 0.082, 0.12, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=207218899]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -29,76 +29,76 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Menu" type="VBoxContainer" parent="CenterContainer"]
+[node name="Menu" type="VBoxContainer" parent="CenterContainer" unique_id=1784492673]
 custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="Title" type="Label" parent="CenterContainer/Menu"]
+[node name="Title" type="Label" parent="CenterContainer/Menu" unique_id=102823890]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
 theme_override_font_sizes/font_size = 30
 text = "LET'S GOAL KEEPER"
 horizontal_alignment = 1
 
-[node name="Subtitle" type="Label" parent="CenterContainer/Menu"]
+[node name="Subtitle" type="Label" parent="CenterContainer/Menu" unique_id=969272198]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.84, 0.92, 1)
 theme_override_font_sizes/font_size = 18
 text = "足球 Roguelike 卡牌游戏"
 horizontal_alignment = 1
 
-[node name="StartButton" type="Button" parent="CenterContainer/Menu"]
+[node name="StartButton" type="Button" parent="CenterContainer/Menu" unique_id=429383442]
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "开始新游戏"
 
-[node name="ContinueButton" type="Button" parent="CenterContainer/Menu"]
+[node name="ContinueButton" type="Button" parent="CenterContainer/Menu" unique_id=1364573097]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "继续当前游戏"
 
-[node name="SettingsButton" type="Button" parent="CenterContainer/Menu"]
+[node name="SettingsButton" type="Button" parent="CenterContainer/Menu" unique_id=721577917]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 text = "设置"
 
-[node name="ExportDiagnosticsButton" type="Button" parent="CenterContainer/Menu"]
+[node name="ExportDiagnosticsButton" type="Button" parent="CenterContainer/Menu" unique_id=370572299]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
 text = "导出诊断日志"
 
-[node name="DeckLogicButton" type="Button" parent="CenterContainer/Menu"]
+[node name="DeckLogicButton" type="Button" parent="CenterContainer/Menu" unique_id=1991620730]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "牌堆逻辑测试"
 
-[node name="BattleLogicButton" type="Button" parent="CenterContainer/Menu"]
+[node name="BattleLogicButton" type="Button" parent="CenterContainer/Menu" unique_id=1644848753]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "战斗逻辑测试"
 
-[node name="CharacterFeedbackButton" type="Button" parent="CenterContainer/Menu"]
+[node name="CharacterFeedbackButton" type="Button" parent="CenterContainer/Menu" unique_id=1032977809]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "角色反馈测试"
 
-[node name="CardDragButton" type="Button" parent="CenterContainer/Menu"]
+[node name="CardDragButton" type="Button" parent="CenterContainer/Menu" unique_id=1036001666]
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "卡牌拖拽测试"
 
-[node name="StatusLabel" type="Label" parent="CenterContainer/Menu"]
+[node name="StatusLabel" type="Label" parent="CenterContainer/Menu" unique_id=551477751]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.62, 0.72, 1)

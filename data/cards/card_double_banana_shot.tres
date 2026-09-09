@@ -1,12 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://f71pdxn7k41w"]
 
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
 
-[sub_resource type="Resource" id="Effect_damage"]
+[sub_resource type="Resource" id="Resource_8ogyh"]
 script = ExtResource("2_effect")
-effect_type = 0
-target = 1
 amount = 3
 hits = 2
 
@@ -15,10 +13,6 @@ script = ExtResource("1_card")
 card_id = "card_double_banana_shot"
 display_name = "双向香蕉球"
 description = "香蕉球攻击2次，每次造成3点伤害"
-cost = 1
-card_type = 0
 shot_type = 2
-attack_delay_beats = 1.0
-multi_hit_interval_beats = 0.5
 rarity = 1
-effects = Array[Resource]([SubResource("Effect_damage")])
+effects = Array[Resource]([SubResource("Resource_8ogyh")])

@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/battle/rhythm_clock.gd" id="7_rhythm_clock"]
 [ext_resource type="Script" path="res://scripts/battle/rhythm_feedback.gd" id="8_rhythm_feedback"]
 [ext_resource type="AudioStream" path="res://sound/beats/bg_basicDrum2_bpm100.mp3" id="9_music"]
+[ext_resource type="Script" path="res://scripts/battle/rhythm_waveform.gd" id="10_waveform"]
 
 [sub_resource type="StyleBoxFlat" id="Style_pitch"]
 bg_color = Color(0.17, 0.29, 0.45, 1)
@@ -140,6 +141,18 @@ layout_mode = 2
 [node name="EnemyDisplay" parent="Pitch/Combatants" instance=ExtResource("3_display")]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="RhythmWaveform" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.08
+anchor_right = 0.92
+offset_top = 232.0
+offset_bottom = 324.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("10_waveform")
 
 [node name="ShotFeedback" type="HBoxContainer" parent="."]
 layout_mode = 1

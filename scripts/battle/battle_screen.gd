@@ -33,6 +33,8 @@ const REST_ROOM_TYPE := 3
 # 节拍时钟和反馈控件使用基础类型，避免首次导入新增全局类时出现脚本缓存顺序问题。
 @onready var rhythm_clock: Node = %RhythmClock
 @onready var rhythm_feedback: Control = %RhythmFeedback
+# 中央波形只响应拍点信号，避免拍内进度形成持续呼吸动画。
+@onready var rhythm_waveform: Control = %RhythmWaveform
 @onready var shot_type_label: Label = %ShotTypeLabel
 @onready var turn_label: Label = %TurnLabel
 @onready var intent_label: Label = %IntentLabel
@@ -225,6 +227,8 @@ func _on_card_drag_finished(_card_view: DraggableCard, valid_drop: bool) -> void
 # 音频跨过新拍点时触发一次表现脉冲，并显示当前小节内的拍位。
 func _on_rhythm_beat_reached(beat_index: int, _bar_index: int) -> void:
 	rhythm_feedback.pulse_beat(beat_index, rhythm_clock.beats_per_bar)
+	if rhythm_waveform != null:
+		rhythm_waveform.pulse_beat()
 
 
 # 结束回合先弃掉剩余手牌，再执行敌人行动；存活时进入新回合并重新抽三张。

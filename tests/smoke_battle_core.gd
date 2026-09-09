@@ -386,8 +386,8 @@ func _test_remaining_migrated_cards() -> void:
 	var group_source = COMBATANT_STATE.new("组射门球员", 20, 3)
 	var group_target = COMBATANT_STATE.new("组射门目标", 30)
 	var group_events: Array[Dictionary] = resolver.resolve_card(SHOT_GROUP, group_source, group_target)
-	_assert_equal(group_events.size(), 5, "一组射门产生5段伤害事件")
-	_assert_equal(group_target.health, 20, "一组射门总计造成10点伤害")
+	_assert_equal(group_events.size(), 8, "一组射门产生8段伤害事件")
+	_assert_equal(group_target.health, 14, "一组射门总计造成16点伤害")
 	_assert_equal(group_events[0].shot_type, SHOT_GROUP.ShotType.RANDOM, "一组射门保留随机射门类型")
 
 	var double_source = COMBATANT_STATE.new("双向香蕉球球员", 20, 3)

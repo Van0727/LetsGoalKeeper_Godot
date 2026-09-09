@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://6eiw7mp0jdfs"
+
+[deps]
+
+files=["res://tables/cards.显示名称.translation", "res://tables/cards.卡牌描述.translation", "res://tables/cards.能量费用.translation", "res://tables/cards.卡牌类型（1攻击，2技能，3防御）.translation", "res://tables/cards.射门类型（0无，1直球，2香蕉球，3挑射，4随机）.translation", "res://tables/cards.稀有度（1普通，2Boss）.translation", "res://tables/cards.攻击延迟拍数.translation", "res://tables/cards.多段攻击间隔拍数（最小精度0.0001拍）.translation", "res://tables/cards.效果序号.translation", "res://tables/cards.效果类型（1伤害，2护盾，3治疗，4恢复能量，5增加力量，6施加虚弱）.translation", "res://tables/cards.效果目标（1自身，2敌人）.translation", "res://tables/cards.基础数值.translation", "res://tables/cards.生效次数.translation", "res://tables/cards.每点剩余能量加成.translation", "res://tables/cards.效果倍率（百分比，100为1倍，150为1.5倍，50为0.5倍）.translation", "res://tables/cards.触发概率百分比.translation", "res://tables/cards.成功后中断后续效果（0否，1是）.translation", "res://tables/cards.来源资源文件（不含.tres后缀）.translation"]
+
+source_file="res://tables/cards.csv"
+dest_files=["res://tables/cards.显示名称.translation", "res://tables/cards.卡牌描述.translation", "res://tables/cards.能量费用.translation", "res://tables/cards.卡牌类型（1攻击，2技能，3防御）.translation", "res://tables/cards.射门类型（0无，1直球，2香蕉球，3挑射，4随机）.translation", "res://tables/cards.稀有度（1普通，2Boss）.translation", "res://tables/cards.攻击延迟拍数.translation", "res://tables/cards.多段攻击间隔拍数（最小精度0.0001拍）.translation", "res://tables/cards.效果序号.translation", "res://tables/cards.效果类型（1伤害，2护盾，3治疗，4恢复能量，5增加力量，6施加虚弱）.translation", "res://tables/cards.效果目标（1自身，2敌人）.translation", "res://tables/cards.基础数值.translation", "res://tables/cards.生效次数.translation", "res://tables/cards.每点剩余能量加成.translation", "res://tables/cards.效果倍率（百分比，100为1倍，150为1.5倍，50为0.5倍）.translation", "res://tables/cards.触发概率百分比.translation", "res://tables/cards.成功后中断后续效果（0否，1是）.translation", "res://tables/cards.来源资源文件（不含.tres后缀）.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

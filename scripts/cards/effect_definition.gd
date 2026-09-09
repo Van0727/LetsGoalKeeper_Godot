@@ -1,4 +1,5 @@
-# 单个卡牌效果的固定定义；多个效果按卡牌数组顺序依次执行。
+@tool
+# 单个卡牌效果的固定定义；支持编辑器 CSV 导入，多个效果按卡牌数组顺序依次执行。
 class_name EffectDefinition
 extends Resource
 

@@ -1,24 +1,17 @@
-[gd_resource type="Resource" script_class="CardDefinition" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://1rrcxbshbatj"]
 
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
 
-[sub_resource type="Resource" id="Effect_damage"]
+[sub_resource type="Resource" id="Resource_f8yg0"]
 script = ExtResource("2_effect")
-effect_type = 0
-target = 1
 amount = 6
-hits = 1
 
 [resource]
 script = ExtResource("1_card")
 card_id = "card_lob_shot"
 display_name = "挑射"
 description = "足球飞行2拍后造成6点伤害"
-cost = 1
-card_type = 0
 shot_type = 3
 attack_delay_beats = 2.0
-multi_hit_interval_beats = 0.5
-rarity = 0
-effects = Array[Resource]([SubResource("Effect_damage")])
+effects = Array[Resource]([SubResource("Resource_f8yg0")])
