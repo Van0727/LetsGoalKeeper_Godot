@@ -1,6 +1,8 @@
 # 可复用暂停层：冻结玩法场景，统一处理继续、设置、返回主菜单和退出确认。
 extends CanvasLayer
 
+const SETTINGS_SCREEN := preload("res://scenes/settings_screen.tscn")
+
 enum ConfirmAction { NONE, MAIN_MENU, QUIT_GAME }
 
 @onready var pause_button: Button = %PauseButton
@@ -10,6 +12,8 @@ enum ConfirmAction { NONE, MAIN_MENU, QUIT_GAME }
 @onready var confirm_label: Label = %ConfirmLabel
 
 var pending_action := ConfirmAction.NONE
+var _settings_overlay
+var _external_modal_open := false
 
 
 # 暂停层在 SceneTree 暂停时仍接收输入；初始只显示右上角入口。
@@ -70,6 +74,9 @@ func cancel_confirmation() -> void:
 
 
 func _handle_back_request() -> void:
+	# 战斗QTE等外部模态层负责自己的完整生命周期，期间返回键不得在其上方再打开暂停菜单。
+	if _external_modal_open:
+		return
 	if confirm_panel != null and confirm_panel.visible:
 		cancel_confirmation()
 	elif get_tree().paused:
@@ -79,24 +86,47 @@ func _handle_back_request() -> void:
 
 
 func _on_settings_pressed() -> void:
-	var settings_service := get_node_or_null("/root/SettingsService")
-	if settings_service != null:
-		settings_service.settings_return_scene = get_tree().current_scene.scene_file_path
-	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/settings_screen.tscn")
+	if _settings_overlay != null:
+		return
+	# 设置页作为暂停层子节点覆盖战斗，避免销毁战斗状态或中断常驻战斗 BGM。
+	pause_panel.hide()
+	_settings_overlay = SETTINGS_SCREEN.instantiate()
+	_settings_overlay.opened_in_pause_overlay = true
+	_settings_overlay.overlay_closed.connect(_on_settings_overlay_closed)
+	add_child(_settings_overlay)
+
+
+# 返回战斗时关闭设置覆盖层并直接解除暂停，保留原来的回合、手牌和音乐播放头。
+func _on_settings_overlay_closed() -> void:
+	_settings_overlay = null
+	close_pause()
 
 
 func _on_confirm_pressed() -> void:
 	var action := pending_action
-	get_tree().paused = false
 	if action == ConfirmAction.MAIN_MENU:
+		# 放弃战斗属于明确 BGM 切换，暂停层保持生效直到切曲音效结束，避免后台战斗继续结算。
+		var bgm_service := get_node_or_null("/root/BgmService")
+		if bgm_service != null:
+			await bgm_service.transition_to_main_bgm()
+		get_tree().paused = false
 		get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 	elif action == ConfirmAction.QUIT_GAME:
+		get_tree().paused = false
 		get_tree().quit()
 
 
 func _on_pause_button_pressed() -> void:
 	open_pause()
+
+
+# 允许宿主界面的临时弹窗隐藏暂停入口并拦截返回键，关闭后恢复正常暂停能力。
+func set_external_modal_open(open: bool) -> void:
+	_external_modal_open = open
+	if open:
+		pause_button.hide()
+	elif not get_tree().paused:
+		pause_button.show()
 
 
 func _on_resume_pressed() -> void:

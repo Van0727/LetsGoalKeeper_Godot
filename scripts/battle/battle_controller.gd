@@ -220,6 +220,23 @@ func play_active_skill(skill: Resource) -> bool:
 	return true
 
 
+# QTE失败仍消耗已承诺的主动技连击，但绝不调用效果执行器，避免先写入伤害再回滚。
+func consume_failed_active_skill(skill: Resource) -> bool:
+	if not _can_player_act():
+		return false
+	if skill == null or not combo_state.can_activate():
+		_log("连击点不足，无法结算失败的主动技")
+		return false
+	if skill.card_type != combo_state.card_type:
+		_log("失败主动技类型与当前连击不匹配")
+		return false
+	var points: int = combo_state.count
+	combo_state.clear()
+	_log("%s QTE失败，消耗%d点连击且不生效" % [skill.display_name, points])
+	state_changed.emit()
+	return true
+
+
 # 从指定手牌位置出牌；节奏结果与卡牌一并提交，只有结算成功才移动卡牌并补牌。
 func play_card_from_hand(
 		deck_state,

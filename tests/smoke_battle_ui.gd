@@ -74,6 +74,21 @@ func _run() -> void:
 	_assert_wave_shape_rules(second_wave_shape)
 	_assert_true(battle_screen._attack_hit_audio.stream != null, "战斗持有统一命中音效资源")
 	_assert_equal(battle_screen._attack_hit_audio.max_polyphony, 8, "多段命中音效支持重叠播放")
+	_assert_true(battle_screen._miss_audio.stream != null, "战斗持有Miss提示音效资源")
+	_assert_true(
+		battle_screen._miss_audio.stream.resource_path.ends_with("sound/sounds/miss.mp3"),
+		"Miss播放器绑定指定音效"
+	)
+	_assert_equal(battle_screen._miss_audio.bus, &"SFX", "Miss音效进入SFX总线")
+	var miss_audio_count := [0]
+	battle_screen.miss_audio_triggered.connect(func() -> void: miss_audio_count[0] += 1)
+	var miss_result := {"grade": battle_screen.rhythm_clock.JudgementGrade.MISS}
+	var good_result := {"grade": battle_screen.rhythm_clock.JudgementGrade.GOOD}
+	_assert_true(battle_screen._play_miss_audio_if_needed(miss_result, true), "成功出牌且Miss时播放提示音")
+	_assert_true(not battle_screen._play_miss_audio_if_needed(good_result, true), "Good出牌不播放Miss提示音")
+	_assert_true(not battle_screen._play_miss_audio_if_needed(miss_result, false), "出牌失败不播放Miss提示音")
+	_assert_equal(miss_audio_count[0], 1, "不同判定分支只产生一次Miss音效")
+	battle_screen._miss_audio.stop()
 	# 三段攻击必须逐段调用统一播放器，不能因复用足球节点而吞掉后续触发。
 	var impact_audio_count := [0]
 	battle_screen.attack_impact_audio_triggered.connect(
@@ -128,9 +143,11 @@ func _run() -> void:
 	_assert_equal(battle_screen.controller.enemy.health, 0, "GM跳过立即消灭敌人")
 	_assert_equal(battle_screen.controller.player.health, 1, "GM跳过不触发乌龟反伤")
 	_assert_true(not battle_screen.gm_overlay.visible, "GM跳过后关闭二级面板")
-	_assert_true(battle_screen.result_overlay.visible, "胜利后显示结果层")
+	_assert_true(not battle_screen.result_overlay.visible, "怪物死亡后不立即显示胜利结果层")
 	_assert_true(battle_screen.end_turn_button.disabled, "胜利后锁定结束回合")
 	_assert_true(battle_screen.gm_menu_button.disabled, "胜利后锁定GM入口")
+	await create_timer(battle_screen.VICTORY_RESULT_DELAY_SECONDS + 0.1).timeout
+	_assert_true(battle_screen.result_overlay.visible, "怪物死亡一秒后显示胜利结果层")
 
 	# 重开后把玩家置于濒死状态，验证敌方行动可进入失败结果且不会再抽牌。
 	battle_screen.start_new_battle()

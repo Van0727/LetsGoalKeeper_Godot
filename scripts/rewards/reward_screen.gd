@@ -16,6 +16,7 @@ var choices: Array[Resource] = []
 var _service := REWARD_SERVICE.new()
 var _rng := RandomNumberGenerator.new()
 var run_state: Node
+var _is_scene_transitioning := false
 
 
 # 奖励随机数由本局seed和已胜场数派生，相同进度可复现同一组候选。
@@ -75,6 +76,8 @@ func _refresh_buttons() -> void:
 
 # 卡牌选择后进入战利品步骤；两项奖励完成后才原子提交房间并判断章节结果。
 func _on_choice_pressed(index: int) -> void:
+	if _is_scene_transitioning:
+		return
 	if phase == Phase.CARD:
 		if index >= choices.size():
 			return
@@ -86,6 +89,10 @@ func _on_choice_pressed(index: int) -> void:
 		if index >= choices.size():
 			return
 		run_state.add_item(choices[index])
+	# 最后一项奖励提交后禁止重复点击，等待音频过场期间不能再次推进房间。
+	_is_scene_transitioning = true
+	for button in choice_buttons:
+		button.disabled = true
 	var flow_result: int = run_state.complete_reward_and_advance()
 	run_state.resume_point = run_state.ResumePoint.MAP
 	# 奖励、房间完成与可能的章节切换已按固定顺序提交，此处形成新的可恢复安全节点。
@@ -100,15 +107,26 @@ func _on_choice_pressed(index: int) -> void:
 			"flow_result": flow_result,
 		})
 	if flow_result == run_state.RewardFlowResult.NO_MAP:
+		var battle_bgm_service := get_node_or_null("/root/BgmService")
+		if battle_bgm_service != null:
+			await battle_bgm_service.prepare_battle_transition()
 		get_tree().change_scene_to_file("res://scenes/battle.tscn")
 		return
 	# 只有第三章 Boss 完成后进入独立通关页；前两章 Boss 与普通房均继续地图流程。
 	if flow_result == run_state.RewardFlowResult.RUN_COMPLETED:
 		get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
 		return
+	# 奖励结算页保持显示到主曲切换完成，避免地图先出现、音效后补播。
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.transition_to_main_bgm()
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 
 # 奖励阶段允许返回主菜单，但不会把未完成奖励误记为完成。
 func _on_back_pressed() -> void:
+	# 奖励页可能仍在播放上一场战斗曲；返回主菜单前必须通过切曲服务统一收尾。
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.transition_to_main_bgm()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

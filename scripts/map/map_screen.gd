@@ -25,6 +25,7 @@ const BUTTON_SIZE := Vector2(96, 54)
 # 房间ID到按钮视图的映射，供测试与刷新检查可进/锁定/已完成状态。
 var room_buttons := {}
 var run_state: Node
+var _is_scene_transitioning := false
 
 
 # 绑定本局状态并重建地图行；独立场景测试没有 Autoload 时创建局部状态。
@@ -116,6 +117,8 @@ func _update_info() -> void:
 
 # 开始所选房间：只登记进行中房间，完成状态由奖励或休息结算提交。
 func _on_room_button_pressed(room_id: String) -> void:
+	if _is_scene_transitioning:
+		return
 	var state = run_state.map_state
 	if state == null:
 		return
@@ -142,6 +145,13 @@ func _on_room_button_pressed(room_id: String) -> void:
 	if room.type == MAP_STATE.RoomType.REST:
 		get_tree().change_scene_to_file("res://scenes/rest_room.tscn")
 	else:
+		# 战斗过场必须在地图仍可见时完成，按钮随即锁定，防止重复点击同一关卡。
+		_is_scene_transitioning = true
+		for button in room_buttons.values():
+			button.disabled = true
+		var bgm_service := get_node_or_null("/root/BgmService")
+		if bgm_service != null:
+			await bgm_service.prepare_battle_transition()
 		get_tree().change_scene_to_file("res://scenes/battle.tscn")
 
 

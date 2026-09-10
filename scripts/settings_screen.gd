@@ -1,6 +1,8 @@
 # 设置界面：编辑音量、语言、窗口模式与节拍器样式，改动即时生效并持久化。
 extends Control
 
+signal overlay_closed
+
 @onready var master_slider: HSlider = %MasterSlider
 @onready var music_slider: HSlider = %MusicSlider
 @onready var sfx_slider: HSlider = %SfxSlider
@@ -9,13 +11,19 @@ extends Control
 @onready var circle_metronome_check: CheckBox = %CircleMetronomeCheck
 @onready var waveform_metronome_check: CheckBox = %WaveformMetronomeCheck
 @onready var status_label: Label = %StatusLabel
+@onready var back_button: Button = $Margin/Layout/BackButton
 
 var settings_service: Node
 var _loading_ui := false
+var opened_in_pause_overlay := false
 
 
 # 从全局服务填充控件；界面初始化期间屏蔽信号，避免打开设置就重复写盘。
 func _ready() -> void:
+	# 嵌入战斗暂停层时仍需接收返回按钮，且不会因暂停树而停掉界面输入。
+	if opened_in_pause_overlay:
+		process_mode = Node.PROCESS_MODE_ALWAYS
+		back_button.text = "返回战斗"
 	settings_service = get_node("/root/SettingsService")
 	_loading_ui = true
 	language_option.add_item("简体中文")
@@ -82,6 +90,10 @@ func _on_waveform_metronome_pressed() -> void:
 # 返回来源场景前再次保存；主菜单进入时来源为空，暂停菜单进入时回到原玩法场景。
 func _on_back_pressed() -> void:
 	settings_service.save_settings()
+	if opened_in_pause_overlay:
+		overlay_closed.emit()
+		queue_free()
+		return
 	var return_scene: String = settings_service.take_settings_return_scene("res://scenes/main_menu.tscn")
 	get_tree().change_scene_to_file(return_scene)
 

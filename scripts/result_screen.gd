@@ -6,8 +6,10 @@ const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 @onready var title_label: Label = %TitleLabel
 @onready var detail_label: Label = %DetailLabel
 @onready var summary_label: Label = %SummaryLabel
+@onready var new_run_button: Button = $Margin/Layout/NewRunButton
 
 var run_state: Node
+var _is_scene_transitioning := false
 
 
 # 正式流程读取全局本局状态；独立场景验收时创建局部失败状态，避免空引用。
@@ -43,12 +45,20 @@ func refresh_ui() -> void:
 
 # 从结算页重开必须彻底覆盖上一局数据，再进入第一章新地图。
 func _on_new_run_pressed() -> void:
+	if _is_scene_transitioning:
+		return
+	_is_scene_transitioning = true
+	new_run_button.disabled = true
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	run_state.start_new_run(rng.randi())
 	var save_service := get_node_or_null("/root/SaveService")
 	if save_service != null:
 		save_service.save_game(run_state)
+	# 新局地图在主曲恢复后才加载，维持所有地图入口一致的音频过场。
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.transition_to_main_bgm()
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 

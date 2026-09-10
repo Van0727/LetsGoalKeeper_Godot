@@ -7,8 +7,10 @@ const REST_HEAL_AMOUNT := 20
 @onready var run_label: Label = %RunLabel
 @onready var heal_button: Button = %HealButton
 @onready var status_label: Label = %StatusLabel
+@onready var continue_button: Button = $Footer/ContinueButton
 
 var run_state: Node
+var _is_scene_transitioning := false
 
 
 # 绑定本局状态并刷新当前生命；独立场景测试没有 Autoload 时创建局部状态。
@@ -36,6 +38,11 @@ func _on_heal_pressed() -> void:
 
 # 继续前进时才提交休息房完成状态并解锁下一层。
 func _on_continue_pressed() -> void:
+	if _is_scene_transitioning:
+		return
+	_is_scene_transitioning = true
+	heal_button.disabled = true
+	continue_button.disabled = true
 	run_state.complete_current_room()
 	run_state.resume_point = run_state.ResumePoint.MAP
 	# 休息效果与路线推进同时落盘，恢复后不可重复领取治疗。
@@ -48,6 +55,10 @@ func _on_continue_pressed() -> void:
 			"chapter": run_state.chapter,
 			"player_hp": run_state.player_hp,
 		})
+	# 休息房完成后先在本页播放切曲音效并恢复主曲，再显示路线地图。
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.transition_to_main_bgm()
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 

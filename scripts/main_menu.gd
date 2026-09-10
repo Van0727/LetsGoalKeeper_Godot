@@ -62,6 +62,11 @@ func _on_continue_button_pressed() -> void:
 	# 安全节点决定恢复目标：胜利后直接领奖，已进入的房间回到对应内容，其他情况回地图。
 	match run_state.resume_point:
 		run_state.ResumePoint.BATTLE:
+			# 继续战斗也复用地图入口的过场顺序，禁止战斗场景加载后才补播切曲音效。
+			continue_button.disabled = true
+			var bgm_service := get_node_or_null("/root/BgmService")
+			if bgm_service != null:
+				await bgm_service.prepare_battle_transition()
 			get_tree().change_scene_to_file("res://scenes/battle.tscn")
 		run_state.ResumePoint.REWARD:
 			get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")

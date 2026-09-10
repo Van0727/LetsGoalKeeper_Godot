@@ -22,6 +22,7 @@ DiagnosticsService="*res://autoload/diagnostics_service.gd"
 RunState="*res://autoload/run_state.gd"
 SaveService="*res://autoload/save_service.gd"
 SettingsService="*res://autoload/settings_service.gd"
+BgmService="*res://autoload/bgm_service.gd"
 
 [display]
 

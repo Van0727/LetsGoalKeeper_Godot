@@ -1,5 +1,5 @@
 # 战斗节拍时钟：以音频播放头为唯一时间基准，提供可测试的拍点位置与出牌准确度判定。
-# BGM 文件统一以“名称_bpm数值”标记速度，例如 bg_basicDrum2_bpm100.mp3；运行时优先读取该值。
+# BGM 文件统一存放在 sound/bgm，并以“名称_bpm数值”标记速度，例如 bg_basicDrum2_bpm100.mp3；运行时优先读取该值。
 class_name RhythmClock
 extends Node
 
@@ -21,6 +21,7 @@ enum JudgementGrade {
 @export_range(-500.0, 500.0, 1.0) var calibration_offset_ms := 0.0
 
 var _audio_player: AudioStreamPlayer
+var _uses_external_player := false
 var _last_emitted_beat := -1
 var _last_music_time := 0.0
 var _last_raw_music_time := 0.0
@@ -35,6 +36,20 @@ func _ready() -> void:
 	_audio_player.bus = "Music"
 	add_child(_audio_player)
 	_sync_bpm_from_music_name()
+
+
+# 常驻 BGM 服务接管战斗曲时绑定其播放头；独立测试仍沿用本地播放器。
+func start_music_with_player(player: AudioStreamPlayer) -> bool:
+	if player == null or music == null:
+		return false
+	_audio_player = player
+	_uses_external_player = true
+	_sync_bpm_from_music_name()
+	_last_emitted_beat = -1
+	_last_music_time = 0.0
+	_last_raw_music_time = 0.0
+	_music_loop_offset = 0.0
+	return _audio_player.playing
 
 
 # 每帧只检测是否跨过新拍点；信号供表现层使用，实际判定始终直接查询音频时间。
@@ -54,6 +69,8 @@ func _process(_delta: float) -> void:
 func start_music() -> bool:
 	if music == null or _audio_player == null:
 		return false
+	if _uses_external_player:
+		return start_music_with_player(_audio_player)
 	# 每次换曲后重新读取文件名，保证卡牌拍数始终跟随当前 BGM，而不是旧场景中的手填数值。
 	_sync_bpm_from_music_name()
 	var runtime_stream := music.duplicate() as AudioStream
@@ -71,7 +88,7 @@ func start_music() -> bool:
 
 # 战斗结束时停止音乐并清理拍点状态，下一场战斗从第一拍重新开始。
 func stop_music() -> void:
-	if _audio_player != null:
+	if _audio_player != null and not _uses_external_player:
 		_audio_player.stop()
 	_last_emitted_beat = -1
 	_last_music_time = 0.0

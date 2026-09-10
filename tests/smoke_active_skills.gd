@@ -26,6 +26,7 @@ func _run() -> void:
 	_test_super_attack_and_bear_reduction()
 	_test_super_defense()
 	_test_super_ability()
+	_test_failed_qte_consumes_without_effect()
 	_test_new_battle_clears_combo()
 
 	if _failed:
@@ -80,6 +81,19 @@ func _test_super_ability() -> void:
 	_assert_true(battle.play_active_skill(SUPER_ABILITY), "超级能力释放成功")
 	_assert_equal(battle.player.strength_multiplier, 1.5, "超级能力力量倍率")
 	_assert_equal(battle.player.strength_turns, 3, "超级能力持续三回合")
+	battle.free()
+
+
+# 四次以上Miss的失败QTE只消耗连击，不得对敌人造成伤害或给玩家添加主动技收益。
+func _test_failed_qte_consumes_without_effect() -> void:
+	var battle = _create_battle(206, TURTLE)
+	for _index in range(3):
+		battle.play_card(STRAIGHT_SHOT)
+	var health_before: int = battle.enemy.health
+	_assert_true(battle.consume_failed_active_skill(SUPER_ATTACK), "失败QTE可以消费已准备的主动技")
+	_assert_equal(battle.enemy.health, health_before, "失败QTE不造成主动技伤害")
+	_assert_equal(battle.combo_state.count, 0, "失败QTE仍清空连击点")
+	_assert_equal(battle.combo_state.card_type, COMBO_STATE.EMPTY_TYPE, "失败QTE仍清空连击类型")
 	battle.free()
 
 

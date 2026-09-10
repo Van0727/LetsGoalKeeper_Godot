@@ -2,6 +2,10 @@
 extends Control
 
 signal attack_impact_audio_triggered
+signal miss_audio_triggered
+signal active_skill_ball_launched(hit_target: bool, end_position: Vector2)
+signal active_skill_effect_committed(elapsed_music_seconds: float)
+signal screen_shake_started(duration: float, amplitude: float)
 
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
@@ -9,7 +13,9 @@ const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
 const BALL_FLIGHT_SCENE := preload("res://scenes/ball_flight.tscn")
+const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const HIT_AUDIO_STREAM := preload("res://sound/sounds/hit.mp3")
+const MISS_AUDIO_STREAM := preload("res://sound/sounds/miss.mp3")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const BEAR := preload("res://data/enemies/enemy_bear.tres")
 const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
@@ -21,8 +27,16 @@ const STARTING_HAND_SIZE := 3
 const CARD_SIZE := Vector2(104, 146)
 const CARD_GAP := 6.0
 const REST_ROOM_TYPE := 3
+const ACTIVE_SKILL_FLIGHT_BEATS := 1.0
+const ACTIVE_SKILL_BALL_SCALE := 3.2
+const PERFECT_SHAKE_SECONDS := 0.5
+const PARTIAL_SHAKE_SECONDS := 0.2
+const PERFECT_SHAKE_AMPLITUDE := 18.0
+const PARTIAL_SHAKE_AMPLITUDE := 6.0
+const VICTORY_RESULT_DELAY_SECONDS := 1.0
 
 @onready var controller: BattleController = %BattleController
+@onready var pause_overlay: CanvasLayer = $PauseOverlay
 @onready var background: ColorRect = $Background
 @onready var player_display: CharacterDisplay = %PlayerDisplay
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
@@ -43,6 +57,7 @@ const REST_ROOM_TYPE := 3
 @onready var hand_layer: Control = %HandLayer
 @onready var pile_label: Label = %PileLabel
 @onready var skill_button: Button = %SkillButton
+@onready var qte_popup: Control = %QTEPopup
 @onready var end_turn_button: Button = %EndTurnButton
 @onready var gm_menu_button: Button = %GMMenuButton
 @onready var gm_overlay: ColorRect = %GMOverlay
@@ -64,16 +79,22 @@ var _is_presenting_resolution := false
 var _gm_menu_open := false
 var _pending_effect_events: Array[Dictionary] = []
 var _pending_battle_result = null
+# 怪物死亡后保持战斗锁定一秒再展示胜利层；标记同时阻止重复信号启动多个结算协程。
+var _victory_result_delay_pending := false
+var _battle_generation := 0
 # 当前出牌对应的音频拍点；所有分段发射和命中都从同一锚点计算，避免逐帧计时累积漂移。
 var _resolution_beat_anchor_time := 0.0
 var _visual_rng := RandomNumberGenerator.new()
 # 实战命中音统一由常驻播放器输出；多声部允许攻击间隔短于音效长度时每段仍清晰触发。
 var _attack_hit_audio: AudioStreamPlayer
+# Miss 提示使用独立播放器，避免与足球命中音共用播放头而相互截断。
+var _miss_audio: AudioStreamPlayer
 var _skills_by_type := {
 	0: SUPER_ATTACK,
 	1: SUPER_DEFENSE,
 	2: SUPER_ABILITY,
 }
+var _pending_active_skill: Resource
 
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
@@ -84,6 +105,12 @@ func _ready() -> void:
 	_attack_hit_audio.bus = &"SFX"
 	_attack_hit_audio.max_polyphony = 8
 	add_child(_attack_hit_audio)
+	_miss_audio = AudioStreamPlayer.new()
+	_miss_audio.name = "MissAudio"
+	_miss_audio.stream = MISS_AUDIO_STREAM
+	_miss_audio.bus = &"SFX"
+	_miss_audio.max_polyphony = 2
+	add_child(_miss_audio)
 	run_state = get_node_or_null("/root/RunState")
 	# 独立场景测试没有 Autoload 时创建局部状态，正式游戏始终使用全局实例。
 	if run_state == null:
@@ -100,9 +127,14 @@ func _ready() -> void:
 	controller.battle_finished.connect(_on_battle_finished)
 	ball_flight.shot_started.connect(_on_shot_started)
 	rhythm_clock.beat_reached.connect(_on_rhythm_beat_reached)
+	qte_popup.qte_finished.connect(_on_qte_finished)
 	# 参考布局把敌人作为上方视觉焦点，玩家状态则压缩到底部生命栏。
 	enemy_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.ENEMY)
 	player_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.PLAYER_BAR)
+	# 地图入口通常已完成过场；直接打开战斗场景时由服务补做，保证战斗第一拍不与切曲音效重叠。
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.consume_battle_transition()
 	start_new_battle()
 
 
@@ -129,7 +161,9 @@ func _apply_chapter_theme() -> void:
 
 # 使用本局牌库和房间敌人重置战斗：路线地图进入的房间按房型从章节池选敌。
 func start_new_battle(enemy_definition: Resource = null) -> void:
+	_battle_generation += 1
 	result_overlay.hide()
+	_victory_result_delay_pending = false
 	gm_overlay.hide()
 	_gm_menu_open = false
 	ball_flight.hide()
@@ -137,7 +171,11 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_pending_effect_events.clear()
 	_pending_battle_result = null
 	_is_presenting_resolution = false
-	rhythm_clock.start_music()
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		rhythm_clock.start_music_with_player(bgm_service.start_battle_bgm(rhythm_clock.music))
+	else:
+		rhythm_clock.start_music()
 	status_label.text = "拖动卡牌到绿色区域出牌"
 	_input_locked = true
 	var starting_deck: Array[Resource] = []
@@ -214,7 +252,17 @@ func _on_card_played(card_view: DraggableCard) -> void:
 	if card_view is BattleCardView:
 		var rhythm_result: Dictionary = rhythm_clock.judge_now()
 		rhythm_feedback.show_judgement(rhythm_result)
-		try_play_hand_card(card_view.hand_index, rhythm_result)
+		var played := try_play_hand_card(card_view.hand_index, rhythm_result)
+		_play_miss_audio_if_needed(rhythm_result, played)
+
+
+# 只有卡牌成功提交且等级确认为 Miss 才播放，避免无效拖拽或费用失败产生错误反馈。
+func _play_miss_audio_if_needed(rhythm_result: Dictionary, played: bool) -> bool:
+	if not played or int(rhythm_result.get("grade", -1)) != rhythm_clock.JudgementGrade.MISS:
+		return false
+	_miss_audio.play()
+	miss_audio_triggered.emit()
+	return true
 
 
 # 拖拽开始时只显示横向虚线；尚未越线前不显示释放提示。
@@ -259,7 +307,7 @@ func _on_end_turn_pressed() -> void:
 	call_deferred("_finish_resolution")
 
 
-# 释放当前卡牌类型对应的主动技，结算帧内与卡牌共用同一输入锁。
+# 主动技先打开战斗内嵌QTE弹窗；QTE完成前只锁输入，不提前消耗连击点或修改战斗数值。
 func _on_skill_pressed() -> void:
 	if _input_locked:
 		return
@@ -268,12 +316,137 @@ func _on_skill_pressed() -> void:
 		return
 	_input_locked = true
 	_update_input_state()
-	if not controller.play_active_skill(skill):
+	_pending_active_skill = skill
+	var qte_seed: int = run_state.seed + controller.turn_number * 1009 + controller.combo_state.count
+	var waveform_center_y: float = rhythm_waveform.get_global_rect().get_center().y
+	if not qte_popup.start_qte(rhythm_clock, qte_seed, waveform_center_y):
+		_pending_active_skill = null
 		_input_locked = false
 		_update_input_state()
 		return
-	status_label.text = "%s已结算" % skill.display_name
+	pause_overlay.set_external_modal_open(true)
+	status_label.text = "%s：完成8拍QTE" % skill.display_name
+
+
+# QTE结束同帧关闭遮罩并发射超级足球；效果只允许在一拍后的命中点提交。
+func _on_qte_finished(result: Dictionary) -> void:
+	pause_overlay.set_external_modal_open(false)
+	var skill := _pending_active_skill
+	_pending_active_skill = null
+	if skill == null:
+		_input_locked = false
+		_update_input_state()
+		return
+	_play_active_skill_qte_result(skill, result)
+
+
+# 四次及以上Miss时随机踢飞并只消费连击；其余结果命中后按Miss数选择震屏强度。
+func _play_active_skill_qte_result(skill: Resource, result: Dictionary) -> void:
+	var miss_count := int(result.get("miss", 0))
+	var hit_target := miss_count < 4
+	var launch_music_time: float = rhythm_clock.get_music_time()
+	var flight_seconds: float = rhythm_clock.beats_to_seconds(ACTIVE_SKILL_FLIGHT_BEATS)
+	var hit_music_time := launch_music_time + flight_seconds
+	var end_position := enemy_display.get_portrait_global_center()
+	if not hit_target:
+		end_position = _get_missed_active_skill_end_position()
+	var visual_state := {"finished": false}
+	_play_active_skill_ball_visual(
+		end_position,
+		flight_seconds,
+		launch_music_time,
+		hit_music_time,
+		visual_state
+	)
+	active_skill_ball_launched.emit(hit_target, end_position)
+	await _wait_for_shot_launch(hit_music_time)
+	if hit_target:
+		_play_attack_impact_audio()
+		ball_flight.notify_impact()
+		# 控制器在真实命中拍点才修改生命、护盾或强化，QTE飞行期间核心状态保持不变。
+		if not controller.play_active_skill(skill):
+			await _wait_for_active_skill_visual(visual_state)
+			_input_locked = false
+			_update_input_state()
+			return
+		active_skill_effect_committed.emit(rhythm_clock.get_music_time() - launch_music_time)
+		var shake_config := _get_active_skill_shake_config(miss_count)
+		await _shake_battle(shake_config.x, shake_config.y)
+	else:
+		controller.consume_failed_active_skill(skill)
+		rhythm_feedback.show_judgement({
+			"grade": rhythm_clock.JudgementGrade.MISS,
+			"grade_name": "Miss",
+			"error_ms": 0.0,
+		})
+		status_label.text = "%s QTE失败 · Miss %d" % [skill.display_name, miss_count]
+	await _wait_for_active_skill_visual(visual_state)
+	if hit_target:
+		status_label.text = "%s已结算 · P%d G%d M%d" % [
+			skill.display_name,
+			int(result.get("perfect", 0)),
+			int(result.get("good", 0)),
+			miss_count,
+		]
 	call_deferred("_finish_resolution")
+
+
+# 失败球终点必须完全落在左右屏幕外；方向由独立表现随机数决定，不影响战斗数值随机序列。
+func _get_missed_active_skill_end_position() -> Vector2:
+	var side := -1.0 if _visual_rng.randi_range(0, 1) == 0 else 1.0
+	return Vector2(size.x * 0.5 + side * (size.x + 180.0), size.y * 0.18)
+
+
+# 零Miss使用夸张震屏；一至三次Miss使用短促小震屏，失败分支不会调用本函数。
+func _get_active_skill_shake_config(miss_count: int) -> Vector2:
+	if miss_count == 0:
+		return Vector2(PERFECT_SHAKE_SECONDS, PERFECT_SHAKE_AMPLITUDE)
+	return Vector2(PARTIAL_SHAKE_SECONDS, PARTIAL_SHAKE_AMPLITUDE)
+
+
+# 超级足球使用普通直球纹理与旋转，但放大到3.2倍并严格绑定一拍音乐时间轴。
+func _play_active_skill_ball_visual(
+		end_position: Vector2,
+		flight_seconds: float,
+		launch_music_time: float,
+		hit_music_time: float,
+		visual_state: Dictionary
+) -> void:
+	await ball_flight.play_shot(
+		CARD_DEFINITION.ShotType.STRAIGHT,
+		_get_player_shot_origin(),
+		end_position,
+		_visual_rng,
+		true,
+		flight_seconds,
+		rhythm_clock,
+		launch_music_time,
+		hit_music_time,
+		false,
+		ACTIVE_SKILL_BALL_SCALE
+	)
+	visual_state.finished = true
+
+
+# 视觉协程通常与音乐命中同时结束；独立等待可覆盖掉帧，避免下一次操作复用仍显示的足球。
+func _wait_for_active_skill_visual(visual_state: Dictionary) -> void:
+	while not bool(visual_state.finished):
+		await get_tree().process_frame
+
+
+# 命中震屏使用确定性随机源逐帧偏移整个战斗画面，结束或异常退出前始终恢复原位置。
+func _shake_battle(duration: float, amplitude: float) -> void:
+	var original_position := position
+	var elapsed := 0.0
+	screen_shake_started.emit(duration, amplitude)
+	while elapsed < duration:
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+		position = original_position + Vector2(
+			_visual_rng.randf_range(-amplitude, amplitude),
+			_visual_rng.randf_range(-amplitude, amplitude)
+		)
+	position = original_position
 
 
 # 按当前章节遭遇池和房间房型确定敌人；同房间首次选择后缓存敌人ID，保证可复现。
@@ -619,11 +792,23 @@ func _on_battle_finished(victory: bool) -> void:
 	_finalize_battle_result(victory)
 
 
-# 动画队列结束后再提交并展示胜负，防止足球尚未命中时结果层提前遮住战场。
+# 怪物死亡后额外等待一秒再提交胜利界面；玩家失败仍立即结算，且等待标记阻止重复保存。
 func _finalize_battle_result(victory: bool) -> void:
+	if victory:
+		if _victory_result_delay_pending:
+			return
+		_victory_result_delay_pending = true
+		var delayed_generation := _battle_generation
+		_update_input_state()
+		await get_tree().create_timer(VICTORY_RESULT_DELAY_SECONDS).timeout
+		# 调试入口或测试若在等待期启动了新战斗，旧协程不得覆盖新一场的状态和存档。
+		if delayed_generation != _battle_generation:
+			return
 	_gm_menu_open = false
 	gm_overlay.hide()
-	rhythm_clock.stop_music()
+	# 胜利后的奖励页继续沿用战斗曲；只有后续触发实际 BGM 切换时，常驻服务才会停止它。
+	if not victory:
+		rhythm_clock.stop_music()
 	_last_victory = victory
 	run_state.record_battle_health(controller.player.health)
 	# 失败不提交房间完成，清除进行中上下文；胜利则保留到两步奖励全部领取后再提交。
@@ -652,6 +837,7 @@ func _finalize_battle_result(victory: bool) -> void:
 			"chapter": run_state.chapter,
 		})
 	result_overlay.show()
+	_victory_result_delay_pending = false
 
 
 # 胜利进入两步奖励，失败进入独立结算页展示本局摘要。
@@ -659,10 +845,17 @@ func _on_restart_pressed() -> void:
 	if _last_victory:
 		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")
 		return
+	# 失败离开战斗时才触发切曲；常驻服务会停止战斗曲并启动主曲后再进入结算页。
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.transition_to_main_bgm()
 	get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
 
 
 # 主动退出战斗视为放弃当前尝试，不得让尚未完成的房间继续占用流程状态。
 func _on_back_pressed() -> void:
 	run_state.cancel_current_room()
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.transition_to_main_bgm()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

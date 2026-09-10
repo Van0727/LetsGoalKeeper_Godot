@@ -68,7 +68,8 @@ func play_shot(
 		timing_clock = null,
 		launch_music_time := -1.0,
 		hit_music_time := -1.0,
-		play_impact_on_animation_end := true
+		play_impact_on_animation_end := true,
+		super_scale_multiplier := 2.0
 ) -> void:
 	var visual_rng := rng if rng != null else RandomNumberGenerator.new()
 	var resolved := _resolve_visual_shot(shot_type, visual_rng)
@@ -87,7 +88,8 @@ func play_shot(
 	visible = true
 	_texture_angle = 0.0
 	_build_ball_mesh(last_banana_direction if last_actual_shot_type == CARD_DEFINITION.ShotType.BANANA else 0)
-	deform_pivot.scale = BASE_BALL_SCALE * (2.0 if super_shot else 1.0)
+	var active_super_scale := super_scale_multiplier if super_shot else 1.0
+	deform_pivot.scale = BASE_BALL_SCALE * active_super_scale
 	# 起脚音必须与足球出现和 shot_started 同帧发生，不能等待伤害结算或下一次音频拍点。
 	kick_audio.play()
 	shot_started.emit(last_actual_shot_type)
@@ -100,7 +102,7 @@ func play_shot(
 	)
 	var duration := maxf(configured_duration, 0.001) / maxf(playback_speed, 0.01)
 	var spin_direction := get_spin_direction(last_actual_shot_type, last_banana_direction)
-	_play_scale_animation(last_actual_shot_type, duration, super_shot)
+	_play_scale_animation(last_actual_shot_type, duration, super_shot, super_scale_multiplier)
 	if timing_clock != null and is_equal_approx(playback_speed, 1.0) and hit_music_time >= 0.0:
 		await _play_music_synced_motion(
 			timing_clock,
@@ -273,8 +275,13 @@ func _build_control_point(
 
 
 # 直球和香蕉球使用守恒比例全程压扁；挑射的等比缩放属于远近变化，不计入形变守恒。
-func _play_scale_animation(shot_type: int, duration: float, super_shot: bool) -> void:
-	var base_scale := BASE_BALL_SCALE * (2.0 if super_shot else 1.0)
+func _play_scale_animation(
+		shot_type: int,
+		duration: float,
+		super_shot: bool,
+		super_scale_multiplier := 2.0
+) -> void:
+	var base_scale := BASE_BALL_SCALE * (super_scale_multiplier if super_shot else 1.0)
 	match shot_type:
 		CARD_DEFINITION.ShotType.BANANA:
 			var banana_scale_tween := create_tween()

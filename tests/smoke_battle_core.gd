@@ -126,9 +126,9 @@ func _test_rhythm_judgement_and_damage() -> void:
 	var clock = RHYTHM_CLOCK.new()
 	clock.bpm = 100.0
 	clock.first_beat_offset = 0.0
-	_assert_equal(clock.get_bpm_from_music_path("res://sound/beats/bg_basicDrum2_bpm100.mp3"), 100.0, "从BGM名称读取整数BPM")
-	_assert_equal(clock.get_bpm_from_music_path("res://sound/beats/boss_bpm127.5.ogg"), 127.5, "从BGM名称读取小数BPM")
-	_assert_equal(clock.get_bpm_from_music_path("res://sound/beats/no_bpm.mp3"), -1.0, "无数值BPM名称返回无效值")
+	_assert_equal(clock.get_bpm_from_music_path("res://sound/bgm/bg_basicDrum2_bpm100.mp3"), 100.0, "从BGM名称读取整数BPM")
+	_assert_equal(clock.get_bpm_from_music_path("res://sound/bgm/boss_bpm127.5.ogg"), 127.5, "从BGM名称读取小数BPM")
+	_assert_equal(clock.get_bpm_from_music_path("res://sound/bgm/no_bpm.mp3"), -1.0, "无数值BPM名称返回无效值")
 	_assert_equal(clock.get_beat_duration(), 0.6, "100 BPM的一拍为0.6秒")
 	_assert_equal(clock.beats_to_seconds(0.25), 0.15, "100 BPM的四分之一拍为0.15秒")
 	_assert_equal(clock.beats_to_seconds(0.5), 0.3, "100 BPM的半拍为0.3秒")
