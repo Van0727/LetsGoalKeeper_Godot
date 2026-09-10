@@ -1,13 +1,14 @@
-# 主动技节奏弹窗：在战斗界面内遮罩原有操作，按当前BGM节拍生成三轨八音符并汇总判定结果。
+# 主动技节奏弹窗：在战斗界面内遮罩原有操作，按当前BGM生成三轨四音符并汇总判定结果。
 extends Control
 
 signal qte_finished(result: Dictionary)
 signal click_audio_triggered
 signal miss_audio_triggered
 
-const NOTE_COUNT := 8
+const NOTE_COUNT := 4
 const LANE_COUNT := 3
 const TRAVEL_BEATS := 2.0
+const NOTE_INTERVAL_BEATS := 0.5
 const CLICK_PULSE_SECONDS := 0.18
 const CLICK_ATTACK_SECONDS := 0.055
 const JUDGEMENT_VISIBLE_SECONDS := 0.42
@@ -69,7 +70,9 @@ func start_qte(rhythm_clock: Node, seed_value: int = 0, target_line_y: float = 2
 	_good_window_seconds = float(_rhythm_clock.good_window_ms) / 1000.0
 	_target_line_y = target_line_y
 	var beat_duration: float = _rhythm_clock.get_beat_duration()
-	_first_target_time = _rhythm_clock.get_music_time() + beat_duration * TRAVEL_BEATS
+	var next_beat_time: float = _rhythm_clock.get_next_beat_time(_rhythm_clock.get_music_time())
+	# 首个音符仍在下一个整数拍出现并完整移动两拍；只把后续目标压缩为半拍间隔。
+	_first_target_time = next_beat_time + beat_duration * TRAVEL_BEATS
 	_notes.clear()
 	_counts = {"perfect": 0, "good": 0, "miss": 0}
 	_target_pulse_ages = PackedFloat32Array([-1.0, -1.0, -1.0])
@@ -78,7 +81,7 @@ func start_qte(rhythm_clock: Node, seed_value: int = 0, target_line_y: float = 2
 	for note_index in range(NOTE_COUNT):
 		_notes.append({
 			"lane": _rng.randi_range(0, LANE_COUNT - 1),
-			"target_time": _first_target_time + beat_duration * note_index,
+			"target_time": _first_target_time + beat_duration * NOTE_INTERVAL_BEATS * note_index,
 			"judged": false,
 		})
 	_running = true

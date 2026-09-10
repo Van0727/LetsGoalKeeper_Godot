@@ -3,6 +3,7 @@ extends Node
 
 const MAIN_BGM := preload("res://sound/bgm/bg_main_bpm110.mp3")
 const CHANGE_BGM_SFX := preload("res://sound/sounds/changeBgm.mp3")
+const WIN_SFX := preload("res://sound/sounds/win.mp3")
 const BATTLE_SCENE_PATH := "res://scenes/battle.tscn"
 
 var _main_player: AudioStreamPlayer
@@ -105,10 +106,24 @@ func transition_to_main_bgm() -> void:
 	play_main_bgm()
 
 
+# 战斗胜利的奖励结算完成后使用专属胜利音效，再恢复地图主曲；其余切曲仍保留 changeBgm。
+func transition_after_victory_to_main_bgm() -> void:
+	if _main_player != null and _main_player.playing:
+		_main_player.stream_paused = true
+	if _battle_player != null and _battle_player.playing:
+		_battle_player.stream_paused = true
+	await _play_transition_sfx(WIN_SFX)
+	_stop_main_bgm()
+	_stop_battle_bgm()
+	play_main_bgm()
+
+
 # 切曲音效独占一个播放器；资源异常时直接完成，避免界面永久等待。
-func _play_transition_sfx() -> void:
-	if _transition_player == null or _transition_player.stream == null:
+func _play_transition_sfx(sound_effect: AudioStream = CHANGE_BGM_SFX) -> void:
+	if _transition_player == null or sound_effect == null:
 		return
+	if _transition_player.stream != sound_effect:
+		_transition_player.stream = sound_effect
 	_transition_player.play()
 	await _transition_player.finished
 

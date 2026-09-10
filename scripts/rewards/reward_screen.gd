@@ -116,10 +116,10 @@ func _on_choice_pressed(index: int) -> void:
 	if flow_result == run_state.RewardFlowResult.RUN_COMPLETED:
 		get_tree().change_scene_to_file("res://scenes/result_screen.tscn")
 		return
-	# 奖励结算页保持显示到主曲切换完成，避免地图先出现、音效后补播。
+	# 战斗胜利的奖励结算完成后使用 win 音效；地图显示前才恢复主曲，避免音效后补播。
 	var bgm_service := get_node_or_null("/root/BgmService")
 	if bgm_service != null:
-		await bgm_service.transition_to_main_bgm()
+		await bgm_service.transition_after_victory_to_main_bgm()
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
 
 

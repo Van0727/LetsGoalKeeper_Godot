@@ -325,7 +325,7 @@ func _on_skill_pressed() -> void:
 		_update_input_state()
 		return
 	pause_overlay.set_external_modal_open(true)
-	status_label.text = "%s：完成8拍QTE" % skill.display_name
+	status_label.text = "%s：完成4次QTE" % skill.display_name
 
 
 # QTE结束同帧关闭遮罩并发射超级足球；效果只允许在一拍后的命中点提交。

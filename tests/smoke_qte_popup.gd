@@ -1,4 +1,4 @@
-# 主动技QTE冒烟测试：验证内嵌遮罩、三轨八音符、判定边界、输入锁和完成后延迟结算。
+# 主动技QTE冒烟测试：验证内嵌遮罩、三轨四音符、半拍间隔、输入锁和完成后延迟结算。
 extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
@@ -41,15 +41,41 @@ func _run() -> void:
 	)
 	battle._on_skill_pressed()
 	_assert_true(battle.qte_popup.visible, "主动技打开战斗内嵌QTE弹窗")
-	_assert_equal(battle.qte_popup._notes.size(), 8, "QTE固定生成八个音符")
+	_assert_equal(battle.qte_popup._notes.size(), 4, "QTE固定生成四个音符")
 	_assert_equal(battle.qte_popup.TRAVEL_BEATS, 2.0, "音符下落时长缩短到两拍即速度提升1.5倍")
 	var note_interval: float = (
 		float(battle.qte_popup._notes[1].target_time) - float(battle.qte_popup._notes[0].target_time)
 	)
 	_assert_true(
-		absf(note_interval - battle.rhythm_clock.get_beat_duration()) < 0.0001,
-		"加速后相邻音符仍保持一拍间隔"
+		absf(note_interval - battle.rhythm_clock.get_beat_duration() * 0.5) < 0.0001,
+		"相邻音符保持半拍间隔"
 	)
+	var first_target_beat: float = (
+		(float(battle.qte_popup._notes[0].target_time) - battle.rhythm_clock.first_beat_offset)
+		/ battle.rhythm_clock.get_beat_duration()
+	)
+	_assert_true(
+		absf(first_target_beat - roundf(first_target_beat)) < 0.0001,
+		"QTE首个目标严格落在BGM整数拍点"
+	)
+	var first_spawn_time: float = (
+		float(battle.qte_popup._notes[0].target_time)
+		- battle.rhythm_clock.get_beat_duration() * battle.qte_popup.TRAVEL_BEATS
+	)
+	var first_spawn_beat: float = (
+		(first_spawn_time - battle.rhythm_clock.first_beat_offset)
+		/ battle.rhythm_clock.get_beat_duration()
+	)
+	_assert_true(
+		absf(first_spawn_beat - roundf(first_spawn_beat)) < 0.0001,
+		"首个音符仍在下一个整数拍进场"
+	)
+	for note in battle.qte_popup._notes:
+		var target_beat: float = (
+			(float(note.target_time) - battle.rhythm_clock.first_beat_offset)
+			/ battle.rhythm_clock.get_beat_duration()
+		)
+		_assert_true(absf(target_beat * 2.0 - roundf(target_beat * 2.0)) < 0.0001, "所有QTE音符目标均对齐半拍网格")
 	_assert_equal(battle.controller.combo_state.count, 3, "QTE期间不提前消耗连击")
 	_assert_equal(battle.controller.enemy.health, health_before, "QTE期间不提前结算主动技")
 	_assert_true(battle._input_locked, "QTE期间锁住战斗输入")

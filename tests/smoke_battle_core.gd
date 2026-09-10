@@ -151,6 +151,14 @@ func _test_rhythm_judgement_and_damage() -> void:
 	_assert_equal(clock.judge_at(0.55).grade, clock.JudgementGrade.PERFECT, "下一拍前50ms为Perfect")
 	_assert_equal(roundi(clock.judge_at(0.55).error_ms), -50, "提前判定保留负误差")
 	_assert_equal(clock.judge_at(0.55).target_time, 0.6, "判定结果保留最近拍点供命中同步")
+	_assert_equal(clock.get_next_beat_time(0.15), 0.6, "四分之一拍启动时锚定到下一个整数拍")
+	_assert_equal(clock.get_next_beat_time(0.30), 0.6, "半拍启动时锚定到下一个整数拍")
+	_assert_equal(clock.get_next_beat_time(0.45), 0.6, "四分之三拍启动时锚定到下一个整数拍")
+	_assert_true(
+		not clock.did_playback_wrap(4.2, 4.12, 12.0),
+		"音频线程的小幅回退不会误判为歌曲循环"
+	)
+	_assert_true(clock.did_playback_wrap(11.9, 0.1, 12.0), "曲尾回到曲首会识别为真实循环")
 
 	var miss_result: Dictionary = clock.judge_at(0.20)
 	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()

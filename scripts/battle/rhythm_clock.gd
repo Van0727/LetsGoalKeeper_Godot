@@ -112,8 +112,8 @@ func get_music_time() -> float:
 		- AudioServer.get_output_latency()
 		+ calibration_offset_ms / 1000.0
 	), 0.0)
-	if raw_music_time + 0.05 < _last_raw_music_time:
-		var stream_length := music.get_length() if music != null else 0.0
+	var stream_length := music.get_length() if music != null else 0.0
+	if did_playback_wrap(_last_raw_music_time, raw_music_time, stream_length):
 		# MP3 的资源长度可能包含编码填充；每轮只累计整数拍时长，防止循环次数越多拍点越漂。
 		var quantized_loop_duration := get_quantized_loop_duration(stream_length, bpm)
 		_music_loop_offset += (
@@ -122,7 +122,10 @@ func get_music_time() -> float:
 			else maxf(stream_length, _last_raw_music_time)
 		)
 	_last_raw_music_time = raw_music_time
-	return _music_loop_offset + raw_music_time
+	# 官方音频同步建议丢弃线程抖动产生的倒退值；保持单调时间可防止QTE音符瞬间回弹。
+	var continuous_time := _music_loop_offset + raw_music_time
+	_last_music_time = maxf(continuous_time, _last_music_time)
+	return _last_music_time
 
 
 # 在真实松手回调中即时采样播放头，返回本次出牌可长期扩展的结构化节奏上下文。
@@ -168,6 +171,25 @@ func get_beat_duration() -> float:
 # 所有卡牌表现统一通过这里把拍数换算为秒，避免飞行和多段间隔各自维护 BPM 公式。
 func beats_to_seconds(beat_count: float) -> float:
 	return maxf(beat_count, 0.0) * get_beat_duration()
+
+
+# 返回严格晚于采样时刻的下一个整数拍，供QTE等玩法把整组事件锚定到真实BGM拍点。
+func get_next_beat_time(music_time: float = -1.0) -> float:
+	var active_time := get_music_time() if music_time < 0.0 else music_time
+	var beat_duration := get_beat_duration()
+	var relative_time := active_time - first_beat_offset
+	var next_beat_index := floori(relative_time / beat_duration) + 1
+	return first_beat_offset + maxi(next_beat_index, 0) * beat_duration
+
+
+# 只有明确跨越大半首歌，或上一采样位于曲尾且新采样位于曲首，才视为真实循环。
+static func did_playback_wrap(previous_time: float, current_time: float, stream_length: float) -> bool:
+	if stream_length <= 0.0 or current_time >= previous_time:
+		return false
+	return (
+		(previous_time >= stream_length * 0.75 and current_time <= stream_length * 0.25)
+		or previous_time - current_time > stream_length * 0.5
+	)
 
 
 # 把一轮音频长度吸附到最接近的整数拍，避免 MP3 尾部填充被逐轮累计到节拍时间轴。
