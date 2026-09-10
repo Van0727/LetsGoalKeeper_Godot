@@ -1,13 +1,12 @@
-[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://cw2yvn2ghj2q3"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
+[ext_resource type="Script" uid="uid://djk4dngla0ujr" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
+[ext_resource type="Script" uid="uid://dr0lb186v2jcj" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
 
 [sub_resource type="Resource" id="Action_attack"]
 script = ExtResource("2_action")
 action_id = "raccoon_attack"
 display_name = "Boss射门"
-action_type = 0
 amount = 20
 variance_percent = 20
 weight = 3
@@ -26,7 +25,6 @@ action_id = "raccoon_heal"
 display_name = "Boss治疗"
 action_type = 2
 amount = 10
-weight = 1
 
 [resource]
 script = ExtResource("1_enemy")

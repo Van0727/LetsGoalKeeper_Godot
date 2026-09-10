@@ -1,4 +1,4 @@
-# 阶段 8 主菜单状态测试：验证进行中、失败和通关提示，以及继续按钮的启用边界。
+# 主菜单继续按钮测试：移除状态文字后，仍验证进行中、失败和通关状态的启用边界。
 extends SceneTree
 
 const MAIN_MENU_SCENE := preload("res://scenes/main_menu.tscn")
@@ -22,19 +22,16 @@ func _run() -> void:
 	run_state.start_new_run(7001)
 	run_state.chapter = 2
 	run_state.battles_won = 4
-	menu.refresh_run_status()
+	menu.refresh_continue_availability()
 	_assert_true(not menu.continue_button.disabled, "进行中的本局允许继续")
-	_assert_true("第 2 章" in menu.status_label.text, "进行中提示包含章节")
 
 	run_state.mark_run_failed()
-	menu.refresh_run_status()
+	menu.refresh_continue_availability()
 	_assert_true(menu.continue_button.disabled, "失败本局不能继续")
-	_assert_true("失败" in menu.status_label.text, "失败提示清楚可见")
 
 	run_state.run_status = run_state.RunStatus.COMPLETED
-	menu.refresh_run_status()
+	menu.refresh_continue_availability()
 	_assert_true(menu.continue_button.disabled, "通关本局不能继续")
-	_assert_true("通关" in menu.status_label.text, "通关提示清楚可见")
 
 	if _failed:
 		quit(1)
@@ -43,7 +40,7 @@ func _run() -> void:
 	quit()
 
 
-# 通用布尔断言：失败时输出对应主菜单状态标签。
+# 通用布尔断言：失败时输出对应的继续按钮状态场景。
 func _assert_true(value: bool, label: String) -> void:
 	if value:
 		return

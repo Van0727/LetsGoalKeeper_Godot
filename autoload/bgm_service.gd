@@ -1,15 +1,23 @@
 # 全局背景音乐服务：在场景切换期间保留非战斗 BGM，并负责进入战斗前的切曲音效顺序。
 extends Node
 
+signal main_beat_reached(beat_index: int)
+
 const MAIN_BGM := preload("res://sound/bgm/bg_main_bpm110.mp3")
 const CHANGE_BGM_SFX := preload("res://sound/sounds/changeBgm.mp3")
 const WIN_SFX := preload("res://sound/sounds/win.mp3")
 const BATTLE_SCENE_PATH := "res://scenes/battle.tscn"
+const MAIN_BGM_BPM := 110.0
 
 var _main_player: AudioStreamPlayer
 var _battle_player: AudioStreamPlayer
 var _transition_player: AudioStreamPlayer
 var _battle_transition_ready := false
+var _last_main_beat := -1
+var _last_main_music_time := 0.0
+var _last_main_raw_time := 0.0
+var _main_loop_offset := 0.0
+var _output_latency := 0.0
 
 
 # 常驻播放器分别承载循环 BGM 与一次性切曲音效，避免场景销毁导致切换音效中断。
@@ -38,8 +46,41 @@ func _ready() -> void:
 	# 暂停菜单确认返回主菜单时仍要完整播放切曲音效，不能随玩法树暂停。
 	_transition_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_transition_player)
+	# 输出延迟在设备运行期间通常稳定；只读取一次，避免每帧查询音频驱动。
+	_output_latency = AudioServer.get_output_latency()
 	get_tree().scene_changed.connect(_on_scene_changed)
 	_on_scene_changed()
+
+
+# 主界面表现使用真实音乐播放头触发节拍，避免普通定时器在长时间循环后逐渐漂拍。
+func _process(_delta: float) -> void:
+	if _main_player == null or not _main_player.playing or _main_player.stream_paused:
+		return
+	var raw_time := maxf(
+		_main_player.get_playback_position()
+		+ AudioServer.get_time_since_last_mix()
+		- _output_latency,
+		0.0
+	)
+	var stream_length := _main_player.stream.get_length() if _main_player.stream != null else 0.0
+	if (
+		stream_length > 0.0
+		and raw_time < _last_main_raw_time
+		and _last_main_raw_time >= stream_length * 0.75
+		and raw_time <= stream_length * 0.25
+	):
+		# MP3 可能包含编码填充，以完整拍数累计循环时长可抑制多轮播放后的拍点漂移。
+		var beat_duration := 60.0 / MAIN_BGM_BPM
+		var beat_count := maxi(roundi(stream_length / beat_duration), 1)
+		_main_loop_offset += beat_count * beat_duration
+	_last_main_raw_time = raw_time
+	var music_time := maxf(_main_loop_offset + raw_time, _last_main_music_time)
+	_last_main_music_time = music_time
+	var beat_index := floori(music_time / (60.0 / MAIN_BGM_BPM))
+	if beat_index == _last_main_beat:
+		return
+	_last_main_beat = beat_index
+	main_beat_reached.emit(beat_index)
 
 
 # 所有非战斗界面共享主菜单曲；战斗胜利后的奖励页保留战斗曲，直到实际触发切曲。
@@ -58,7 +99,16 @@ func play_main_bgm() -> void:
 		return
 	_main_player.stream_paused = false
 	if not _main_player.playing:
+		_reset_main_beat_clock()
 		_main_player.play()
+
+
+# 只有音乐真正从头播放时才清空节拍时间轴；暂停恢复必须沿用原播放位置。
+func _reset_main_beat_clock() -> void:
+	_last_main_beat = -1
+	_last_main_music_time = 0.0
+	_last_main_raw_time = 0.0
+	_main_loop_offset = 0.0
 
 
 # 启动常驻战斗曲并返回唯一播放头，RhythmClock 通过它保持节拍判定与实际声音一致。
