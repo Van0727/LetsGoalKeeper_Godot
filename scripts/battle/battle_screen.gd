@@ -37,7 +37,7 @@ const VICTORY_RESULT_DELAY_SECONDS := 1.0
 
 @onready var controller: BattleController = %BattleController
 @onready var pause_overlay: CanvasLayer = $PauseOverlay
-@onready var background: ColorRect = $Background
+@onready var background: TextureRect = $Background
 @onready var player_display: CharacterDisplay = %PlayerDisplay
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
 # 使用基础控件类型避免新增脚本的全局类缓存尚未刷新时阻塞战斗场景解析。
@@ -60,9 +60,9 @@ const VICTORY_RESULT_DELAY_SECONDS := 1.0
 @onready var qte_popup: Control = %QTEPopup
 @onready var end_turn_button: Button = %EndTurnButton
 @onready var gm_menu_button: Button = %GMMenuButton
-@onready var gm_overlay: ColorRect = %GMOverlay
+@onready var gm_overlay: TextureRect = %GMOverlay
 @onready var gm_skip_button: Button = %GMSkipButton
-@onready var result_overlay: ColorRect = %ResultOverlay
+@onready var result_overlay: TextureRect = %ResultOverlay
 @onready var result_title: Label = %ResultTitle
 @onready var result_detail: Label = %ResultDetail
 @onready var result_action_button: Button = %RestartButton
@@ -154,9 +154,9 @@ func _apply_metronome_style() -> void:
 	rhythm_waveform.visible = not use_circle
 
 
-# 战斗背景固定为参考界面的蓝灰球场色，避免章节色把上下信息区切成不同底色。
+# 战斗背景直接使用完整图片；保持白色调制可避免运行时染色破坏原始美术。
 func _apply_chapter_theme() -> void:
-	background.color = Color(0.17, 0.29, 0.45, 1.0)
+	background.self_modulate = Color.WHITE
 
 
 # 使用本局牌库和房间敌人重置战斗：路线地图进入的房间按房型从章节池选敌。

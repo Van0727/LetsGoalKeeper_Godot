@@ -105,6 +105,35 @@ func _run() -> void:
 	_assert_equal(qte_miss_audio_count[0], 1, "错误点击立即产生Miss音效反馈")
 	for note in battle.qte_popup._notes:
 		_assert_true(int(note.lane) >= 0 and int(note.lane) < 3, "每个音符只落在三条轨道之一")
+	for note_index in range(1, battle.qte_popup._notes.size()):
+		var previous_lane := int(battle.qte_popup._notes[note_index - 1].lane)
+		var current_lane := int(battle.qte_popup._notes[note_index].lane)
+		_assert_true(abs(current_lane - previous_lane) <= 1, "相邻音符不会跨过中间轨道")
+	_assert_true(
+		not (
+			battle.qte_popup._notes[0].lane == battle.qte_popup._notes[1].lane
+			and battle.qte_popup._notes[1].lane == battle.qte_popup._notes[2].lane
+			and battle.qte_popup._notes[2].lane == battle.qte_popup._notes[3].lane
+		),
+		"四个音符不会全部落在同一轨道"
+	)
+	# 多组固定种子覆盖随机边界，避免单次序列恰好未出现左右端互跳而漏检。
+	for sequence_seed in range(64):
+		battle.qte_popup._rng.seed = sequence_seed + 1
+		var lane_sequence: PackedInt32Array = battle.qte_popup._generate_lane_sequence()
+		for note_index in range(1, lane_sequence.size()):
+			_assert_true(
+				absi(lane_sequence[note_index] - lane_sequence[note_index - 1]) <= 1,
+				"任意随机种子的相邻音符轨道差不超过一格"
+			)
+		_assert_true(
+			not (
+				lane_sequence[0] == lane_sequence[1]
+				and lane_sequence[1] == lane_sequence[2]
+				and lane_sequence[2] == lane_sequence[3]
+			),
+			"任意随机种子都不会生成四连同轨"
+		)
 
 	# 分别覆盖Perfect、Good和超时Miss；其余音符精确击中后应进入统一完成流程。
 	var first_note: Dictionary = battle.qte_popup._notes[0]

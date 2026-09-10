@@ -1,6 +1,15 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_overlay.gd" id="1_pause"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/overlay_dark.png" id="2_overlay_art"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/top_status.png" id="3_panel_art"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/action_button.png" id="4_button_art"]
+
+[sub_resource type="StyleBoxTexture" id="Style_pause_panel"]
+texture = ExtResource("3_panel_art")
+
+[sub_resource type="StyleBoxTexture" id="Style_pause_button"]
+texture = ExtResource("4_button_art")
 
 [node name="PauseOverlay" type="CanvasLayer"]
 layer = 100
@@ -14,15 +23,20 @@ offset_top = 10.0
 offset_right = 350.0
 offset_bottom = 50.0
 text = "Ⅱ"
+theme_override_styles/normal = SubResource("Style_pause_button")
+theme_override_styles/hover = SubResource("Style_pause_button")
+theme_override_styles/pressed = SubResource("Style_pause_button")
 
-[node name="Shade" type="ColorRect" parent="."]
+[node name="Shade" type="TextureRect" parent="."]
 unique_name_in_owner = true
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.01, 0.02, 0.03, 0.78)
+texture = ExtResource("2_overlay_art")
+expand_mode = 1
+stretch_mode = 0
 
 [node name="PauseCenter" type="CenterContainer" parent="."]
 anchors_preset = 15
@@ -36,6 +50,7 @@ mouse_filter = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 360)
 layout_mode = 2
+theme_override_styles/panel = SubResource("Style_pause_panel")
 
 [node name="Margin" type="MarginContainer" parent="PauseCenter/PausePanel"]
 layout_mode = 2
@@ -58,21 +73,33 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
 text = "继续游戏"
+theme_override_styles/normal = SubResource("Style_pause_button")
+theme_override_styles/hover = SubResource("Style_pause_button")
+theme_override_styles/pressed = SubResource("Style_pause_button")
 
 [node name="SettingsButton" type="Button" parent="PauseCenter/PausePanel/Margin/Buttons"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "设置"
+theme_override_styles/normal = SubResource("Style_pause_button")
+theme_override_styles/hover = SubResource("Style_pause_button")
+theme_override_styles/pressed = SubResource("Style_pause_button")
 
 [node name="MainMenuButton" type="Button" parent="PauseCenter/PausePanel/Margin/Buttons"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "返回主菜单"
+theme_override_styles/normal = SubResource("Style_pause_button")
+theme_override_styles/hover = SubResource("Style_pause_button")
+theme_override_styles/pressed = SubResource("Style_pause_button")
 
 [node name="QuitButton" type="Button" parent="PauseCenter/PausePanel/Margin/Buttons"]
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 text = "退出游戏"
+theme_override_styles/normal = SubResource("Style_pause_button")
+theme_override_styles/hover = SubResource("Style_pause_button")
+theme_override_styles/pressed = SubResource("Style_pause_button")
 
 [node name="ConfirmCenter" type="CenterContainer" parent="."]
 anchors_preset = 15
@@ -86,6 +113,7 @@ mouse_filter = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(310, 230)
 layout_mode = 2
+theme_override_styles/panel = SubResource("Style_pause_panel")
 
 [node name="Margin" type="MarginContainer" parent="ConfirmCenter/ConfirmPanel"]
 layout_mode = 2
@@ -111,11 +139,17 @@ autowrap_mode = 2
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "确定"
+theme_override_styles/normal = SubResource("Style_pause_button")
+theme_override_styles/hover = SubResource("Style_pause_button")
+theme_override_styles/pressed = SubResource("Style_pause_button")
 
 [node name="CancelButton" type="Button" parent="ConfirmCenter/ConfirmPanel/Margin/Layout"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "取消"
+theme_override_styles/normal = SubResource("Style_pause_button")
+theme_override_styles/hover = SubResource("Style_pause_button")
+theme_override_styles/pressed = SubResource("Style_pause_button")
 
 [connection signal="pressed" from="PauseButton" to="." method="_on_pause_button_pressed"]
 [connection signal="pressed" from="PauseCenter/PausePanel/Margin/Buttons/ResumeButton" to="." method="_on_resume_pressed"]

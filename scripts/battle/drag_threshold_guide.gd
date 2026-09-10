@@ -1,10 +1,6 @@
-# 战斗拖拽阈值引导：仅在拖动卡牌时绘制横向虚线，并按越线状态显示释放提示。
+# 战斗拖拽阈值引导：使用图片显示横向阈值线，并按越线状态显示释放提示。
 class_name DragThresholdGuide
 extends Control
-
-const DASH_WIDTH := 13.0
-const DASH_GAP := 9.0
-const LINE_COLOR := Color(0.94, 0.96, 1.0, 0.9)
 
 @onready var prompt_label: Label = %PromptLabel
 
@@ -19,7 +15,6 @@ func _ready() -> void:
 func begin_drag() -> void:
 	show()
 	prompt_label.hide()
-	queue_redraw()
 
 
 # 卡牌越过阈值后才显示释放提示；返回线下时立即撤销提示。
@@ -31,11 +26,3 @@ func set_qualified(qualified: bool) -> void:
 func end_drag() -> void:
 	prompt_label.hide()
 	hide()
-
-
-# 用短线段绘制稳定的虚线，不依赖额外纹理资源并可随视口宽度自动延展。
-func _draw() -> void:
-	var x := 0.0
-	while x < size.x:
-		draw_line(Vector2(x, 0), Vector2(minf(x + DASH_WIDTH, size.x), 0), LINE_COLOR, 3.0)
-		x += DASH_WIDTH + DASH_GAP

@@ -2,6 +2,8 @@
 class_name CharacterDisplay
 extends PanelContainer
 
+const ENEMY_PANEL_TEXTURE := preload("res://assets/placeholders/enemy_area.png")
+
 enum BattleLayoutRole {
 	DEFAULT,
 	ENEMY,
@@ -29,12 +31,9 @@ func set_battle_layout_role(role: BattleLayoutRole) -> void:
 	match role:
 		BattleLayoutRole.ENEMY:
 			custom_minimum_size = Vector2(128, 178)
-			var enemy_panel := StyleBoxFlat.new()
-			enemy_panel.bg_color = Color(0.04, 0.08, 0.12, 0.32)
-			enemy_panel.corner_radius_top_left = 4
-			enemy_panel.corner_radius_top_right = 4
-			enemy_panel.corner_radius_bottom_left = 4
-			enemy_panel.corner_radius_bottom_right = 4
+			# 战斗紧凑布局继续复用图片面板，避免运行时重新绘制纯色圆角框。
+			var enemy_panel := StyleBoxTexture.new()
+			enemy_panel.texture = ENEMY_PANEL_TEXTURE
 			add_theme_stylebox_override("panel", enemy_panel)
 			margin.add_theme_constant_override("margin_left", 4)
 			margin.add_theme_constant_override("margin_top", 2)

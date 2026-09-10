@@ -1,4 +1,4 @@
-# 主动技节奏弹窗：在战斗界面内遮罩原有操作，按当前BGM生成三轨四音符并汇总判定结果。
+# 主动技节奏弹窗：用图片节点呈现三轨四音符，判定仍严格跟随当前BGM时钟。
 extends Control
 
 signal qte_finished(result: Dictionary)
@@ -14,11 +14,11 @@ const CLICK_ATTACK_SECONDS := 0.055
 const JUDGEMENT_VISIBLE_SECONDS := 0.42
 const TARGET_NOTE_RADIUS := 27.0
 const TARGET_HIT_RADIUS := 42.0
-const WAVE_BAR_COUNT := 72
-const WAVE_EDGE_COLOR := Color(0.25, 0.36, 0.78, 0.72)
-const WAVE_CENTER_COLOR := Color(0.28, 0.92, 0.92, 0.94)
 const QTE_CLICK_STREAM := preload("res://sound/sounds/qteClick.mp3")
 const MISS_STREAM := preload("res://sound/sounds/miss.mp3")
+const LANE_TEXTURE := preload("res://assets/placeholders/qte_lane.png")
+const TARGET_TEXTURE := preload("res://assets/placeholders/qte_target_ring.png")
+const NOTE_TEXTURE := preload("res://assets/placeholders/qte_note.png")
 const LANE_COLORS := [
 	Color(1.0, 0.3, 0.42),
 	Color(1.0, 0.78, 0.22),
@@ -39,14 +39,48 @@ var _judgement_text := ""
 var _judgement_age := JUDGEMENT_VISIBLE_SECONDS
 var _click_audio: AudioStreamPlayer
 var _miss_audio: AudioStreamPlayer
+var _lane_views: Array[TextureRect] = []
+var _target_views: Array[TextureRect] = []
+var _note_views: Array[TextureRect] = []
+var _judgement_label: Label
 
 
-# 弹窗常驻战斗UI树但默认隐藏，运行时只重绘轨道和音符，不创建或切换场景。
+# 弹窗常驻战斗UI树但默认隐藏；图片节点预先创建并循环复用，避免QTE中途分配资源。
 func _ready() -> void:
+	_create_visual_nodes()
 	_click_audio = _create_sfx_player("QTEClickAudio", QTE_CLICK_STREAM, 3)
 	_miss_audio = _create_sfx_player("QTEMissAudio", MISS_STREAM, 4)
 	hide()
 	set_process(false)
+
+
+# 三条轨道、目标圈和四个音符都由PNG节点承担显示，只有文字继续使用Label动态更新。
+func _create_visual_nodes() -> void:
+	for lane in range(LANE_COUNT):
+		var lane_view := _create_texture_view("Lane%d" % lane, LANE_TEXTURE)
+		var target_view := _create_texture_view("Target%d" % lane, TARGET_TEXTURE)
+		target_view.modulate = LANE_COLORS[lane]
+		_lane_views.append(lane_view)
+		_target_views.append(target_view)
+	for note_index in range(NOTE_COUNT):
+		_note_views.append(_create_texture_view("Note%d" % note_index, NOTE_TEXTURE))
+	_judgement_label = Label.new()
+	_judgement_label.name = "JudgementFeedback"
+	_judgement_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_judgement_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_judgement_label.add_theme_font_size_override("font_size", 22)
+	add_child(_judgement_label)
+
+
+func _create_texture_view(node_name: String, texture_resource: Texture2D) -> TextureRect:
+	var view := TextureRect.new()
+	view.name = node_name
+	view.texture = texture_resource
+	view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	view.stretch_mode = TextureRect.STRETCH_SCALE
+	view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(view)
+	return view
 
 
 # QTE音效统一进入SFX总线；有限多声部允许快速连点或低帧率补记多个Miss时保留反馈。
@@ -78,17 +112,39 @@ func start_qte(rhythm_clock: Node, seed_value: int = 0, target_line_y: float = 2
 	_target_pulse_ages = PackedFloat32Array([-1.0, -1.0, -1.0])
 	_judgement_text = ""
 	_judgement_age = JUDGEMENT_VISIBLE_SECONDS
+	var lane_sequence := _generate_lane_sequence()
 	for note_index in range(NOTE_COUNT):
 		_notes.append({
-			"lane": _rng.randi_range(0, LANE_COUNT - 1),
+			"lane": lane_sequence[note_index],
 			"target_time": _first_target_time + beat_duration * NOTE_INTERVAL_BEATS * note_index,
 			"judged": false,
 		})
 	_running = true
 	show()
 	set_process(true)
-	queue_redraw()
+	_refresh_visual_nodes()
 	return true
+
+
+# 首音允许全轨随机；后续只选上一轨及相邻轨。前三音可同轨，但第四音不得形成四连同轨。
+func _generate_lane_sequence() -> PackedInt32Array:
+	var lanes := PackedInt32Array()
+	if NOTE_COUNT <= 0:
+		return lanes
+	lanes.append(_rng.randi_range(0, LANE_COUNT - 1))
+	for note_index in range(1, NOTE_COUNT):
+		var previous_lane: int = lanes[note_index - 1]
+		lanes.append(_rng.randi_range(
+			maxi(previous_lane - 1, 0),
+			mini(previous_lane + 1, LANE_COUNT - 1)
+		))
+	if lanes.size() == 4 and lanes[0] == lanes[1] and lanes[1] == lanes[2] and lanes[2] == lanes[3]:
+		# 前三个保持合法的同轨结果，只把末音移到相邻轨；中轨仍随机选择左右方向。
+		if lanes[3] == 1:
+			lanes[3] = 0 if _rng.randi_range(0, 1) == 0 else 2
+		else:
+			lanes[3] = 1
+	return lanes
 
 
 # 每帧依据音乐绝对时间计算位置并补记越过窗口的Miss，同时推进点击动画和判定浮字。
@@ -105,7 +161,7 @@ func _process(delta: float) -> void:
 	for note in _notes:
 		if not bool(note.judged) and music_time > float(note.target_time) + _good_window_seconds:
 			_apply_judgement(note, "Miss")
-	queue_redraw()
+	_refresh_visual_nodes()
 	if _judged_count() == NOTE_COUNT:
 		_finish_qte()
 
@@ -200,6 +256,7 @@ func _apply_judgement(note: Dictionary, grade: String) -> void:
 func _show_judgement(grade: String) -> void:
 	_judgement_text = grade
 	_judgement_age = 0.0
+	_refresh_visual_nodes()
 
 
 # 点击时机错误和音符自然超时共用出牌Miss音效。
@@ -225,8 +282,8 @@ func _finish_qte() -> void:
 	qte_finished.emit(result)
 
 
-# 绘制三条轨道、底部判定圆和活动音符；位置只由目标拍点和播放头差值决定。
-func _draw() -> void:
+# 刷新图片节点的位置与颜色；时间和判定数据保持原顺序，不参与视觉节点布局计算。
+func _refresh_visual_nodes() -> void:
 	if not _running or _rhythm_clock == null:
 		return
 	var play_area := _get_play_area()
@@ -234,14 +291,21 @@ func _draw() -> void:
 	var beat_duration: float = _rhythm_clock.get_beat_duration()
 	var travel_seconds := beat_duration * TRAVEL_BEATS
 	var music_time: float = _rhythm_clock.get_music_time()
-	_draw_waveform_target_line(play_area, target_y)
 	for lane in range(LANE_COUNT):
 		var lane_x := _get_lane_x(play_area, lane)
-		draw_line(Vector2(lane_x, play_area.position.y), Vector2(lane_x, target_y), Color(0.45, 0.78, 1.0, 0.42), 3.0)
+		var lane_view := _lane_views[lane]
+		lane_view.position = Vector2(lane_x - 1.5, play_area.position.y)
+		lane_view.size = Vector2(3.0, target_y - play_area.position.y)
+		lane_view.modulate = Color(LANE_COLORS[lane], 0.42)
 		var target_radius := TARGET_NOTE_RADIUS * _get_target_pulse_scale(lane)
-		draw_circle(Vector2(lane_x, target_y), target_radius, Color(LANE_COLORS[lane], 0.32))
-		draw_arc(Vector2(lane_x, target_y), target_radius, 0.0, TAU, 40, LANE_COLORS[lane], 4.0)
-	for note in _notes:
+		var target_view := _target_views[lane]
+		target_view.position = Vector2(lane_x, target_y) - Vector2.ONE * target_radius
+		target_view.size = Vector2.ONE * target_radius * 2.0
+		target_view.modulate = LANE_COLORS[lane]
+	for note_index in range(_notes.size()):
+		var note: Dictionary = _notes[note_index]
+		var note_view := _note_views[note_index]
+		note_view.hide()
 		if bool(note.judged):
 			continue
 		var time_until_target: float = float(note.target_time) - music_time
@@ -251,9 +315,11 @@ func _draw() -> void:
 		var lane: int = int(note.lane)
 		var note_x := _get_lane_x(play_area, lane)
 		var note_y := lerpf(play_area.position.y, target_y, progress)
-		draw_circle(Vector2(note_x, note_y), 17.0, LANE_COLORS[lane])
-		draw_arc(Vector2(note_x, note_y), 20.0, 0.0, TAU, 32, Color.WHITE, 3.0)
-	_draw_judgement_feedback(target_y)
+		note_view.position = Vector2(note_x, note_y) - Vector2.ONE * 20.0
+		note_view.size = Vector2.ONE * 40.0
+		note_view.modulate = LANE_COLORS[lane]
+		note_view.show()
+	_refresh_judgement_label(target_y)
 
 
 # 点击动画先在55毫秒内放大到1.28倍，再快速回弹至原尺寸。
@@ -267,9 +333,10 @@ func _get_target_pulse_scale(lane: int) -> float:
 	return lerpf(1.28, 1.0, clampf(release_progress, 0.0, 1.0))
 
 
-# Perfect、Good、Miss短暂悬浮在横线上方，颜色沿用既有节奏反馈且不增加边框控件。
-func _draw_judgement_feedback(target_y: float) -> void:
+# Perfect、Good、Miss由Label短暂悬浮在目标线上方，避免把动态文字烘焙进图片。
+func _refresh_judgement_label(target_y: float) -> void:
 	if _judgement_text.is_empty() or _judgement_age >= JUDGEMENT_VISIBLE_SECONDS:
+		_judgement_label.hide()
 		return
 	var color := Color(1.0, 0.4, 0.42)
 	if _judgement_text == "Perfect":
@@ -277,30 +344,11 @@ func _draw_judgement_feedback(target_y: float) -> void:
 	elif _judgement_text == "Good":
 		color = Color(0.35, 0.82, 1.0)
 	color.a = 1.0 - _judgement_age / JUDGEMENT_VISIBLE_SECONDS
-	var font := ThemeDB.fallback_font
-	var text_size := font.get_string_size(_judgement_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 22)
-	draw_string(
-		font,
-		Vector2((size.x - text_size.x) * 0.5, target_y - 48.0),
-		_judgement_text,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1.0,
-		22,
-		color
-	)
-
-
-# QTE横线复制原波形静止中心线的72段蓝青渐变，且宽度与波形控件的8%～92%范围一致。
-func _draw_waveform_target_line(play_area: Rect2, target_y: float) -> void:
-	var spacing: float = play_area.size.x / float(WAVE_BAR_COUNT)
-	var bar_width: float = maxf(spacing * 0.42, 1.0)
-	for bar_index in range(WAVE_BAR_COUNT):
-		var normalized_x := (float(bar_index) + 0.5) / float(WAVE_BAR_COUNT)
-		var center_weight := 1.0 - absf(normalized_x * 2.0 - 1.0)
-		var color := WAVE_EDGE_COLOR.lerp(WAVE_CENTER_COLOR, center_weight)
-		color.a *= 0.18
-		var x := play_area.position.x + (float(bar_index) + 0.5) * spacing
-		draw_line(Vector2(x, target_y - 0.5), Vector2(x, target_y + 0.5), color, bar_width, true)
+	_judgement_label.text = _judgement_text
+	_judgement_label.position = Vector2(0.0, target_y - 70.0)
+	_judgement_label.size = Vector2(size.x, 32.0)
+	_judgement_label.modulate = color
+	_judgement_label.show()
 
 
 func _get_play_area() -> Rect2:

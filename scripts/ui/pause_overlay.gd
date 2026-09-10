@@ -6,7 +6,7 @@ const SETTINGS_SCREEN := preload("res://scenes/settings_screen.tscn")
 enum ConfirmAction { NONE, MAIN_MENU, QUIT_GAME }
 
 @onready var pause_button: Button = %PauseButton
-@onready var shade: ColorRect = %Shade
+@onready var shade: TextureRect = %Shade
 @onready var pause_panel: PanelContainer = %PausePanel
 @onready var confirm_panel: PanelContainer = %ConfirmPanel
 @onready var confirm_label: Label = %ConfirmLabel

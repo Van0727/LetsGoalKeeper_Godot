@@ -1,10 +1,23 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/character_display.gd" id="1_display"]
-[ext_resource type="Texture2D" path="res://icon.svg" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/enemy_goalkeeper.png" id="2_portrait"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/enemy_area.png" id="3_panel_art"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/resource_and_combo.png" id="4_health_background"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/health_bar_fill.png" id="5_health_fill"]
+
+[sub_resource type="StyleBoxTexture" id="Style_character_panel"]
+texture = ExtResource("3_panel_art")
+
+[sub_resource type="StyleBoxTexture" id="Style_health_background"]
+texture = ExtResource("4_health_background")
+
+[sub_resource type="StyleBoxTexture" id="Style_health_fill"]
+texture = ExtResource("5_health_fill")
 
 [node name="CharacterDisplay" type="PanelContainer"]
 custom_minimum_size = Vector2(145, 185)
+theme_override_styles/panel = SubResource("Style_character_panel")
 script = ExtResource("1_display")
 
 [node name="Margin" type="MarginContainer" parent="."]
@@ -47,6 +60,8 @@ custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 value = 100.0
 show_percentage = false
+theme_override_styles/background = SubResource("Style_health_background")
+theme_override_styles/fill = SubResource("Style_health_fill")
 
 [node name="HealthLabel" type="Label" parent="Margin/Content"]
 unique_name_in_owner = true

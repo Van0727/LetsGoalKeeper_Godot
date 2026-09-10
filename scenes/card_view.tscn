@@ -1,32 +1,18 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/card_view.gd" id="1_card"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/card_background.png" id="2_card_art"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/icon_energy.png" id="3_cost_art"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/resource_and_combo.png" id="4_shot_art"]
 
-[sub_resource type="StyleBoxFlat" id="Style_card"]
-bg_color = Color(0.94, 0.95, 0.88, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.13, 0.2, 0.25, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+[sub_resource type="StyleBoxTexture" id="Style_card"]
+texture = ExtResource("2_card_art")
 
-[sub_resource type="StyleBoxFlat" id="Style_cost"]
-bg_color = Color(0.12, 0.43, 0.76, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+[sub_resource type="StyleBoxTexture" id="Style_cost"]
+texture = ExtResource("3_cost_art")
 
-[sub_resource type="StyleBoxFlat" id="Style_shot"]
-bg_color = Color(0.12, 0.18, 0.22, 0.12)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+[sub_resource type="StyleBoxTexture" id="Style_shot"]
+texture = ExtResource("4_shot_art")
 
 [node name="CardView" type="PanelContainer"]
 custom_minimum_size = Vector2(104, 146)
