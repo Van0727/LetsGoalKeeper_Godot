@@ -1,4 +1,4 @@
-# 主菜单继续按钮测试：移除状态文字后，仍验证进行中、失败和通关状态的启用边界。
+# 主菜单入口测试：验证临时遮罩层级，以及继续按钮在不同本局状态下的启用边界。
 extends SceneTree
 
 const MAIN_MENU_SCENE := preload("res://scenes/main_menu.tscn")
@@ -18,6 +18,11 @@ func _run() -> void:
 	root.add_child(menu)
 	await process_frame
 	var run_state: Node = root.get_node("RunState")
+	var test_mask := menu.get_node("TempCompanyTestMask") as ColorRect
+	_assert_true(test_mask.visible, "公司测试临时遮罩默认可见")
+	_assert_true(test_mask.mouse_filter == Control.MOUSE_FILTER_STOP, "临时遮罩拦截下层界面输入")
+	_assert_true(test_mask.get_index() < menu.start_button.get_index(), "开始按钮绘制在临时遮罩上方")
+	_assert_true(test_mask.get_index() < menu.continue_button.get_index(), "继续按钮绘制在临时遮罩上方")
 
 	run_state.start_new_run(7001)
 	run_state.chapter = 2

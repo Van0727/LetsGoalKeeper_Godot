@@ -134,6 +134,18 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "卡牌拖拽测试"
 
+[node name="TempCompanyTestMask" type="ColorRect" parent="."]
+unique_name_in_owner = true
+editor_description = "公司临时测试遮罩：覆盖除 Start 和 Continue 外的主界面内容，测试结束后可直接删除此节点。"
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0.015, 0.02, 0.025, 1)
+
 [node name="ContinueButton" type="Button" parent="." unique_id=1364573097]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 53.365)

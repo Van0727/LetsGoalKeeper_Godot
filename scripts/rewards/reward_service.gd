@@ -7,6 +7,7 @@ const COMMON_CARD_IDS: Array[String] = [
 	"card_attack_and_defend", "card_explosion_ball", "card_run_up", "card_weakness",
 	"card_bloodthirsty_ball", "card_spiked_ball", "card_rugby_ball", "card_gloves",
 	"card_sports_drink", "card_towel",
+	"card_pitch_up", "card_pitch_down", "card_pitch_reset",
 ]
 const BOSS_CARD_IDS: Array[String] = [
 	"card_energy_shot", "card_shot_group", "card_double_banana_shot",

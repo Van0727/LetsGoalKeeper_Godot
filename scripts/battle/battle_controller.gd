@@ -8,6 +8,8 @@ signal state_changed
 # 表现层逐条消费结构化事件；事件携带结算后快照，允许界面按动画顺序延迟显示。
 signal effect_resolved(event: Dictionary)
 signal battle_finished(victory: bool)
+# 纪律牌只报告本回合成功出牌数；红牌的实际回合推进由表现层在当前卡牌动画结束后提交。
+signal discipline_card_issued(card_color: String, played_count: int)
 
 const COMBATANT_STATE := preload("res://scripts/battle/combatant_state.gd")
 const EFFECT_RESOLVER := preload("res://scripts/battle/effect_resolver.gd")
@@ -19,6 +21,8 @@ const PLAYER_MAX_HEALTH := 100
 const PLAYER_MAX_ENERGY := 3
 const ENEMY_MAX_HEALTH := 30
 const ENEMY_BASE_DAMAGE := 8
+const YELLOW_CARD_THRESHOLD := 5
+const RED_CARD_THRESHOLD := 10
 
 # 战斗阶段限制玩家只能在自己的行动阶段操作。
 enum Phase {
@@ -41,6 +45,8 @@ var damage_modifiers: Dictionary = {}
 var current_enemy_definition: Resource
 var current_enemy_action: Resource
 var combo_state := COMBO_STATE.new()
+var player_cards_played_this_turn := 0
+var red_card_pending := false
 
 var _rng := RandomNumberGenerator.new()
 var _effect_resolver = EFFECT_RESOLVER.new()
@@ -65,6 +71,8 @@ func setup(seed_value := 20260902, enemy_definition: Resource = null, run_damage
 	current_enemy_action = null
 	_enemy_action_index = 0
 	combo_state = COMBO_STATE.new()
+	player_cards_played_this_turn = 0
+	red_card_pending = false
 	turn_number = 1
 	phase = Phase.NOT_STARTED
 	_log("战斗开始，seed=%d" % battle_seed)
@@ -180,6 +188,7 @@ func play_card(
 	elif enemy.is_dead():
 		_finish_battle(true)
 	else:
+		_register_successful_card_play()
 		state_changed.emit()
 	return true
 
@@ -283,11 +292,24 @@ func commit_deferred_damage(event: Dictionary) -> bool:
 func end_player_turn() -> bool:
 	if not _can_player_act():
 		return false
+	_end_player_turn()
+	return true
+
+
+# 红牌只允许在第20张牌完整表现后消费；普通调用不能绕过待结算状态重复推进回合。
+func force_end_turn_for_red_card() -> bool:
+	if not red_card_pending or phase != Phase.PLAYER_TURN:
+		return false
+	red_card_pending = false
+	_end_player_turn()
+	return true
+
+
+func _end_player_turn() -> void:
 	phase = Phase.PLAYER_END
 	_log("玩家结束第 %d 回合" % turn_number)
 	_advance_strength_status(player)
 	_execute_enemy_turn()
-	return true
 
 
 # 返回供界面显示的中文阶段名称。
@@ -307,6 +329,9 @@ func get_phase_text() -> String:
 
 # 玩家回合开始时清盾、回满能量并选定一次敌人行动及其最终随机值。
 func _start_player_turn() -> void:
+	# 每个玩家回合独立计数；黄牌不会跨回合累计，红牌也不能泄漏到下一回合。
+	player_cards_played_this_turn = 0
+	red_card_pending = false
 	var cleared_shield := player.clear_shield()
 	var restored_energy := player.refill_energy()
 	phase = Phase.PLAYER_TURN
@@ -501,10 +526,25 @@ func _advance_strength_status(combatant) -> void:
 
 # 统一拦截错误阶段的玩家操作并写入日志。
 func _can_player_act() -> bool:
-	if phase == Phase.PLAYER_TURN:
+	if phase == Phase.PLAYER_TURN and not red_card_pending:
 		return true
+	if red_card_pending:
+		_log("已被出示红牌，必须结束当前回合")
+		return false
 	_log("当前阶段不能执行玩家行动")
 	return false
+
+
+# 只有完整支付费用并成功结算的牌才计数；阈值使用等号保证每回合各提示一次。
+func _register_successful_card_play() -> void:
+	player_cards_played_this_turn += 1
+	if player_cards_played_this_turn == RED_CARD_THRESHOLD:
+		red_card_pending = true
+		_log("红牌！本回合已打出 %d 张牌，当前卡牌结算后强制结束回合" % player_cards_played_this_turn)
+		discipline_card_issued.emit("red", player_cards_played_this_turn)
+	elif player_cards_played_this_turn == YELLOW_CARD_THRESHOLD:
+		_log("黄牌警告！本回合已打出 %d 张牌" % player_cards_played_this_turn)
+		discipline_card_issued.emit("yellow", player_cards_played_this_turn)
 
 
 # 锁定战斗状态、清除意图并广播最终胜负。
@@ -540,6 +580,13 @@ func _log_effect_event(event: Dictionary) -> void:
 			_log("效果：力量变为 ×%.1f，持续 %d 回合" % [event.multiplier, event.turns])
 		"weakness":
 			_log("效果：虚弱变为 ×%.1f，持续 %d 回合" % [event.multiplier, event.turns])
+		"bgm_pitch":
+			if event.get("reset", false):
+				_log("效果：BGM 恢复原调")
+			else:
+				_log("效果：BGM %s 1 个半音" % (
+					"升高" if event.get("semitone_delta", 0) > 0 else "降低"
+				))
 		"chance":
 			_log("效果：概率判定 %d/%d，%s" % [
 				event.roll,

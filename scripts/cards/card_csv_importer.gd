@@ -70,7 +70,7 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 	var delay := _parse_float(row[7], 0.0, 16.0, "攻击延迟拍数", line_number, errors)
 	var interval := _parse_float(row[8], 0.0, 16.0, "多段攻击间隔拍数", line_number, errors)
 	var effect_index := _parse_uint(row[9], 1, 255, "效果序号", line_number, errors)
-	var effect_type := _map_value(row[10], {1: EFFECT_DEFINITION.EffectType.DAMAGE, 2: EFFECT_DEFINITION.EffectType.SHIELD, 3: EFFECT_DEFINITION.EffectType.HEAL, 4: EFFECT_DEFINITION.EffectType.ENERGY, 5: EFFECT_DEFINITION.EffectType.APPLY_STRENGTH, 6: EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS}, "效果类型", line_number, errors)
+	var effect_type := _map_value(row[10], {1: EFFECT_DEFINITION.EffectType.DAMAGE, 2: EFFECT_DEFINITION.EffectType.SHIELD, 3: EFFECT_DEFINITION.EffectType.HEAL, 4: EFFECT_DEFINITION.EffectType.ENERGY, 5: EFFECT_DEFINITION.EffectType.APPLY_STRENGTH, 6: EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS, 7: EFFECT_DEFINITION.EffectType.BGM_PITCH_UP, 8: EFFECT_DEFINITION.EffectType.BGM_PITCH_DOWN, 9: EFFECT_DEFINITION.EffectType.BGM_PITCH_RESET}, "效果类型", line_number, errors)
 	var target := _map_value(row[11], {1: EFFECT_DEFINITION.Target.SELF, 2: EFFECT_DEFINITION.Target.ENEMY}, "效果目标", line_number, errors)
 	var amount := _parse_uint(row[12], 0, 999, "基础数值", line_number, errors)
 	var hits := _parse_uint(row[13], 1, 99, "生效次数", line_number, errors)

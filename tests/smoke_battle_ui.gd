@@ -80,6 +80,13 @@ func _run() -> void:
 		"Miss播放器绑定指定音效"
 	)
 	_assert_equal(battle_screen._miss_audio.bus, &"SFX", "Miss音效进入SFX总线")
+	battle_screen._on_discipline_card_issued("yellow", 10)
+	_assert_true(battle_screen.card_warning_overlay.visible, "黄牌触发可见警告UI")
+	_assert_true("10" in battle_screen.card_warning_label.text, "黄牌警告显示本回合出牌数")
+	battle_screen._on_discipline_card_issued("red", 20)
+	_assert_true(battle_screen.card_warning_overlay.visible, "红牌触发可见警告UI")
+	_assert_true("强制结束回合" in battle_screen.card_warning_label.text, "红牌警告说明处罚结果")
+	battle_screen.card_warning_overlay.hide()
 	var miss_audio_count := [0]
 	battle_screen.miss_audio_triggered.connect(func() -> void: miss_audio_count[0] += 1)
 	var miss_result := {"grade": battle_screen.rhythm_clock.JudgementGrade.MISS}

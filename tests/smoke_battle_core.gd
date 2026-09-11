@@ -21,6 +21,9 @@ const RUGBY_BALL := preload("res://data/cards/card_rugby_ball.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const SPORTS_DRINK := preload("res://data/cards/card_sports_drink.tres")
 const TOWEL := preload("res://data/cards/card_towel.tres")
+const PITCH_UP := preload("res://data/cards/card_pitch_up.tres")
+const PITCH_DOWN := preload("res://data/cards/card_pitch_down.tres")
+const PITCH_RESET := preload("res://data/cards/card_pitch_reset.tres")
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const EFFECT_DEFINITION := preload("res://scripts/cards/effect_definition.gd")
 const RHYTHM_CLOCK := preload("res://scripts/battle/rhythm_clock.gd")
@@ -47,12 +50,62 @@ func _run() -> void:
 	_test_effect_order()
 	_test_deterministic_seed()
 	_test_rhythm_judgement_and_damage()
+	_test_bgm_pitch_card_events()
+	_test_discipline_cards_and_forced_turn_end()
 
 	if _failed:
 		quit(1)
 		return
 	print("smoke_battle_core: PASS")
 	quit()
+
+
+# 验证三张音调牌生成准确事件；实际音频变化由战斗表现层消费，核心测试无需音频设备。
+func _test_bgm_pitch_card_events() -> void:
+	var resolver = preload("res://scripts/battle/effect_resolver.gd").new()
+	var source = COMBATANT_STATE.new("玩家", 10, 3)
+	var target = COMBATANT_STATE.new("敌人", 10)
+	var up_events: Array[Dictionary] = resolver.resolve_card(PITCH_UP, source, target)
+	var down_events: Array[Dictionary] = resolver.resolve_card(PITCH_DOWN, source, target)
+	var reset_events: Array[Dictionary] = resolver.resolve_card(PITCH_RESET, source, target)
+	_assert_equal(up_events[0].get("semitone_delta"), 1, "升调牌产生升高一个半音事件")
+	_assert_equal(down_events[0].get("semitone_delta"), -1, "降调牌产生降低一个半音事件")
+	_assert_true(reset_events[0].get("reset", false), "原调牌产生恢复原调事件")
+
+
+# 验证成功出牌才累计纪律计数，第10张黄牌、第20张红牌，并在消费红牌后推进回合且重置。
+func _test_discipline_cards_and_forced_turn_end() -> void:
+	var battle = BATTLE_CONTROLLER.new()
+	root.add_child(battle)
+	battle.setup(20260911)
+	var free_card = CARD_DEFINITION.new()
+	free_card.card_id = "card_discipline_test"
+	free_card.display_name = "纪律测试牌"
+	free_card.cost = 0
+	free_card.card_type = CARD_DEFINITION.CardType.ABILITY
+	var unaffordable_card = CARD_DEFINITION.new()
+	unaffordable_card.display_name = "无法支付的纪律测试牌"
+	unaffordable_card.cost = 4
+	_assert_true(not battle.play_card(unaffordable_card), "能量不足的牌不能打出")
+	_assert_equal(battle.player_cards_played_this_turn, 0, "失败出牌不累计纪律计数")
+	var issued_colors: Array[String] = []
+	battle.discipline_card_issued.connect(func(color: String, _count: int) -> void: issued_colors.append(color))
+	for _index in range(9):
+		_assert_true(battle.play_card(free_card), "前9张测试牌可正常打出")
+	_assert_equal(issued_colors.size(), 0, "第9张牌前不触发纪律警告")
+	_assert_true(battle.play_card(free_card), "第10张测试牌可正常打出")
+	_assert_equal(issued_colors, ["yellow"], "第10张牌只触发一次黄牌")
+	for _index in range(10):
+		_assert_true(battle.play_card(free_card), "黄牌后仍可继续出牌直到红牌")
+	_assert_equal(issued_colors, ["yellow", "red"], "第20张牌触发红牌")
+	_assert_true(battle.red_card_pending, "红牌等待当前牌表现完成")
+	_assert_true(not battle.play_card(free_card), "红牌后不能继续出牌")
+	var previous_turn: int = battle.turn_number
+	_assert_true(battle.force_end_turn_for_red_card(), "表现层可消费红牌并强制结束回合")
+	_assert_equal(battle.turn_number, previous_turn + 1, "红牌强制推进到下一回合")
+	_assert_equal(battle.player_cards_played_this_turn, 0, "新回合清空出牌计数")
+	_assert_true(not battle.red_card_pending, "新回合清除红牌状态")
+	battle.free()
 
 
 # 验证护盾优先吸收、生命扣减和治疗上限。

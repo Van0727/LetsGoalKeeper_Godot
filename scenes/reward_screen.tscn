@@ -1,18 +1,26 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/rewards/reward_screen.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="2_pause"]
-[sub_resource type="StyleBoxFlat" id="panel"]
-bg_color = Color(0.07, 0.12, 0.16, 0.96)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.95, 0.78, 0.25, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
+[ext_resource type="Texture2D" path="res://assets/placeholders/card_left.png" id="3_left"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/card_center.png" id="4_center"]
+[ext_resource type="Texture2D" path="res://assets/placeholders/card_right.png" id="5_right"]
+[ext_resource type="PackedScene" path="res://scenes/card_view.tscn" id="6_card_view"]
+[sub_resource type="StyleBoxTexture" id="card_left"]
+texture = ExtResource("3_left")
+
+[sub_resource type="StyleBoxTexture" id="card_center"]
+texture = ExtResource("4_center")
+
+[sub_resource type="StyleBoxTexture" id="card_right"]
+texture = ExtResource("5_right")
+
+[sub_resource type="StyleBoxFlat" id="confirm"]
+bg_color = Color(0.95, 0.55, 0.12, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="RewardScreen" type="Control"]
 layout_mode = 3
@@ -73,35 +81,83 @@ theme_override_font_sizes/font_size = 15
 text = "选择1张加入本局牌库"
 horizontal_alignment = 1
 
-[node name="Choices" type="VBoxContainer" parent="Margin/Layout"]
+[node name="Choices" type="HBoxContainer" parent="Margin/Layout"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 6
 alignment = 1
 
 [node name="Choice0" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 110)
+custom_minimum_size = Vector2(104, 146)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("panel")
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("card_left")
+flat = true
 text = "奖励一"
+
+[node name="RewardCard0" parent="Margin/Layout/Choices/Choice0" instance=ExtResource("6_card_view")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="Choice1" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 110)
+custom_minimum_size = Vector2(104, 146)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("panel")
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("card_center")
+flat = true
 text = "奖励二"
+
+[node name="RewardCard1" parent="Margin/Layout/Choices/Choice1" instance=ExtResource("6_card_view")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="Choice2" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 110)
+custom_minimum_size = Vector2(104, 146)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("panel")
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("card_right")
+flat = true
 text = "奖励三"
+
+[node name="RewardCard2" parent="Margin/Layout/Choices/Choice2" instance=ExtResource("6_card_view")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ConfirmButton" type="Button" parent="Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(156, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.04, 0.08, 0.1, 1)
+theme_override_colors/font_disabled_color = Color(0.25, 0.29, 0.31, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_styles/normal = SubResource("confirm")
+disabled = true
+text = "确认获得"
 
 [node name="RunLabel" type="Label" parent="Margin/Layout"]
 unique_name_in_owner = true

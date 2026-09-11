@@ -37,6 +37,9 @@ func _run() -> void:
 	var second_cards := service.generate_card_choices(false, second_rng)
 	_assert_equal(first_cards.size(), 3, "普通战斗生成三张卡牌")
 	_assert_equal(_definition_ids(first_cards, "card_id"), _definition_ids(second_cards, "card_id"), "相同seed奖励一致")
+	_assert_true("card_pitch_up" in service.COMMON_CARD_IDS, "升调牌进入普通奖励池")
+	_assert_true("card_pitch_down" in service.COMMON_CARD_IDS, "降调牌进入普通奖励池")
+	_assert_true("card_pitch_reset" in service.COMMON_CARD_IDS, "原调牌进入普通奖励池")
 	_run_state.add_card(first_cards[0].card_id)
 	_assert_equal(_run_state.deck_card_ids.size(), 13, "奖励卡加入本局牌库")
 

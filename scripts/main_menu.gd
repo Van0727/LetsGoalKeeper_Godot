@@ -14,6 +14,8 @@ const LOGO_PULSE_SCALE := 1.08
 const ENEMY_PULSE_SCALE := 1.2
 const BALL_PULSE_SCALE := 1.2
 const BUTTON_PULSE_SCALE := 1.05
+const START_BUTTON_WITH_CONTINUE_POSITION := Vector2(26.0, 503.0)
+const START_BUTTON_WITHOUT_CONTINUE_POSITION := Vector2(26.0, 529.0)
 # 怪物透明像素的视觉重心约位于高度 60%，用它缩放可避免主体上下漂移形成抖动感。
 const ENEMY_PIVOT_RATIO := Vector2(0.5, 0.6)
 
@@ -90,11 +92,12 @@ func _on_main_beat_reached(_beat_index: int) -> void:
 				_start_button_pulse_tween,
 				BUTTON_PULSE_SCALE
 			)
-			_continue_button_pulse_tween = _restart_pulse(
-				continue_button,
-				_continue_button_pulse_tween,
-				BUTTON_PULSE_SCALE
-			)
+			if continue_button.visible:
+				_continue_button_pulse_tween = _restart_pulse(
+					continue_button,
+					_continue_button_pulse_tween,
+					BUTTON_PULSE_SCALE
+				)
 
 
 # 只中断本拍再次触发的对象；跳过的拍数不会破坏其他对象尚未结束的回落动画。
@@ -115,13 +118,23 @@ func _create_pulse_tween(control: Control, peak_scale: float) -> Tween:
 	return pulse_tween
 
 
-# 主菜单不再显示本局状态文字，仅按存档状态控制继续按钮是否可用。
+# 主菜单仅在存在可恢复进度时显示继续入口；隐藏后将开始按钮下移填补视觉空位。
 func refresh_continue_availability() -> void:
 	var run_state := get_node("/root/RunState")
-	continue_button.disabled = (
-		run_state.is_placeholder_run
-		or run_state.run_status != run_state.RunStatus.ACTIVE
-		or run_state.map_state == null
+	var save_service = get_node_or_null("/root/SaveService")
+	var has_continue_save: bool = (
+		save_service != null
+		and save_service.has_valid_save()
+		and not run_state.is_placeholder_run
+		and run_state.run_status == run_state.RunStatus.ACTIVE
+		and run_state.map_state != null
+	)
+	continue_button.visible = has_continue_save
+	continue_button.disabled = not has_continue_save
+	start_button.position = (
+		START_BUTTON_WITH_CONTINUE_POSITION
+		if has_continue_save
+		else START_BUTTON_WITHOUT_CONTINUE_POSITION
 	)
 
 

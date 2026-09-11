@@ -94,6 +94,13 @@ func resolve_card(
 					"turns": weakness_turns,
 					"target": recipient,
 				})
+			EFFECT_DEFINITION.EffectType.BGM_PITCH_UP:
+				# 音调效果只产出表现事件，不让无场景依赖的核心结算器直接访问全局音频节点。
+				events.append({"type": "bgm_pitch", "semitone_delta": 1, "reset": false})
+			EFFECT_DEFINITION.EffectType.BGM_PITCH_DOWN:
+				events.append({"type": "bgm_pitch", "semitone_delta": -1, "reset": false})
+			EFFECT_DEFINITION.EffectType.BGM_PITCH_RESET:
+				events.append({"type": "bgm_pitch", "semitone_delta": 0, "reset": true})
 			_:
 				events.append({"type": "unsupported", "effect_type": effect.effect_type})
 

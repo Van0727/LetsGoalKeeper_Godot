@@ -18,6 +18,7 @@ var _last_main_music_time := 0.0
 var _last_main_raw_time := 0.0
 var _main_loop_offset := 0.0
 var _output_latency := 0.0
+var _battle_pitch_semitones := 0
 
 
 # 常驻播放器分别承载循环 BGM 与一次性切曲音效，避免场景销毁导致切换音效中断。
@@ -121,8 +122,34 @@ func start_battle_bgm(source_music: AudioStream) -> AudioStreamPlayer:
 		battle_mp3_stream.loop = true
 	_battle_player.stop()
 	_battle_player.stream = runtime_battle_bgm
+	# 每场战斗从原调开始，避免上一场或奖励页保留的变调泄漏到新战斗。
+	reset_battle_pitch()
 	_battle_player.play()
 	return _battle_player
+
+
+# 以十二平均律累计改变战斗 BGM；AudioStreamPlayer 的 pitch_scale 会同步改变音高与速度。
+func shift_battle_pitch(semitone_delta: int) -> int:
+	_battle_pitch_semitones += semitone_delta
+	_apply_battle_pitch()
+	return _battle_pitch_semitones
+
+
+# “原调”无条件回到资源的原始采样率，不依赖此前累计了多少次升降调。
+func reset_battle_pitch() -> void:
+	_battle_pitch_semitones = 0
+	_apply_battle_pitch()
+
+
+# 暴露整数半音状态，供界面提示和自动化测试核对累计规则。
+func get_battle_pitch_semitones() -> int:
+	return _battle_pitch_semitones
+
+
+# 把累计半音数转换成采样率倍率；每增加十二个半音恰好升高一个八度。
+func _apply_battle_pitch() -> void:
+	if _battle_player != null:
+		_battle_player.pitch_scale = pow(2.0, _battle_pitch_semitones / 12.0)
 
 
 # 关卡点击后在原场景内完成切曲，调用方只能在音效结束后再加载战斗场景。

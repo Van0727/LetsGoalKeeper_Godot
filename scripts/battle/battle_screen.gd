@@ -54,6 +54,8 @@ const VICTORY_RESULT_DELAY_SECONDS := 1.0
 @onready var intent_label: Label = %IntentLabel
 @onready var energy_label: Label = %EnergyLabel
 @onready var status_label: Label = %StatusLabel
+@onready var card_warning_overlay: PanelContainer = %CardWarningOverlay
+@onready var card_warning_label: Label = %CardWarningLabel
 @onready var hand_layer: Control = %HandLayer
 @onready var pile_label: Label = %PileLabel
 @onready var skill_button: Button = %SkillButton
@@ -95,6 +97,7 @@ var _skills_by_type := {
 	2: SUPER_ABILITY,
 }
 var _pending_active_skill: Resource
+var _card_warning_tween: Tween
 
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
@@ -124,6 +127,7 @@ func _ready() -> void:
 	controller.log_added.connect(_on_log_added)
 	controller.state_changed.connect(_on_state_changed)
 	controller.effect_resolved.connect(_on_effect_resolved)
+	controller.discipline_card_issued.connect(_on_discipline_card_issued)
 	controller.battle_finished.connect(_on_battle_finished)
 	ball_flight.shot_started.connect(_on_shot_started)
 	rhythm_clock.beat_reached.connect(_on_rhythm_beat_reached)
@@ -171,6 +175,7 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_pending_effect_events.clear()
 	_pending_battle_result = null
 	_is_presenting_resolution = false
+	card_warning_overlay.hide()
 	var bgm_service := get_node_or_null("/root/BgmService")
 	if bgm_service != null:
 		rhythm_clock.start_music_with_player(bgm_service.start_battle_bgm(rhythm_clock.music))
@@ -631,8 +636,24 @@ func _play_pending_resolution() -> void:
 		_pending_battle_result = null
 		_finalize_battle_result(victory)
 		return
+	if controller.red_card_pending:
+		_force_end_turn_after_red_card()
+		return
 	status_label.text = "卡牌已结算"
 	_finish_resolution()
+
+
+# 红牌等待当前牌的所有飞行与反馈完成后再弃牌、推进敌方行动，避免动画引用过期状态。
+func _force_end_turn_after_red_card() -> void:
+	var discarded := deck_state.discard_hand()
+	if not controller.force_end_turn_for_red_card():
+		_finish_resolution()
+		return
+	if controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN:
+		deck_state.draw_cards(STARTING_HAND_SIZE)
+	status_label.text = "红牌：弃掉 %d 张手牌并强制结束回合" % discarded
+	_fade_card_warning(0.65)
+	call_deferred("_finish_resolution")
 
 
 # 仅把带弹道的对敌伤害纳入飞球队列；自伤和非攻击效果仍保持即时、严格的数组顺序。
@@ -764,6 +785,15 @@ func _apply_effect_feedback(event: Dictionary) -> void:
 		"shield":
 			display.set_shield(event.get("shield_after", target.shield))
 			display.show_shield_gain(event.amount)
+		"bgm_pitch":
+			# 音频节点由跨场景服务唯一持有；卡牌事件只描述升降或复原意图。
+			var bgm_service := get_node_or_null("/root/BgmService")
+			if bgm_service == null:
+				return
+			if event.get("reset", false):
+				bgm_service.reset_battle_pitch()
+			else:
+				bgm_service.shift_battle_pitch(int(event.get("semitone_delta", 0)))
 
 
 # 足球组件已解析 RANDOM 的实际弹道，此处仅同步显示本次真实射门类型。
@@ -780,6 +810,32 @@ func _on_log_added(message: String) -> void:
 	var diagnostics := get_node_or_null("/root/DiagnosticsService")
 	if diagnostics != null:
 		diagnostics.record("battle", "message", {"message": message})
+
+
+# 黄牌短暂警告，红牌保持到强制回合推进完成；重复动画会先终止旧 Tween，避免透明度竞争。
+func _on_discipline_card_issued(card_color: String, played_count: int) -> void:
+	if _card_warning_tween != null:
+		_card_warning_tween.kill()
+	card_warning_overlay.show()
+	card_warning_overlay.modulate = Color.WHITE
+	if card_color == "red":
+		card_warning_overlay.self_modulate = Color(0.72, 0.08, 0.06, 0.96)
+		card_warning_label.text = "红牌！\n本回合第 %d 张牌\n结算后强制结束回合" % played_count
+	else:
+		card_warning_overlay.self_modulate = Color(0.95, 0.72, 0.08, 0.96)
+		card_warning_label.text = "黄牌警告！\n本回合已打出 %d 张牌" % played_count
+	# 红牌持续显示至当前卡牌完整结算，黄牌则只做短暂警告且不阻塞操作。
+	if card_color != "red":
+		_fade_card_warning(0.65)
+
+
+func _fade_card_warning(delay_seconds: float) -> void:
+	if _card_warning_tween != null:
+		_card_warning_tween.kill()
+	_card_warning_tween = create_tween()
+	_card_warning_tween.tween_interval(delay_seconds)
+	_card_warning_tween.tween_property(card_warning_overlay, "modulate:a", 0.0, 0.25)
+	_card_warning_tween.tween_callback(card_warning_overlay.hide)
 
 
 # 胜负确定后锁定输入并显示独立结果层，避免重复出牌或结束回合。

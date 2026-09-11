@@ -11,6 +11,9 @@ enum EffectType {
 	ENERGY,
 	APPLY_STRENGTH,
 	APPLY_WEAKNESS,
+	BGM_PITCH_UP,
+	BGM_PITCH_DOWN,
+	BGM_PITCH_RESET,
 }
 
 # 效果目标相对于出牌者确定。

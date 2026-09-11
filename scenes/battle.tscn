@@ -50,6 +50,13 @@ texture = ExtResource("13_top_status_art")
 [sub_resource type="StyleBoxTexture" id="Style_button"]
 texture = ExtResource("19_action_button_art")
 
+[sub_resource type="StyleBoxFlat" id="Style_card_warning"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [node name="Battle" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -196,6 +203,32 @@ text = "直球"
 
 [node name="BallFlight" parent="." instance=ExtResource("6_ball")]
 unique_name_in_owner = true
+
+[node name="CardWarningOverlay" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 45
+layout_mode = 1
+anchors_preset = 10
+anchor_left = 0.18
+anchor_right = 0.82
+offset_top = 178.0
+offset_bottom = 282.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_card_warning")
+
+[node name="CardWarningLabel" type="Label" parent="CardWarningOverlay"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.75)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 20
+text = "黄牌警告！"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="DragThresholdGuide" type="Control" parent="."]
 unique_name_in_owner = true
