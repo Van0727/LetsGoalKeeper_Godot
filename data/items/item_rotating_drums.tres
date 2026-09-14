@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
+[sub_resource type="Resource" id="last_beat_shield"]
+script = ExtResource("2")
+trigger = 8
+operation = 5
+target_key = "gain_shield"
+amount = 3.0
+requires_last_beat = true
+[resource]
+script = ExtResource("1")
+item_id = "item_rotating_drums"
+display_name = "回转鼓组"
+description = "在当前BGM小节最后一拍结束回合时，获得3点护盾"
+modifier_type = 4
+effects = Array[Resource]([SubResource("last_beat_shield")])

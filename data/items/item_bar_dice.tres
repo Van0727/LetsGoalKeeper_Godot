@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+item_id = "item_bar_dice"
+display_name = "酒吧骰子"
+description = "每次释放主动技后，50%概率下一次对敌伤害×2，否则直接结束回合"
+modifier_type = 4

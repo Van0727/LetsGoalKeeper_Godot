@@ -15,6 +15,12 @@ func _initialize() -> void:
 # 使用奖励真实场景完成两步选择，并检查其局部 RunState 变化。
 func _run() -> void:
 	root.size = Vector2i(360, 640)
+	# 奖励场景使用 Autoload；先隔离存档路径并建立新局，避免读取或覆盖玩家正式进度。
+	var save_service: Node = root.get_node("SaveService")
+	var previous_save_path: String = str(save_service.save_path)
+	var test_save_path := "res://tests/.smoke_reward_save_%d.json" % OS.get_process_id()
+	save_service.save_path = test_save_path
+	root.get_node("RunState").start_new_run(601)
 	var screen := REWARD_SCENE.instantiate()
 	root.add_child(screen)
 	await process_frame
@@ -84,6 +90,7 @@ func _run() -> void:
 	_assert_equal(connected_room.state, MAP_STATE.RoomState.LOCKED, "奖励未完成时下一层保持锁定")
 	screen._on_choice_pressed(0)
 	_assert_equal(screen.run_state.owned_item_ids.size(), 0, "预选遗物时不立即加入本局")
+	await create_timer(screen.SELECT_SCALE_DURATION + 0.05).timeout
 	_assert_equal(screen.choice_buttons[0].scale, Vector2(1.5, 1.5), "预选遗物放大1.5倍")
 	screen._on_confirm_pressed()
 	_assert_equal(screen.confirm_button.self_modulate.a, 0.0, "遗物确认后确认按钮视觉隐藏")
@@ -94,6 +101,11 @@ func _run() -> void:
 	_assert_equal(active_room.state, MAP_STATE.RoomState.VISITED, "两项奖励后房间标记完成")
 	_assert_equal(connected_room.state, MAP_STATE.RoomState.ATTAINABLE, "两项奖励后解锁连线房间")
 	_assert_equal(map_state.current_room_id, "", "奖励完成后清除进行中房间")
+	save_service.save_path = previous_save_path
+	if FileAccess.file_exists(test_save_path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(test_save_path))
+	if is_instance_valid(screen):
+		screen.free()
 
 	if _failed:
 		quit(1)

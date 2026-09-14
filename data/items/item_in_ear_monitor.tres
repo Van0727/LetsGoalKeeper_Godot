@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+item_id = "item_in_ear_monitor"
+display_name = "耳返"
+description = "无论何时出牌，都视为完美卡在当前BGM拍子上；不改变真实拍位"
+modifier_type = 4

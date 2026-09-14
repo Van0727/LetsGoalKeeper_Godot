@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
+[sub_resource type="Resource" id="count"]
+script = ExtResource("2")
+trigger = 3
+operation = 3
+amount = 1.0
+card_filter = 3
+counter_key = "wishing_bracelet_cards"
+counter_maximum = 2
+[sub_resource type="Resource" id="restore"]
+script = ExtResource("2")
+trigger = 3
+operation = 5
+target_key = "gain_energy"
+amount = 1.0
+card_filter = 3
+counter_key = "wishing_bracelet_cards"
+counter_minimum = 2
+[sub_resource type="Resource" id="reset"]
+script = ExtResource("2")
+trigger = 3
+operation = 4
+card_filter = 3
+counter_key = "wishing_bracelet_cards"
+counter_minimum = 2
+[resource]
+script = ExtResource("1")
+item_id = "item_wishing_bracelet"
+display_name = "许愿手绳"
+description = "每打出2张技能牌，恢复1点能量"
+modifier_type = 4
+effects = Array[Resource]([SubResource("count"), SubResource("restore"), SubResource("reset")])

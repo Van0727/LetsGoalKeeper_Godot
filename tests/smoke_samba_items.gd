@@ -14,6 +14,7 @@ const DOUBLE_BANANA := preload("res://data/cards/card_double_banana_shot.tres")
 const STRAIGHT := preload("res://data/cards/card_straight_shot.tres")
 const GLOVES := preload("res://data/cards/card_gloves.tres")
 const RANDOM_SHOT := preload("res://data/cards/card_barrage_shot.tres")
+const ATTACK_AND_DEFEND := preload("res://data/cards/card_attack_and_defend.tres")
 
 var _failed := false
 
@@ -28,6 +29,9 @@ func _run() -> void:
 	_test_streak_cap_and_random_shot()
 	_test_delayed_healing()
 	_test_gorilla_probability()
+	_test_banana_attack_and_defend_commands()
+	_test_converted_multi_shot_directions()
+	_test_native_banana_direction_unchanged()
 	if _failed:
 		quit(1)
 		return
@@ -168,6 +172,97 @@ func _test_gorilla_probability() -> void:
 	_assert_true(successes > 0 and successes < 200, "25%概率既非必发也非永不触发")
 	_assert_equal(first.trigger(ITEM_EFFECT.Trigger.AFTER_DAMAGE, {"shot_type": 2, "is_enemy_target": false}).size(), 0, "自伤不触发玩偶")
 	_assert_equal(first.trigger(ITEM_EFFECT.Trigger.AFTER_DAMAGE, {"shot_type": 1, "is_enemy_target": true}).size(), 0, "非香蕉球不触发玩偶")
+
+
+# 回归事件字典携带普通 Array 时的命令类型边界：攻守兼备必须完整结算伤害与护盾。
+func _test_banana_attack_and_defend_commands() -> void:
+	var battle = BATTLE.new()
+	root.add_child(battle)
+	battle.setup(505, null, {}, [BANANA])
+	var events: Array[Dictionary] = []
+	battle.effect_resolved.connect(func(event: Dictionary) -> void: events.append(event))
+	_assert_true(battle.play_card(ATTACK_AND_DEFEND), "持有香蕉后攻守兼备可成功结算")
+	_assert_equal(battle.current_action_context.actual_shot_type, 2, "攻守兼备的射门转换为香蕉球")
+	_assert_equal(battle.enemy.health, 25, "攻守兼备造成5点伤害")
+	_assert_equal(battle.player.shield, 5, "伤害后仍获得5点护盾")
+	_assert_equal(battle.player_cards_played_this_turn, 1, "结算后成功推进出牌计数")
+	_assert_equal(_damage_events(events).size(), 1, "只产生一段有效伤害事件")
+	battle.free()
+
+
+# 战利品转换的非香蕉多球牌逐颗判向；同种子可复现，左右伤害与事件方向逐颗一致。
+func _test_converted_multi_shot_directions() -> void:
+	var seed_value := _find_mixed_direction_seed()
+	_assert_true(seed_value > 0, "找到四颗球包含左右两侧的确定性种子")
+	if seed_value <= 0:
+		return
+	var battle = BATTLE.new()
+	root.add_child(battle)
+	battle.setup(seed_value, null, {}, [BANANA, LEFT])
+	battle.enemy.max_health = 1000
+	battle.enemy.health = 1000
+	var events: Array[Dictionary] = []
+	battle.effect_resolved.connect(func(event: Dictionary) -> void: events.append(event))
+	_assert_true(battle.play_card(RANDOM_SHOT), "非香蕉多球牌被战利品转换后成功出牌")
+	var damage_events := _damage_events(events)
+	_assert_equal(damage_events.size(), 4, "连续射门保留原有四颗球")
+	var seen_left := false
+	var seen_right := false
+	for event in damage_events:
+		_assert_equal(event.shot_type, 2, "每颗转换后的球都是香蕉球")
+		_assert_equal(event.item_context.shot_direction, event.shot_direction, "伤害与表现共用该颗球的方向")
+		if event.shot_direction == -1:
+			seen_left = true
+			_assert_equal(event.amount, 5, "左侧球独立获得黄金左脚+2")
+		elif event.shot_direction == 1:
+			seen_right = true
+			_assert_equal(event.amount, 3, "右侧球不获得黄金左脚加成")
+		else:
+			_assert_true(false, "转换后的每颗球必须有明确方向")
+	_assert_true(seen_left and seen_right, "同一张转换多球牌可以同时踢向左右")
+	battle.free()
+
+	var fixed_battle = BATTLE.new()
+	root.add_child(fixed_battle)
+	fixed_battle.setup(seed_value, null, {}, [BANANA, LEFT])
+	fixed_battle.enemy.max_health = 1000
+	fixed_battle.enemy.health = 1000
+	fixed_battle.set_banana_shot_direction(1)
+	var fixed_events: Array[Dictionary] = []
+	fixed_battle.effect_resolved.connect(func(event: Dictionary) -> void: fixed_events.append(event))
+	_assert_true(fixed_battle.play_card(RANDOM_SHOT), "固定方向后的转换多球牌成功出牌")
+	for event in _damage_events(fixed_events):
+		_assert_equal(event.shot_direction, 1, "固定方向时每颗转换球都向右")
+		_assert_equal(event.amount, 3, "固定向右时不获得左侧加伤")
+	fixed_battle.free()
+
+
+# 原生香蕉球牌不走逐颗重掷分支，保留既有整张牌共享方向的行为。
+func _test_native_banana_direction_unchanged() -> void:
+	var battle = BATTLE.new()
+	root.add_child(battle)
+	battle.setup(818, null, {}, [BANANA])
+	var events: Array[Dictionary] = []
+	battle.effect_resolved.connect(func(event: Dictionary) -> void: events.append(event))
+	_assert_true(battle.play_card(DOUBLE_BANANA), "原生双向香蕉球成功出牌")
+	var damage_events := _damage_events(events)
+	_assert_equal(damage_events.size(), 2, "原生双向香蕉球仍为两段")
+	if damage_events.size() == 2:
+		_assert_equal(damage_events[0].shot_direction, damage_events[1].shot_direction, "原生牌继续共用既有方向")
+		_assert_equal(damage_events[0].shot_direction, battle.current_action_context.shot_direction, "原生牌事件仍对应出牌方向")
+	battle.free()
+
+
+# 在测试进程内寻找可复现且前四次左右掷骰不相同的种子，不把随机运气当成断言前提。
+func _find_mixed_direction_seed() -> int:
+	for candidate in range(1, 1001):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = candidate * 31 + 17
+		var first := rng.randi_range(0, 1)
+		for _hit in range(3):
+			if rng.randi_range(0, 1) != first:
+				return candidate
+	return -1
 
 
 func _damage_events(events: Array[Dictionary]) -> Array[Dictionary]:

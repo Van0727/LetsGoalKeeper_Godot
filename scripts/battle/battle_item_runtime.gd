@@ -22,6 +22,19 @@ func start_turn() -> void:
 	_used_this_turn.clear()
 
 
+# 结构性战利品可查询本场持有状态；通用数值效果仍走 trigger 配置表。
+func has_item_id(item_id: String) -> bool:
+	for item in items:
+		if item != null and item.item_id == item_id:
+			return true
+	return false
+
+
+# 酒吧骰子复用本场奖励品随机流；固定种子下正反面可复现，GM 切换不重置随机序列。
+func roll_percent(chance_percent: int) -> bool:
+	return _rng.randi_range(1, 100) <= clampi(chance_percent, 0, 100)
+
+
 # GM 实时同步物品列表，不重置仍持有奖励的计数和随机流；取消的物品只清理自身状态。
 func sync_items(item_definitions: Array[Resource]) -> void:
 	var next_ids := {}
@@ -65,6 +78,18 @@ func trigger(trigger_type: int, context: Dictionary) -> Array[Dictionary]:
 
 
 func _matches(effect: Resource, context: Dictionary) -> bool:
+	if int(context.get("turn_number", 1)) > effect.maximum_turn:
+		return false
+	if effect.beat_in_bar_filter >= 0 and int(context.get("beat_in_bar", -1)) != effect.beat_in_bar_filter:
+		return false
+	if effect.requires_last_beat and not bool(context.get("is_last_beat", false)):
+		return false
+	if int(context.get("subdivision", 0)) < effect.minimum_subdivision:
+		return false
+	if effect.requires_rapid_hits and not bool(context.get("rapid_hits", false)):
+		return false
+	if effect.source_health_below_percent > 0 and int(context.get("source_health", 0)) * 100 >= int(context.get("source_max_health", 1)) * effect.source_health_below_percent:
+		return false
 	if effect.requires_shot and int(context.get("shot_type", 0)) == 0:
 		return false
 	if effect.target_filter == ITEM_EFFECT.TargetFilter.ENEMY and not bool(context.get("is_enemy_target", false)):
@@ -109,10 +134,16 @@ func _apply_effect(
 		ITEM_EFFECT.Operation.EMIT_COMMAND:
 			commands.append({"command": effect.target_key, "amount": effect.amount, "item_id": item_id})
 		ITEM_EFFECT.Operation.UPDATE_BANANA_STREAK:
-			# 首张香蕉球为 0 层；其他射门打断，非射门不参与。多段命中不重复推进。
+			# 首张香蕉球为 0 层；其他射门删除连击态，使下一张仍从 0 层开始。非射门不参与。
 			if int(context.get("shot_type", 0)) == 2:
 				counters[effect.counter_key] = mini(int(counters.get(effect.counter_key, -1)) + 1, effect.counter_maximum)
 			else:
-				counters[effect.counter_key] = 0
+				counters.erase(effect.counter_key)
 		ITEM_EFFECT.Operation.ADD_COUNTER:
 			context[effect.target_key] = float(context.get(effect.target_key, 0.0)) + int(counters.get(effect.counter_key, 0)) * effect.amount
+		ITEM_EFFECT.Operation.SET_COUNTER:
+			counters[effect.counter_key] = clampi(ceili(effect.amount), 0, effect.counter_maximum)
+		ITEM_EFFECT.Operation.ADD_HIT_STACK:
+			context[effect.target_key] = float(context.get(effect.target_key, 0.0)) + mini(int(context.get("hit", 1)), effect.counter_maximum) * effect.amount
+		ITEM_EFFECT.Operation.MULTIPLY_FINAL_DAMAGE:
+			context["final_damage_multiplier"] = float(context.get("final_damage_multiplier", 1.0)) * effect.amount

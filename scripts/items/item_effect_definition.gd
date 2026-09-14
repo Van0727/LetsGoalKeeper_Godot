@@ -28,6 +28,12 @@ enum Operation {
 	# 同一张多段牌只更新一次连续计数，随后每段伤害读取同一层数。
 	UPDATE_BANANA_STREAK,
 	ADD_COUNTER,
+	# 计数达到阈值时由后续效果发命令或消费；不依赖物品获得顺序。
+	SET_COUNTER,
+	# 连拍牌按当前段序逐段加伤，封顶值由配置给出。
+	ADD_HIT_STACK,
+	# 固定加伤全部完成后才应用倍率，避免物品获得顺序改变最终伤害。
+	MULTIPLY_FINAL_DAMAGE,
 }
 
 enum CardFilter { ANY, ATTACK, DEFENSE, ABILITY }
@@ -53,3 +59,10 @@ enum TargetFilter { ANY, ENEMY, SELF }
 @export_range(0, 999, 1) var counter_minimum := 0
 @export_range(0, 999, 1) var counter_maximum := 999
 @export var once_per_turn := false
+# 下列过滤器读取 BGM 采样上下文；缺失拍位时不误判为第一拍或最后一拍。
+@export var beat_in_bar_filter := -1
+@export var requires_last_beat := false
+@export_range(0, 64, 1) var minimum_subdivision := 0
+@export_range(0, 999, 1) var maximum_turn := 999
+@export var requires_rapid_hits := false
+@export_range(0, 100, 1) var source_health_below_percent := 0

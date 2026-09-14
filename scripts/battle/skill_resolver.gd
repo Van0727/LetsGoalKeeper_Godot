@@ -11,14 +11,15 @@ func resolve_skill(
 		combo_count: int,
 		source,
 		target,
-		target_damage_multiplier: float = 1.0
+		target_damage_multiplier: float = 1.0,
+		effect_multiplier: float = 1.0
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	var points := maxi(combo_count, 0)
 	match skill.card_type:
 		CARD_DEFINITION.CardType.ATTACK:
 			var raw_damage: float = float(skill.base_value * points) * source.strength_multiplier
-			var damage: int = maxi(roundi(raw_damage * target_damage_multiplier), 0)
+			var damage: int = maxi(ceili(raw_damage * target_damage_multiplier * effect_multiplier), 0)
 			var result: Dictionary = target.take_damage(damage)
 			events.append({
 				"type": "damage",
@@ -30,10 +31,11 @@ func resolve_skill(
 				"damage_tag": "active_skill",
 			})
 		CARD_DEFINITION.CardType.DEFENSE:
-			var gained: int = source.gain_shield(skill.base_value * points)
+			var gained: int = source.gain_shield(ceili(skill.base_value * points * effect_multiplier))
 			events.append({"type": "shield", "amount": gained, "target": source})
 		CARD_DEFINITION.CardType.ABILITY:
-			var turns: int = source.apply_strength(skill.multiplier, skill.base_value * points)
+			# 强化倍率属于效果数值；持续回合不参与音游奖杯翻倍。
+			var turns: int = source.apply_strength(skill.multiplier * effect_multiplier, skill.base_value * points)
 			events.append({
 				"type": "strength",
 				"multiplier": source.strength_multiplier,

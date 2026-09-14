@@ -73,7 +73,7 @@ func _test_bgm_pitch_card_events() -> void:
 	_assert_true(reset_events[0].get("reset", false), "原调牌产生恢复原调事件")
 
 
-# 验证成功出牌才累计纪律计数，第10张黄牌、第20张红牌，并在消费红牌后推进回合且重置。
+# 验证成功出牌才累计纪律计数，默认第5张黄牌、第10张红牌，并在消费红牌后推进回合且重置。
 func _test_discipline_cards_and_forced_turn_end() -> void:
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)
@@ -90,14 +90,14 @@ func _test_discipline_cards_and_forced_turn_end() -> void:
 	_assert_equal(battle.player_cards_played_this_turn, 0, "失败出牌不累计纪律计数")
 	var issued_colors: Array[String] = []
 	battle.discipline_card_issued.connect(func(color: String, _count: int) -> void: issued_colors.append(color))
-	for _index in range(9):
-		_assert_true(battle.play_card(free_card), "前9张测试牌可正常打出")
-	_assert_equal(issued_colors.size(), 0, "第9张牌前不触发纪律警告")
-	_assert_true(battle.play_card(free_card), "第10张测试牌可正常打出")
-	_assert_equal(issued_colors, ["yellow"], "第10张牌只触发一次黄牌")
-	for _index in range(10):
+	for _index in range(4):
+		_assert_true(battle.play_card(free_card), "前4张测试牌可正常打出")
+	_assert_equal(issued_colors.size(), 0, "第5张牌前不触发纪律警告")
+	_assert_true(battle.play_card(free_card), "第5张测试牌可正常打出")
+	_assert_equal(issued_colors, ["yellow"], "第5张牌只触发一次黄牌")
+	for _index in range(5):
 		_assert_true(battle.play_card(free_card), "黄牌后仍可继续出牌直到红牌")
-	_assert_equal(issued_colors, ["yellow", "red"], "第20张牌触发红牌")
+	_assert_equal(issued_colors, ["yellow", "red"], "第10张牌触发红牌")
 	_assert_true(battle.red_card_pending, "红牌等待当前牌表现完成")
 	_assert_true(not battle.play_card(free_card), "红牌后不能继续出牌")
 	var previous_turn: int = battle.turn_number
@@ -227,7 +227,7 @@ func _test_rhythm_judgement_and_damage() -> void:
 	)
 	_assert_equal(target.health, 17, "Miss使6点对敌伤害减半")
 	_assert_equal(shot_events[0].rhythm_multiplier, 0.5, "伤害事件记录节奏倍率")
-	_assert_equal(shot_events[0].attack_delay_beats, 1.0, "伤害事件携带一拍飞行延迟")
+	_assert_equal(shot_events[0].attack_delay_beats, 0.5, "射门伤害事件携带当前半拍飞行延迟")
 	_assert_equal(shot_events[0].multi_hit_interval_beats, 0.5, "伤害事件携带半拍多段间隔")
 
 	# 真实飞球模式在命中前不得改变生命；提交命中事件后才扣血并更新事件快照。
@@ -447,8 +447,8 @@ func _test_remaining_migrated_cards() -> void:
 	var group_source = COMBATANT_STATE.new("组射门球员", 20, 3)
 	var group_target = COMBATANT_STATE.new("组射门目标", 30)
 	var group_events: Array[Dictionary] = resolver.resolve_card(SHOT_GROUP, group_source, group_target)
-	_assert_equal(group_events.size(), 8, "一组射门产生8段伤害事件")
-	_assert_equal(group_target.health, 14, "一组射门总计造成16点伤害")
+	_assert_equal(group_events.size(), 4, "一组射门按当前资源产生4段伤害事件")
+	_assert_equal(group_target.health, 22, "一组射门总计造成8点伤害")
 	_assert_equal(group_events[0].shot_type, SHOT_GROUP.ShotType.RANDOM, "一组射门保留随机射门类型")
 
 	var double_source = COMBATANT_STATE.new("双向香蕉球球员", 20, 3)

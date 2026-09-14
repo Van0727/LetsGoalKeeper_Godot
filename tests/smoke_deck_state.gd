@@ -88,7 +88,7 @@ func _test_card_definitions() -> void:
 	_assert_equal(WEAKNESS.effects[0].amount, 2, "虚弱持续回合")
 	_assert_equal(WEAKNESS.effects[0].multiplier, 0.5, "虚弱伤害倍率")
 	_assert_equal(SHOT_GROUP.effects[0].amount, 2, "一组射门单段伤害")
-	_assert_equal(SHOT_GROUP.effects[0].hits, 8, "一组射门攻击段数")
+	_assert_equal(SHOT_GROUP.effects[0].hits, 4, "一组射门当前资源攻击段数")
 	_assert_equal(SHOT_GROUP.attack_delay_beats, 1.0, "一组射门首段延迟为1拍")
 	_assert_equal(SHOT_GROUP.multi_hit_interval_beats, 0.25, "一组射门间隔为四分之一拍")
 	_assert_equal(DOUBLE_BANANA_SHOT.effects[0].amount, 3, "双向香蕉球单段伤害")

@@ -19,7 +19,8 @@ func resolve_card(
 		rhythm_result: Dictionary = {},
 		defer_enemy_shot_damage := false,
 		item_runtime = null,
-		action_context: Dictionary = {}
+		action_context: Dictionary = {},
+		shot_rng: RandomNumberGenerator = null
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	# 节奏倍率只作用于对手受到的直接伤害；自伤、治疗、护盾和状态保持卡牌原始规则。
@@ -28,9 +29,11 @@ func resolve_card(
 		0.0,
 		10.0
 	)
+	# 卡牌效果倍率只作用可量化数值，不延长力量/虚弱持续回合。
+	var card_effect_multiplier := maxf(float(action_context.get("card_effect_multiplier", 1.0)), 0.0)
 	for effect in card.effects:
 		# 概率事件保留掷骰明细，确保日志、测试和以后回放都能解释结果。
-		var chance := clampi(effect.chance_percent, 0, 100)
+		var chance := clampi(ceili(effect.chance_percent * card_effect_multiplier), 0, 100)
 		if chance < 100:
 			var active_rng := rng if rng != null else _fallback_rng
 			var roll := active_rng.randi_range(1, 100)
@@ -60,10 +63,11 @@ func resolve_card(
 					damage_modifiers,
 					applied_rhythm_multiplier,
 					item_runtime,
-					action_context
+					action_context,
+					shot_rng
 				)
 			EFFECT_DEFINITION.EffectType.SHIELD:
-				var gained: int = recipient.gain_shield(effect.amount)
+				var gained: int = recipient.gain_shield(ceili(effect.amount * card_effect_multiplier))
 				events.append({
 					"type": "shield",
 					"amount": gained,
@@ -72,7 +76,7 @@ func resolve_card(
 					"shield_after": recipient.shield,
 				})
 			EFFECT_DEFINITION.EffectType.HEAL:
-				var healed: int = recipient.heal(effect.amount)
+				var healed: int = recipient.heal(ceili(effect.amount * card_effect_multiplier))
 				events.append({
 					"type": "heal",
 					"amount": healed,
@@ -81,10 +85,10 @@ func resolve_card(
 					"shield_after": recipient.shield,
 				})
 			EFFECT_DEFINITION.EffectType.ENERGY:
-				var restored: int = recipient.gain_energy(effect.amount)
+				var restored: int = recipient.gain_energy(ceili(effect.amount * card_effect_multiplier))
 				events.append({"type": "energy", "amount": restored, "target": recipient})
 			EFFECT_DEFINITION.EffectType.APPLY_STRENGTH:
-				var strength_turns: int = recipient.apply_strength(effect.multiplier, effect.amount)
+				var strength_turns: int = recipient.apply_strength(effect.multiplier * card_effect_multiplier, effect.amount)
 				events.append({
 					"type": "strength",
 					"multiplier": recipient.strength_multiplier,
@@ -92,7 +96,7 @@ func resolve_card(
 					"target": recipient,
 				})
 			EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS:
-				var weakness_turns: int = recipient.apply_weakness(effect.multiplier, effect.amount)
+				var weakness_turns: int = recipient.apply_weakness(effect.multiplier * card_effect_multiplier, effect.amount)
 				events.append({
 					"type": "weakness",
 					"multiplier": recipient.strength_multiplier,
@@ -106,6 +110,11 @@ func resolve_card(
 				events.append({"type": "bgm_pitch", "semitone_delta": -1, "reset": false})
 			EFFECT_DEFINITION.EffectType.BGM_PITCH_RESET:
 				events.append({"type": "bgm_pitch", "semitone_delta": 0, "reset": true})
+			EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_LEFT:
+				# 仅声明战斗内方向切换；后续香蕉球仍沿用统一的方向与战利品结算路径。
+				events.append({"type": "banana_direction", "direction": -1})
+			EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_RIGHT:
+				events.append({"type": "banana_direction", "direction": 1})
 			_:
 				events.append({"type": "unsupported", "effect_type": effect.effect_type})
 
@@ -131,7 +140,8 @@ func _resolve_damage(
 		damage_modifiers: Dictionary,
 		rhythm_multiplier: float,
 		item_runtime = null,
-		action_context: Dictionary = {}
+		action_context: Dictionary = {},
+		shot_rng: RandomNumberGenerator = null
 ) -> void:
 	for hit_index in range(effect.hits):
 		# 能量加成读取费用支付后的运行时能量，不回写 EffectDefinition。
@@ -139,14 +149,32 @@ func _resolve_damage(
 		var item_bonus := _get_shot_damage_bonus(shot_type, damage_modifiers)
 		var scaled_amount: int = effect.amount + energy_bonus + item_bonus
 		var damage_context := action_context.duplicate(true)
-		damage_context["amount"] = scaled_amount * source.strength_multiplier * rhythm_multiplier
+		# 下一次攻击叠层与十牌倍率在整张牌级别锁定；每段分别加固定值，再统一向上取整。
+		var attack_bonus := float(action_context.get("attack_bonus", 0.0)) if recipient != source else 0.0
+		var attack_multiplier := float(action_context.get("value_multiplier", 1.0)) if recipient != source else 1.0
+		damage_context["amount"] = (scaled_amount * source.strength_multiplier * rhythm_multiplier + attack_bonus) * attack_multiplier * float(action_context.get("card_effect_multiplier", 1.0))
 		damage_context["hit"] = hit_index + 1
 		damage_context["hits"] = effect.hits
+		# 连拍由同一张牌在 BGM 上的相邻击打间隔定义，不读取玩家出牌间隔。
+		damage_context["rapid_hits"] = effect.hits > 1 and multi_hit_interval_beats <= 0.5
 		damage_context["shot_type"] = shot_type
 		damage_context["is_enemy_target"] = recipient != source
+		damage_context["source_health"] = source.health
+		damage_context["source_max_health"] = source.max_health
+		# 只有非香蕉球被战利品转换且没有固定方向时，每颗真正射向敌人的球独立掷左右。
+		# 原生香蕉球继续读取出牌上下文，避免改变“双向香蕉球”等既有牌的方向逻辑。
+		if recipient != source and shot_type == 2 and bool(action_context.get("converted_banana_per_hit", false)) and int(damage_context.get("shot_direction", 0)) == 0:
+			var direction_rng: RandomNumberGenerator = shot_rng if shot_rng != null else _fallback_rng
+			damage_context["shot_direction"] = -1 if direction_rng.randi_range(0, 1) == 0 else 1
 		var before_commands: Array[Dictionary] = []
 		if item_runtime != null:
 			before_commands = item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_DAMAGE, damage_context)
+		# 纹身贴等末端倍率放在所有固定加伤之后，物品获得顺序不再改变结果。
+		damage_context["amount"] = float(damage_context.get("amount", 0.0)) * float(damage_context.get("final_damage_multiplier", 1.0))
+		# 酒吧骰子的下一次伤害只消费首个对敌伤害段；自伤和非伤害效果不消费。
+		if recipient != source and float(action_context.get("pending_damage_multiplier", 1.0)) > 1.0:
+			damage_context["amount"] = float(damage_context.get("amount", 0.0)) * float(action_context["pending_damage_multiplier"])
+			action_context["pending_damage_multiplier"] = 1.0
 		# 所有倍率的最终结果统一向上取整，避免战斗状态和表现事件出现小数。
 		var damage := maxi(ceili(float(damage_context.get("amount", 0.0))), 0)
 		# 实战射门只生成待命中事件；实际护盾消耗、扣血和死亡判断由足球命中帧提交。
@@ -167,7 +195,7 @@ func _resolve_damage(
 			"hit": hit_index + 1,
 			"hits": effect.hits,
 			"shot_type": shot_type,
-			"shot_direction": int(action_context.get("shot_direction", 0)),
+			"shot_direction": int(damage_context.get("shot_direction", 0)),
 			"item_context": damage_context.duplicate(true),
 			"item_commands": before_commands,
 			# 表现层读取事件快照，避免结算期间修改 Resource 导致已发出的球改变时序。

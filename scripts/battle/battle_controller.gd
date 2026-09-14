@@ -26,6 +26,7 @@ const ENEMY_MAX_HEALTH := 30
 const ENEMY_BASE_DAMAGE := 8
 const YELLOW_CARD_THRESHOLD := 5
 const RED_CARD_THRESHOLD := 10
+const CHUNGHWA_RED_CARD_THRESHOLD := 20
 
 # 战斗阶段限制玩家只能在自己的行动阶段操作。
 enum Phase {
@@ -54,6 +55,14 @@ var current_action_context
 var banana_shot_direction := 0
 var player_cards_played_this_turn := 0
 var red_card_pending := false
+# 暴力流物品的充能与待消费倍率只存在于当前战斗；GM 取消对应物品时同步清理。
+var blindfold_charges := 0
+var pending_first_card_multiplier := 1.0
+var pending_first_card_item_id := ""
+var pending_next_damage_multiplier := 1.0
+var bar_dice_end_turn_pending := false
+# 红牌阈值按本场持有物动态推导；GM 取消后立即恢复默认值，不写入存档。
+var red_card_threshold := RED_CARD_THRESHOLD
 
 var _rng := RandomNumberGenerator.new()
 # 球路随机流与卡牌概率、敌人行动隔离；固定种子保证相同战局仍可复现。
@@ -87,10 +96,16 @@ func setup(
 	_enemy_action_index = 0
 	combo_state = COMBO_STATE.new()
 	item_runtime.setup(item_definitions, battle_seed + 7919)
+	_sync_red_card_threshold()
 	current_action_context = null
 	banana_shot_direction = 0
 	player_cards_played_this_turn = 0
 	red_card_pending = false
+	blindfold_charges = 0
+	pending_first_card_multiplier = 1.0
+	pending_first_card_item_id = ""
+	pending_next_damage_multiplier = 1.0
+	bar_dice_end_turn_pending = false
 	turn_number = 1
 	phase = Phase.NOT_STARTED
 	_log("战斗开始，seed=%d" % battle_seed)
@@ -177,33 +192,57 @@ func play_card(
 		return false
 
 	_log("打出 %s，支付 %d 能量" % [card.display_name, card.cost])
+	# 耳返只覆盖本次出牌判定，不修改节拍时钟或传入字典；拍位仍由真实 BGM 时间决定。
+	var effective_rhythm_result: Dictionary = rhythm_result.duplicate(true)
+	if item_runtime.has_item_id("item_in_ear_monitor"):
+		effective_rhythm_result["grade"] = 0
+		effective_rhythm_result["grade_name"] = "Perfect"
+		effective_rhythm_result["effect_multiplier"] = 1.0
+		effective_rhythm_result["error_ms"] = 0.0
 	current_action_context = BATTLE_ACTION_CONTEXT.new()
-	current_action_context.setup(card, rhythm_result)
+	current_action_context.setup(card, effective_rhythm_result)
 	var shot_context: Dictionary = current_action_context.to_trigger_context()
 	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_SHOT_RESOLVED, shot_context))
-	_resolve_actual_shot(current_action_context, int(shot_context.get("shot_type", card.shot_type)))
+	# 仅标记“非香蕉球被战利品转换”的射门；原生香蕉球仍保留整张牌既有方向规则。
+	var converted_banana: bool = int(card.shot_type) != 2 and int(shot_context.get("shot_type", card.shot_type)) == 2
+	_resolve_actual_shot(current_action_context, int(shot_context.get("shot_type", card.shot_type)), converted_banana)
 	var action_context: Dictionary = current_action_context.to_trigger_context()
+	# 上回合乐谱待用倍率只在成功支付费用的首张牌消费，其他物品可再按配置相乘。
+	action_context["card_effect_multiplier"] = pending_first_card_multiplier
+	pending_first_card_multiplier = 1.0
+	pending_first_card_item_id = ""
 	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_CARD_PLAYED, action_context))
 	current_action_context.actual_shot_type = int(action_context.get("shot_type", card.shot_type))
 	current_action_context.shot_direction = int(action_context.get("shot_direction", 0))
 	current_action_context.value_multiplier = float(action_context.get("value_multiplier", 1.0))
-	if not rhythm_result.is_empty():
+	if not effective_rhythm_result.is_empty():
 		_log("节奏判定：%s（%+.0fms）" % [
-			rhythm_result.get("grade_name", "Miss"),
-			float(rhythm_result.get("error_ms", 0.0)),
+			effective_rhythm_result.get("grade_name", "Miss"),
+			float(effective_rhythm_result.get("error_ms", 0.0)),
 		])
+	var resolved_context: Dictionary = current_action_context.to_trigger_context()
+	# 下一次攻击的叠层和倍率在出牌时锁定，整张多段牌共用，不能逐段重复消费。
+	resolved_context["attack_bonus"] = float(action_context.get("attack_bonus", 0.0))
+	resolved_context["card_effect_multiplier"] = float(action_context.get("card_effect_multiplier", 1.0))
+	resolved_context["pending_damage_multiplier"] = pending_next_damage_multiplier
+	resolved_context["converted_banana_per_hit"] = converted_banana
 	var events := _effect_resolver.resolve_card(
 		card,
 		player,
 		enemy,
 		_rng,
 		damage_modifiers,
-		rhythm_result,
+		effective_rhythm_result,
 		defer_enemy_shot_damage,
 		item_runtime,
-		current_action_context.to_trigger_context()
+		resolved_context,
+		_shot_rng
 	)
+	pending_next_damage_multiplier = float(resolved_context.get("pending_damage_multiplier", 1.0))
 	for event in events:
+		# 方向牌在费用支付和效果成功后才改写本场状态；死亡结算前已发出的球保留原方向快照。
+		if event.get("type") == "banana_direction":
+			set_banana_shot_direction(int(event.get("direction", 0)))
 		_resolve_item_commands(event.get("item_commands", []))
 		if not event.get("deferred_damage", false):
 			_log_effect_event(event)
@@ -212,6 +251,9 @@ func play_card(
 			_resolve_reactive_passive(event)
 		if player.is_dead():
 			break
+	# 人字拖是每张攻击牌独立掷一次的追加打击，不附着在多段射门的每颗球上。
+	if not player.is_dead() and not enemy.is_dead() and float(action_context.get("slipper_damage", 0.0)) > 0.0:
+		_resolve_slipper_damage(ceili(float(action_context["slipper_damage"])), defer_enemy_shot_damage)
 	combo_state.register_card(card.card_type)
 	_resolve_item_commands(item_runtime.trigger(
 		ITEM_EFFECT.Trigger.AFTER_CARD_PLAYED,
@@ -229,20 +271,73 @@ func play_card(
 	return true
 
 
-# 后续方向技能通过该接口切换香蕉球方向；0 保留未指定状态，-1/1 分别表示玩家视角左/右。
+# 追加打击在同步模式即时生效；实战飞球模式排到原球命中后，避免提前击杀目标。
+func _resolve_slipper_damage(amount: int, defer_damage := false) -> void:
+	if item_runtime.has_item_id("item_tattoo_sticker") and player.health * 100 < player.max_health * 30:
+		amount = ceili(amount * 1.5)
+	if pending_next_damage_multiplier > 1.0:
+		amount = ceili(amount * pending_next_damage_multiplier)
+		pending_next_damage_multiplier = 1.0
+	var final_damage := _apply_enemy_damage_reduction(maxi(amount, 0), "item")
+	if defer_damage:
+		effect_resolved.emit({
+			"type": "damage", "amount": final_damage, "absorbed": 0,
+			"health_damage": 0, "target": enemy, "source": player,
+			"damage_tag": "item", "shot_type": 0, "shot_direction": 0,
+			"deferred_damage": true,
+			"item_context": {"shot_type": 0, "is_enemy_target": true},
+		})
+		return
+	var result: Dictionary = enemy.take_damage(final_damage)
+	var event: Dictionary = {
+		"type": "damage", "amount": final_damage, "absorbed": result.absorbed,
+		"health_damage": result.health_damage, "target": enemy, "source": player,
+		"damage_tag": "item", "shot_type": 0, "shot_direction": 0,
+		"health_after": enemy.health, "shield_after": enemy.shield,
+	}
+	_log_effect_event(event)
+	effect_resolved.emit(event)
+	_resolve_reactive_passive(event)
+
+
+# 方向牌共用此接口；0 表示未指定，-1/1 分别为玩家视角左/右，跨回合保留并由 setup 重置。
 func set_banana_shot_direction(direction: int) -> void:
 	banana_shot_direction = signi(direction)
 
 
 # GM 勾选变化只同步持有定义与旧式加成，不重新 setup 或恢复已失去的战斗生命等临时状态。
 func debug_sync_items(item_definitions: Array[Resource], run_damage_modifiers: Dictionary) -> void:
+	var had_blindfold := item_runtime.has_item_id("item_blindfold")
 	item_runtime.sync_items(item_definitions)
+	if not item_runtime.has_item_id("item_blindfold"):
+		blindfold_charges = 0
+	elif not had_blindfold:
+		blindfold_charges = 3
+	if pending_first_card_item_id != "" and not item_runtime.has_item_id(pending_first_card_item_id):
+		pending_first_card_multiplier = 1.0
+		pending_first_card_item_id = ""
+	if not item_runtime.has_item_id("item_bar_dice"):
+		pending_next_damage_multiplier = 1.0
+		bar_dice_end_turn_pending = false
+	_sync_red_card_threshold()
 	damage_modifiers = run_damage_modifiers.duplicate()
 	state_changed.emit()
 
 
-# 同一张牌在计算伤害前锁定实际球型和方向；所有段数及表现事件共用该决定。
-func _resolve_actual_shot(action, configured_type: int) -> void:
+# 战利品阈值只影响红牌；移除时若本回合已超过默认阈值，立刻锁定后续出牌。
+func _sync_red_card_threshold() -> void:
+	red_card_threshold = RED_CARD_THRESHOLD
+	for item in item_runtime.items:
+		if item != null and item.item_id == "item_chunghwa_cigarettes":
+			red_card_threshold = CHUNGHWA_RED_CARD_THRESHOLD
+			break
+	if phase == Phase.PLAYER_TURN and player_cards_played_this_turn >= red_card_threshold and not red_card_pending:
+		red_card_pending = true
+		discipline_card_issued.emit("red", player_cards_played_this_turn)
+
+
+# 原生香蕉球仍在出牌前锁定方向；战利品转换的香蕉球仅在有固定方向时锁定，默认逐段判向。
+func _resolve_actual_shot(action, configured_type: int, converted_banana := false) -> void:
 	action.actual_shot_type = configured_type
 	action.shot_direction = 0
 	if configured_type == 4:
@@ -251,11 +346,14 @@ func _resolve_actual_shot(action, configured_type: int) -> void:
 			1: action.actual_shot_type = 3
 			_: action.actual_shot_type = 2
 	if action.actual_shot_type == 2:
-		action.shot_direction = banana_shot_direction if banana_shot_direction != 0 else (-1 if _shot_rng.randi_range(0, 1) == 0 else 1)
+		if converted_banana:
+			action.shot_direction = banana_shot_direction
+		else:
+			action.shot_direction = banana_shot_direction if banana_shot_direction != 0 else (-1 if _shot_rng.randi_range(0, 1) == 0 else 1)
 
 
 # 释放与当前连击类型匹配的主动技；结算完成后无论结果都清空类型与点数。
-func play_active_skill(skill: Resource) -> bool:
+func play_active_skill(skill: Resource, qte_result: Dictionary = {}, defer_turn_end := false) -> bool:
 	if not _can_player_act():
 		return false
 	if skill == null or not combo_state.can_activate():
@@ -268,12 +366,20 @@ func play_active_skill(skill: Resource) -> bool:
 	var points: int = combo_state.count
 	_log("释放%s，消耗%d点连击" % [skill.display_name, points])
 	var damage_multiplier := _get_enemy_damage_multiplier("active_skill")
+	if item_runtime.has_item_id("item_tattoo_sticker") and player.health * 100 < player.max_health * 30:
+		damage_multiplier *= 1.5
+	if int(skill.card_type) == 0 and pending_next_damage_multiplier > 1.0:
+		damage_multiplier *= pending_next_damage_multiplier
+		pending_next_damage_multiplier = 1.0
+	# 音游奖杯要求四音全部 Perfect；只翻倍数值，不翻倍强化持续回合或 QTE 次数。
+	var perfect_skill_multiplier := 2.0 if item_runtime.has_item_id("item_rhythm_game_trophy") and int(qte_result.get("perfect", 0)) == 4 and int(qte_result.get("good", 0)) == 0 and int(qte_result.get("miss", 0)) == 0 else 1.0
 	var events := _skill_resolver.resolve_skill(
 		skill,
 		points,
 		player,
 		enemy,
-		damage_multiplier
+		damage_multiplier,
+		perfect_skill_multiplier
 	)
 	for event in events:
 		_resolve_item_commands(event.get("item_commands", []))
@@ -285,6 +391,12 @@ func play_active_skill(skill: Resource) -> bool:
 		ITEM_EFFECT.Trigger.ACTIVE_SKILL_FINISHED,
 		_base_item_context()
 	))
+	# 酒吧骰子在本次主动技结算后掷骰，增伤只留给后续伤害；结束回合由界面等动画播完再提交。
+	if item_runtime.has_item_id("item_bar_dice") and not player.is_dead() and not enemy.is_dead():
+		if item_runtime.roll_percent(50):
+			pending_next_damage_multiplier = 2.0
+		else:
+			bar_dice_end_turn_pending = true
 
 	if player.is_dead():
 		_finish_battle(false)
@@ -292,6 +404,28 @@ func play_active_skill(skill: Resource) -> bool:
 		_finish_battle(true)
 	else:
 		state_changed.emit()
+	if bar_dice_end_turn_pending and not defer_turn_end and phase == Phase.PLAYER_TURN:
+		resolve_bar_dice_end_turn()
+	return true
+
+
+# 蒙眼布每回合至多换牌三次；换牌失败不消耗次数。
+func use_blindfold_swap(deck_state) -> bool:
+	if not _can_player_act() or not item_runtime.has_item_id("item_blindfold") or blindfold_charges <= 0:
+		return false
+	if not deck_state.swap_single_hand_card():
+		return false
+	blindfold_charges -= 1
+	state_changed.emit()
+	return true
+
+
+# 酒吧骰子强制回合结束必须在主动技视觉完成后提交，避免中途清空手牌和目标状态。
+func resolve_bar_dice_end_turn() -> bool:
+	if not bar_dice_end_turn_pending or phase != Phase.PLAYER_TURN:
+		return false
+	bar_dice_end_turn_pending = false
+	_end_player_turn()
 	return true
 
 
@@ -325,7 +459,8 @@ func play_card_from_hand(
 	var card: Resource = deck_state.hand[hand_index]
 	if not play_card(card, rhythm_result, defer_enemy_shot_damage):
 		return false
-	deck_state.play_card_at(hand_index)
+	# 狼牙鼓槌只取消成功出牌后的自动补牌，不影响回合开始或显式换牌抽取。
+	deck_state.play_card_at(hand_index, not item_runtime.has_item_id("item_spiked_drum_mallet"))
 	return true
 
 
@@ -359,14 +494,14 @@ func commit_deferred_damage(event: Dictionary) -> bool:
 
 
 # 结束玩家阶段并立即执行当前敌人行动。
-func end_player_turn() -> bool:
+func end_player_turn(rhythm_result: Dictionary = {}) -> bool:
 	if not _can_player_act():
 		return false
-	_end_player_turn()
+	_end_player_turn(rhythm_result)
 	return true
 
 
-# 红牌只允许在第20张牌完整表现后消费；普通调用不能绕过待结算状态重复推进回合。
+# 红牌只允许在当前阈值牌完整表现后消费；普通调用不能绕过待结算状态重复推进回合。
 func force_end_turn_for_red_card() -> bool:
 	if not red_card_pending or phase != Phase.PLAYER_TURN:
 		return false
@@ -375,10 +510,22 @@ func force_end_turn_for_red_card() -> bool:
 	return true
 
 
-func _end_player_turn() -> void:
+func _end_player_turn(rhythm_result: Dictionary = {}) -> void:
 	phase = Phase.PLAYER_END
+	# 乐谱按本回合成功出牌数决定下一回合首张牌倍率，不跨多个空回合叠乘。
+	pending_first_card_multiplier = 1.0
+	pending_first_card_item_id = ""
+	if player_cards_played_this_turn == 0 and item_runtime.has_item_id("item_blank_score"):
+		pending_first_card_multiplier = 4.0
+		pending_first_card_item_id = "item_blank_score"
+	elif player_cards_played_this_turn == 1 and item_runtime.has_item_id("item_rest_score"):
+		pending_first_card_multiplier = 2.0
+		pending_first_card_item_id = "item_rest_score"
 	_log("玩家结束第 %d 回合" % turn_number)
-	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.TURN_ENDED, _base_item_context()))
+	var end_context: Dictionary = _base_item_context()
+	end_context["beat_in_bar"] = int(rhythm_result.get("beat_in_bar", -1))
+	end_context["is_last_beat"] = bool(rhythm_result.get("is_last_beat", false))
+	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.TURN_ENDED, end_context))
 	_advance_strength_status(player)
 	_execute_enemy_turn()
 
@@ -404,6 +551,7 @@ func _start_player_turn() -> void:
 	player_cards_played_this_turn = 0
 	red_card_pending = false
 	item_runtime.start_turn()
+	blindfold_charges = 3 if item_runtime.has_item_id("item_blindfold") else 0
 	var cleared_shield := player.clear_shield()
 	var restored_energy := player.refill_energy()
 	phase = Phase.PLAYER_TURN
@@ -599,7 +747,7 @@ func _advance_strength_status(combatant) -> void:
 
 # 统一拦截错误阶段的玩家操作并写入日志。
 func _can_player_act() -> bool:
-	if phase == Phase.PLAYER_TURN and not red_card_pending:
+	if phase == Phase.PLAYER_TURN and not red_card_pending and not bar_dice_end_turn_pending:
 		return true
 	if red_card_pending:
 		_log("已被出示红牌，必须结束当前回合")
@@ -611,7 +759,7 @@ func _can_player_act() -> bool:
 # 只有完整支付费用并成功结算的牌才计数；阈值使用等号保证每回合各提示一次。
 func _register_successful_card_play() -> void:
 	player_cards_played_this_turn += 1
-	if player_cards_played_this_turn == RED_CARD_THRESHOLD:
+	if player_cards_played_this_turn == red_card_threshold:
 		red_card_pending = true
 		_log("红牌！本回合已打出 %d 张牌，当前卡牌结算后强制结束回合" % player_cards_played_this_turn)
 		discipline_card_issued.emit("red", player_cards_played_this_turn)
@@ -624,9 +772,15 @@ func _register_successful_card_play() -> void:
 		discipline_card_issued.emit("yellow", player_cards_played_this_turn)
 
 
-# 框架阶段只执行无歧义的即时资源命令；换牌、改阈值和强制结束回合等结构命令留给具体奖励品接入。
-func _resolve_item_commands(commands: Array[Dictionary]) -> void:
-	for command in commands:
+# 事件字典的 get() 返回 Variant，默认 [] 也是未定型数组；在边界逐项校验，避免把普通 Array
+# 传给 Array[Dictionary] 参数而中断卡牌结算。复杂结构命令仍留给具体奖励品接入。
+func _resolve_item_commands(raw_commands: Variant) -> void:
+	if raw_commands is not Array:
+		return
+	for entry in raw_commands:
+		if entry is not Dictionary:
+			continue
+		var command: Dictionary = entry
 		match String(command.get("command", "")):
 			"gain_health":
 				player.heal(ceili(float(command.get("amount", 0.0))))
@@ -650,6 +804,8 @@ func _base_item_context() -> Dictionary:
 # 锁定战斗状态、清除意图并广播最终胜负。
 func _finish_battle(victory: bool) -> void:
 	phase = Phase.FINISHED
+	# 怪物死亡或玩家失败即结束本场，清除方向牌效果；下一只怪物仍由 setup 从随机方向开始。
+	banana_shot_direction = 0
 	enemy_intent_damage = 0
 	_log("战斗胜利" if victory else "战斗失败")
 	state_changed.emit()
@@ -687,6 +843,8 @@ func _log_effect_event(event: Dictionary) -> void:
 				_log("效果：BGM %s 1 个半音" % (
 					"升高" if event.get("semitone_delta", 0) > 0 else "降低"
 				))
+		"banana_direction":
+			_log("效果：本场香蕉球改为向%s踢出" % ("左" if int(event.direction) < 0 else "右"))
 		"chance":
 			_log("效果：概率判定 %d/%d，%s" % [
 				event.roll,

@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+item_id = "item_nude_license"
+display_name = "全裸许可证"
+description = "将牌组中所有防御牌替换为等量的赤膊；赤膊仍为防御牌，消耗1点能量并获得2点能量"
+modifier_type = 4

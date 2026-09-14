@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
+[sub_resource type="Resource" id="yellow"]
+script = ExtResource("2")
+trigger = 6
+operation = 8
+amount = 1.0
+counter_key = "lumberjack_yellow_active"
+[sub_resource type="Resource" id="new_turn"]
+script = ExtResource("2")
+trigger = 1
+operation = 4
+counter_key = "lumberjack_yellow_active"
+[sub_resource type="Resource" id="bonus"]
+script = ExtResource("2")
+trigger = 4
+operation = 7
+target_key = "amount"
+amount = 2.0
+target_filter = 1
+counter_key = "lumberjack_yellow_active"
+[resource]
+script = ExtResource("1")
+item_id = "item_lumberjack_axe"
+display_name = "伐木斧"
+description = "本回合获得黄牌后，后续攻击每段伤害+2"
+modifier_type = 4
+effects = Array[Resource]([SubResource("yellow"), SubResource("new_turn"), SubResource("bonus")])

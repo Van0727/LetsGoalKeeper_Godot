@@ -3,6 +3,7 @@ extends SceneTree
 
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
+const CHUNGHWA := preload("res://data/items/item_chunghwa_cigarettes.tres")
 
 var _failed := false
 
@@ -26,24 +27,42 @@ func _run() -> void:
 	_assert_equal(battle.player_cards_played_this_turn, 0, "失败出牌不计数")
 	var issued: Array[String] = []
 	battle.discipline_card_issued.connect(func(color: String, _count: int) -> void: issued.append(color))
-	for _index in range(10):
+	for _index in range(5):
 		_assert_true(battle.play_card(free_card), "黄牌前成功出牌")
-	_assert_equal(issued, ["yellow"], "第10张触发一次黄牌")
-	for _index in range(10):
+	_assert_equal(issued, ["yellow"], "第5张触发一次黄牌")
+	for _index in range(5):
 		_assert_true(battle.play_card(free_card), "红牌前成功出牌")
-	_assert_equal(issued, ["yellow", "red"], "第20张触发一次红牌")
+	_assert_equal(issued, ["yellow", "red"], "默认第10张触发一次红牌")
 	_assert_true(battle.red_card_pending, "红牌锁定等待当前牌表现完成")
-	_assert_true(not battle.play_card(free_card), "红牌后拒绝第21张牌")
+	_assert_true(not battle.play_card(free_card), "红牌后拒绝第11张牌")
 	var old_turn: int = battle.turn_number
 	_assert_true(battle.force_end_turn_for_red_card(), "红牌可强制结束回合")
 	_assert_equal(battle.turn_number, old_turn + 1, "敌方行动后进入下一回合")
 	_assert_equal(battle.player_cards_played_this_turn, 0, "新回合计数清零")
 	battle.free()
+	_test_chunghwa_threshold(free_card)
 	if _failed:
 		quit(1)
 		return
 	print("smoke_discipline_cards: PASS")
 	quit()
+
+
+# 一条中华只改红牌阈值；GM 取消时若已超过默认阈值，应立即锁定当前回合。
+func _test_chunghwa_threshold(free_card: Resource) -> void:
+	var battle = BATTLE_CONTROLLER.new()
+	root.add_child(battle)
+	battle.setup(20260912, null, {}, [CHUNGHWA])
+	var items: Array[Resource] = [CHUNGHWA]
+	_assert_equal(battle.red_card_threshold, 20, "持有中华时阈值为20")
+	for _index in range(12):
+		_assert_true(battle.play_card(free_card), "中华允许打到第12张")
+	_assert_true(not battle.red_card_pending, "第12张未获红牌")
+	items.clear()
+	battle.debug_sync_items(items, {})
+	_assert_equal(battle.red_card_threshold, 10, "取消中华恢复默认阈值")
+	_assert_true(battle.red_card_pending, "取消后超阈值立即锁回合")
+	battle.free()
 
 
 func _assert_true(value: bool, label: String) -> void:

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=6 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
+[sub_resource type="Resource" id="stack"]
+script = ExtResource("2")
+trigger = 3
+operation = 3
+amount = 1.0
+card_filter = 3
+counter_key = "parrot_feather_bonus"
+[sub_resource type="Resource" id="apply"]
+script = ExtResource("2")
+trigger = 2
+operation = 7
+target_key = "attack_bonus"
+amount = 1.0
+card_filter = 1
+counter_key = "parrot_feather_bonus"
+[sub_resource type="Resource" id="consume"]
+script = ExtResource("2")
+trigger = 2
+operation = 4
+card_filter = 1
+counter_key = "parrot_feather_bonus"
+[resource]
+script = ExtResource("1")
+item_id = "item_parrot_feather"
+display_name = "鹦鹉羽毛"
+description = "每打出1张技能牌，下一张攻击牌的每段伤害+1，可叠加"
+modifier_type = 4
+effects = Array[Resource]([SubResource("stack"), SubResource("apply"), SubResource("consume")])

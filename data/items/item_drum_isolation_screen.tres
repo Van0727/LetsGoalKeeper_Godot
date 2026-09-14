@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
+[sub_resource type="Resource" id="first_turn_shield"]
+script = ExtResource("2")
+trigger = 1
+operation = 5
+target_key = "gain_shield"
+amount = 5.0
+maximum_turn = 1
+[resource]
+script = ExtResource("1")
+item_id = "item_drum_isolation_screen"
+display_name = "鼓手隔音屏"
+description = "每场战斗首回合开始时获得5点护盾"
+modifier_type = 4
+effects = Array[Resource]([SubResource("first_turn_shield")])

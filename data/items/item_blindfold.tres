@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+item_id = "item_blindfold"
+display_name = "蒙眼布"
+description = "手牌上限为1；主动技改为换牌，每回合可用3次"
+modifier_type = 4

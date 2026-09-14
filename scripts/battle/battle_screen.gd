@@ -14,6 +14,8 @@ const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
 const BALL_FLIGHT_SCENE := preload("res://scenes/ball_flight.tscn")
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
+const BARE_CHESTED := preload("res://data/cards/card_bare_chested.tres")
+const NUDE_LICENSE_ID := "item_nude_license"
 const HIT_AUDIO_STREAM := preload("res://sound/sounds/hit.mp3")
 const MISS_AUDIO_STREAM := preload("res://sound/sounds/miss.mp3")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
@@ -207,6 +209,9 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	# 表现随机数仍独立于核心球路随机流；实际球型与方向由控制器先锁定并写入事件。
 	_visual_rng.seed = current_seed * 31 + 7
 	deck_state.setup(starting_deck, current_seed)
+	# 从 RunState 原始牌组生成本场可玩投影，读档不需要额外保存替换来源。
+	deck_state.sync_defense_replacement(NUDE_LICENSE_ID in run_state.owned_item_ids, BARE_CHESTED)
+	deck_state.set_hand_limit(1 if "item_blindfold" in run_state.owned_item_ids else STARTING_HAND_SIZE)
 	controller.setup(
 		current_seed,
 		selected_enemy,
@@ -266,6 +271,12 @@ func try_play_hand_card(hand_index: int, rhythm_result: Dictionary = {}) -> bool
 func _on_card_played(card_view: DraggableCard) -> void:
 	if card_view is BattleCardView:
 		var rhythm_result: Dictionary = rhythm_clock.judge_now()
+		# 耳返改变本次出牌的判定反馈与伤害，不改 BGM 拍位或实际音频时间。
+		if controller.item_runtime.has_item_id("item_in_ear_monitor"):
+			rhythm_result["grade"] = rhythm_clock.JudgementGrade.PERFECT
+			rhythm_result["grade_name"] = "Perfect"
+			rhythm_result["effect_multiplier"] = 1.0
+			rhythm_result["error_ms"] = 0.0
 		rhythm_feedback.show_judgement(rhythm_result)
 		var played := try_play_hand_card(card_view.hand_index, rhythm_result)
 		_play_miss_audio_if_needed(rhythm_result, played)
@@ -316,7 +327,10 @@ func _on_end_turn_pressed() -> void:
 	_update_input_state()
 	var discarded := deck_state.discard_hand()
 	status_label.text = "弃掉 %d 张手牌，敌人行动" % discarded
-	controller.end_player_turn()
+	# 结束回合按钮即时采样 BGM 拍位，回转鼓组不依赖上一次出牌时的拍位。
+	var end_timing: Dictionary = rhythm_clock.judge_now()
+	end_timing["is_last_beat"] = int(end_timing.get("beat_in_bar", -1)) == rhythm_clock.beats_per_bar - 1
+	controller.end_player_turn(end_timing)
 	if controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN:
 		deck_state.draw_cards(STARTING_HAND_SIZE)
 	call_deferred("_finish_resolution")
@@ -325,6 +339,11 @@ func _on_end_turn_pressed() -> void:
 # 主动技先打开战斗内嵌QTE弹窗；QTE完成前只锁输入，不提前消耗连击点或修改战斗数值。
 func _on_skill_pressed() -> void:
 	if _input_locked:
+		return
+	if controller.item_runtime.has_item_id("item_blindfold"):
+		if controller.use_blindfold_swap(deck_state):
+			_rebuild_hand()
+			_refresh_all()
 		return
 	var skill: Resource = _get_current_skill()
 	if skill == null:
@@ -379,7 +398,7 @@ func _play_active_skill_qte_result(skill: Resource, result: Dictionary) -> void:
 		_play_attack_impact_audio()
 		ball_flight.notify_impact()
 		# 控制器在真实命中拍点才修改生命、护盾或强化，QTE飞行期间核心状态保持不变。
-		if not controller.play_active_skill(skill):
+		if not controller.play_active_skill(skill, result, true):
 			await _wait_for_active_skill_visual(visual_state)
 			_input_locked = false
 			_update_input_state()
@@ -396,6 +415,11 @@ func _play_active_skill_qte_result(skill: Resource, result: Dictionary) -> void:
 		})
 		status_label.text = "%s QTE失败 · Miss %d" % [skill.display_name, miss_count]
 	await _wait_for_active_skill_visual(visual_state)
+	# 骰子强制结束必须等主动技球与反馈播完，再弃手牌并抽下一回合手牌。
+	if controller.bar_dice_end_turn_pending:
+		deck_state.discard_hand()
+		if controller.resolve_bar_dice_end_turn() and controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN:
+			deck_state.draw_cards(STARTING_HAND_SIZE)
 	if hit_target:
 		status_label.text = "%s已结算 · P%d G%d M%d" % [
 			skill.display_name,
@@ -565,6 +589,7 @@ func _on_gm_item_toggled(checked: bool, item: Resource, checkbox: CheckBox) -> v
 	if not _gm_menu_open or not gm_items_page.visible or _input_locked or not item.enabled:
 		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
 		return
+	var had_blindfold: bool = "item_blindfold" in run_state.owned_item_ids
 	var changed: bool = run_state.add_item(item) if checked else run_state.remove_item(item)
 	if not changed:
 		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
@@ -573,6 +598,12 @@ func _on_gm_item_toggled(checked: bool, item: Resource, checkbox: CheckBox) -> v
 		_reward_service.get_items_by_ids(run_state.owned_item_ids),
 		run_state.damage_modifiers
 	)
+	deck_state.sync_defense_replacement(NUDE_LICENSE_ID in run_state.owned_item_ids, BARE_CHESTED)
+	deck_state.set_hand_limit(1 if "item_blindfold" in run_state.owned_item_ids else STARTING_HAND_SIZE)
+	# 只有解除蒙眼布上限才补回常规手牌；切换其他GM物品不能绕过狼牙鼓槌停抽。
+	if had_blindfold and deck_state.hand_limit == STARTING_HAND_SIZE:
+		deck_state.draw_cards(STARTING_HAND_SIZE)
+	_rebuild_hand()
 	_refresh_all()
 
 
@@ -582,6 +613,9 @@ func _on_gm_close_pressed() -> void:
 	gm_overlay.hide()
 	_show_gm_tools_page()
 	_update_input_state()
+	# GM 取消一条中华时可能已超过默认红牌阈值，关闭菜单后立即推进该回合。
+	if controller.red_card_pending and not _is_presenting_resolution:
+		_force_end_turn_after_red_card()
 
 
 # GM 跳过从二级面板进入统一胜利出口；控制器负责绕过护盾和反伤。
@@ -664,11 +698,15 @@ func _update_input_state() -> void:
 	gm_skip_button.disabled = _input_locked or controller.phase == BATTLE_CONTROLLER.Phase.FINISHED
 	var current_skill := _get_current_skill()
 	var combo_count: int = controller.combo_state.count
-	if current_skill == null:
+	if controller.item_runtime.has_item_id("item_blindfold"):
+		skill_button.text = "换牌 %d/3" % controller.blindfold_charges
+		skill_button.disabled = not can_act or controller.blindfold_charges <= 0
+	elif current_skill == null:
 		skill_button.text = "连击 0/3"
 	else:
 		skill_button.text = "%s %d/3" % [current_skill.display_name, combo_count]
-	skill_button.disabled = not can_act or not controller.combo_state.can_activate()
+	if not controller.item_runtime.has_item_id("item_blindfold"):
+		skill_button.disabled = not can_act or not controller.combo_state.can_activate()
 	for child in hand_layer.get_children():
 		if child is BattleCardView:
 			var affordable: bool = controller.player.can_spend_energy(child.card_definition.cost)
@@ -700,6 +738,12 @@ func _play_pending_resolution() -> void:
 				shot_events.append(_pending_effect_events[event_index])
 				event_index += 1
 			await _play_shot_group(shot_events)
+			continue
+		# 非足球的追加打击同样等待前序飞球命中，再提交核心伤害并刷新血条。
+		if bool(event.get("deferred_damage", false)):
+			if controller.commit_deferred_damage(event):
+				_apply_effect_feedback(event)
+			event_index += 1
 			continue
 		_apply_effect_feedback(event)
 		event_index += 1

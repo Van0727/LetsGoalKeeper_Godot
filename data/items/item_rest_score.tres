@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+item_id = "item_rest_score"
+display_name = "空拍乐谱"
+description = "回合结束时只出过1张牌，下一回合第一张牌的数值效果×2"
+modifier_type = 4

@@ -8,10 +8,12 @@ const COMMON_CARD_IDS: Array[String] = [
 	"card_bloodthirsty_ball", "card_spiked_ball", "card_rugby_ball", "card_gloves",
 	"card_sports_drink", "card_towel",
 	"card_pitch_up", "card_pitch_down", "card_pitch_reset",
+	"card_banana_left", "card_banana_right",
 ]
 const BOSS_CARD_IDS: Array[String] = [
 	"card_energy_shot", "card_shot_group", "card_double_banana_shot",
 ]
+# 普通奖励目录也是 GM 完整清单的来源；新增奖励在这里登记后无需另写界面入口。
 const NORMAL_ITEMS: Array[Resource] = [
 	preload("res://data/items/item_golden_boot.tres"),
 	preload("res://data/items/item_lob_badge.tres"),
@@ -21,6 +23,26 @@ const NORMAL_ITEMS: Array[Resource] = [
 	preload("res://data/items/item_banana.tres"),
 	preload("res://data/items/item_gorilla_doll.tres"),
 	preload("res://data/items/item_free_kick_master_license.tres"),
+	preload("res://data/items/item_wishing_bracelet.tres"),
+	preload("res://data/items/item_parrot_feather.tres"),
+	preload("res://data/items/item_national_flip_flops.tres"),
+	preload("res://data/items/item_hercules_cup.tres"),
+	preload("res://data/items/item_lumberjack_axe.tres"),
+	preload("res://data/items/item_nude_license.tres"),
+	preload("res://data/items/item_chunghwa_cigarettes.tres"),
+	preload("res://data/items/item_rotating_drums.tres"),
+	preload("res://data/items/item_drum_isolation_screen.tres"),
+	preload("res://data/items/item_racing_drumsticks.tres"),
+	preload("res://data/items/item_rhythm_game_trophy.tres"),
+	preload("res://data/items/item_double_bass_pedal.tres"),
+	preload("res://data/items/item_in_ear_monitor.tres"),
+	preload("res://data/items/item_big_drum_mallet.tres"),
+	preload("res://data/items/item_spiked_drum_mallet.tres"),
+	preload("res://data/items/item_blindfold.tres"),
+	preload("res://data/items/item_blank_score.tres"),
+	preload("res://data/items/item_rest_score.tres"),
+	preload("res://data/items/item_tattoo_sticker.tres"),
+	preload("res://data/items/item_bar_dice.tres"),
 ]
 const BOSS_ITEMS: Array[Resource] = [
 	preload("res://data/items/item_number_7.tres"),
