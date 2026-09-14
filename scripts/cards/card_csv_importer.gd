@@ -1,5 +1,5 @@
 @tool
-# 卡牌 CSV 导入器：在编辑器内将策划表数值转换为 Godot 卡牌资源，保留资源文件名作为存档稳定 ID。
+# 卡牌 CSV 导入器：卡牌按效果模板 ID 复用步骤，并由卡牌行提供各步骤的战斗数值。
 class_name CardCsvImporter
 extends RefCounted
 
@@ -8,18 +8,31 @@ const EFFECT_DEFINITION := preload("res://scripts/cards/effect_definition.gd")
 
 const FIELD_NAMES := [
 	"id", "display_name", "description", "cost", "card_type", "shot_type", "rarity",
-	"attack_delay_beats", "multi_hit_interval_beats", "effect_index", "effect_type", "target",
-	"amount", "hits", "amount_per_energy", "multiplier", "chance_percent",
-	"interrupt_on_success", "source_file",
+	"attack_delay_beats", "multi_hit_interval_beats", "effect_id", "amounts", "hits",
+	"amounts_per_energy", "multipliers", "chances", "interrupts", "source_file",
 ]
 const FIELD_TYPES := [
 	"uint16", "string", "string", "uint8", "uint8", "uint8", "uint8", "float32", "float32",
-	"uint8", "uint8", "uint8", "uint16", "uint8", "uint8", "uint8", "uint8", "uint8", "string",
+	"uint16", "uint16_list", "uint8_list", "uint8_list", "uint8_list",
+	"uint8_list", "uint8_list", "string",
 ]
+const EFFECT_FIELD_NAMES := [
+	"effect_id", "name", "description",
+]
+const EFFECT_FIELD_TYPES := [
+	"uint16", "string", "string",
+]
+const STEP_FIELD_NAMES := ["effect_id", "effect_index", "effect_type", "target", "description"]
+const STEP_FIELD_TYPES := ["uint16", "uint8", "uint8", "uint8", "string"]
 
 
-# 读取 CSV、完整校验后再写入资源；返回结构化结果，避免错误配置覆盖现有卡牌。
-func import_cards(csv_path := "res://tables/cards.csv", output_directory := "res://data/cards") -> Dictionary:
+# 三张表先完整校验再写入资源；缺失模板、错位参数和孤立步骤都不能造成部分写入。
+func import_cards(
+		csv_path := "res://tables/cards.csv",
+		output_directory := "res://data/cards",
+		effects_path := "res://tables/effects.csv",
+		steps_path := "res://tables/effect_steps.csv"
+) -> Dictionary:
 	var errors: Array[String] = []
 	var file := FileAccess.open(csv_path, FileAccess.READ)
 	if file == null:
@@ -31,19 +44,87 @@ func import_cards(csv_path := "res://tables/cards.csv", output_directory := "res
 		return {"ok": false, "errors": ["CSV 前三行表头与卡牌配置约定不一致"]}
 
 	var cards := {}
+	var ids := {}
+	var previous_id := 0
 	var line_number := 3
 	while not file.eof_reached():
 		var row := _read_csv_row(file)
 		line_number += 1
 		if row.is_empty() or (row.size() == 1 and row[0].strip_edges().is_empty()):
 			continue
-		_parse_card_row(row, line_number, cards, errors)
+		var numeric_id := _parse_card_row(row, line_number, cards, ids, errors)
+		if numeric_id > 0:
+			if numeric_id < previous_id:
+				errors.append("卡牌主表第%d行ID必须从低到高排列" % line_number)
+			previous_id = numeric_id
 	file.close()
-	_validate_unique_ids(cards, errors)
+	var templates := {}
+	var effects_file := FileAccess.open(effects_path, FileAccess.READ)
+	if effects_file == null:
+		errors.append("无法打开卡牌效果 CSV：%s" % effects_path)
+	else:
+		var effect_comment := _read_csv_row(effects_file)
+		var effect_fields := _read_csv_row(effects_file)
+		var effect_types := _read_csv_row(effects_file)
+		if effect_comment.size() != EFFECT_FIELD_NAMES.size() or not _row_matches(effect_fields, EFFECT_FIELD_NAMES) or not _row_matches(effect_types, EFFECT_FIELD_TYPES):
+			errors.append("效果 CSV 前三行表头与配置约定不一致")
+		else:
+			line_number = 3
+			previous_id = 0
+			while not effects_file.eof_reached():
+				var effect_row := _read_csv_row(effects_file)
+				line_number += 1
+				if effect_row.is_empty() or (effect_row.size() == 1 and effect_row[0].strip_edges().is_empty()):
+					continue
+				var template_id := _parse_effect_row(effect_row, line_number, templates, errors)
+				if template_id > 0:
+					if template_id < previous_id:
+						errors.append("效果模板表第%d行ID必须从低到高排列" % line_number)
+					previous_id = template_id
+		effects_file.close()
+	var steps_file := FileAccess.open(steps_path, FileAccess.READ)
+	if steps_file == null:
+		errors.append("无法打开效果步骤 CSV：%s" % steps_path)
+	else:
+		var step_comment := _read_csv_row(steps_file)
+		var step_fields := _read_csv_row(steps_file)
+		var step_types := _read_csv_row(steps_file)
+		if step_comment.size() != STEP_FIELD_NAMES.size() or not _row_matches(step_fields, STEP_FIELD_NAMES) or not _row_matches(step_types, STEP_FIELD_TYPES):
+			errors.append("效果步骤 CSV 前三行表头与配置约定不一致")
+		else:
+			line_number = 3
+			previous_id = 0
+			while not steps_file.eof_reached():
+				var step_row := _read_csv_row(steps_file)
+				line_number += 1
+				if step_row.is_empty() or (step_row.size() == 1 and step_row[0].strip_edges().is_empty()):
+					continue
+				var step_id := _parse_step_row(step_row, line_number, templates, errors)
+				if step_id > 0:
+					if step_id < previous_id:
+						errors.append("效果步骤表第%d行ID必须从低到高排列" % line_number)
+					previous_id = step_id
+		steps_file.close()
+	for template_id in templates:
+		if templates[template_id]["steps"].is_empty():
+			errors.append("效果模板 %d 没有步骤" % template_id)
+	for source_file in cards:
+		var card: Dictionary = cards[source_file]
+		if not templates.has(card.effect_id):
+			errors.append("卡牌 %s 引用不存在的效果ID %d" % [source_file, card.effect_id])
+			continue
+		var steps: Array = templates[card.effect_id]["steps"]
+		if card.values.size() != steps.size():
+			errors.append("卡牌 %s 的参数组数必须等于效果步骤数 %d" % [source_file, steps.size()])
+			continue
+		for index in range(steps.size()):
+			var effect_data: Dictionary = steps[index].duplicate()
+			effect_data.merge(card.values[index])
+			card.effects.append(effect_data)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
 	if cards.is_empty():
-		return {"ok": false, "errors": ["CSV 未包含任何卡牌效果记录"]}
+		return {"ok": false, "errors": ["CSV 未包含任何卡牌记录"]}
 
 	var directory_error := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(output_directory))
 	if directory_error != OK:
@@ -57,11 +138,11 @@ func import_cards(csv_path := "res://tables/cards.csv", output_directory := "res
 	return {"ok": true, "card_count": cards.size(), "effect_count": _effect_count(cards)}
 
 
-# CSV 第一列是策划数字 ID；资源文件名仍是运行时与存档使用的英文稳定 ID。
-func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary, errors: Array[String]) -> void:
+# 主表每个数字 ID 只能出现一次；资源文件名仍是运行时和存档使用的英文稳定 ID。
+func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary, ids: Dictionary, errors: Array[String]) -> int:
 	if row.size() != FIELD_NAMES.size():
 		errors.append("第%d行列数应为%d，实际为%d" % [line_number, FIELD_NAMES.size(), row.size()])
-		return
+		return -1
 	var numeric_id := _parse_uint(row[0], 1, 65535, "ID", line_number, errors)
 	var cost := _parse_uint(row[3], 0, 99, "能量费用", line_number, errors)
 	var card_type := _map_value(row[4], {1: CARD_DEFINITION.CardType.ATTACK, 2: CARD_DEFINITION.CardType.ABILITY, 3: CARD_DEFINITION.CardType.DEFENSE}, "卡牌类型", line_number, errors)
@@ -69,24 +150,32 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 	var rarity := _map_value(row[6], {1: CARD_DEFINITION.Rarity.COMMON, 2: CARD_DEFINITION.Rarity.BOSS}, "稀有度", line_number, errors)
 	var delay := _parse_float(row[7], 0.0, 16.0, "攻击延迟拍数", line_number, errors)
 	var interval := _parse_float(row[8], 0.0, 16.0, "多段攻击间隔拍数", line_number, errors)
-	var effect_index := _parse_uint(row[9], 1, 255, "效果序号", line_number, errors)
-	var effect_type := _map_value(row[10], {1: EFFECT_DEFINITION.EffectType.DAMAGE, 2: EFFECT_DEFINITION.EffectType.SHIELD, 3: EFFECT_DEFINITION.EffectType.HEAL, 4: EFFECT_DEFINITION.EffectType.ENERGY, 5: EFFECT_DEFINITION.EffectType.APPLY_STRENGTH, 6: EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS, 7: EFFECT_DEFINITION.EffectType.BGM_PITCH_UP, 8: EFFECT_DEFINITION.EffectType.BGM_PITCH_DOWN, 9: EFFECT_DEFINITION.EffectType.BGM_PITCH_RESET, 10: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_LEFT, 11: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_RIGHT}, "效果类型", line_number, errors)
-	var target := _map_value(row[11], {1: EFFECT_DEFINITION.Target.SELF, 2: EFFECT_DEFINITION.Target.ENEMY}, "效果目标", line_number, errors)
-	var amount := _parse_uint(row[12], 0, 999, "基础数值", line_number, errors)
-	var hits := _parse_uint(row[13], 1, 99, "生效次数", line_number, errors)
-	var amount_per_energy := _parse_uint(row[14], 0, 255, "每点剩余能量加成", line_number, errors)
-	var multiplier_percent := _parse_uint(row[15], 0, 255, "效果倍率", line_number, errors)
-	var chance_percent := _parse_uint(row[16], 0, 100, "触发概率", line_number, errors)
-	var interrupt := _parse_uint(row[17], 0, 1, "成功后中断", line_number, errors)
-	var source_file := row[18].strip_edges()
+	var effect_id := _parse_uint(row[9], 1, 65535, "效果ID", line_number, errors)
+	var amounts := _parse_uint_list(row[10], 0, 999, "基础数值", line_number, errors)
+	var hits := _parse_uint_list(row[11], 1, 99, "生效次数", line_number, errors)
+	var amounts_per_energy := _parse_uint_list(row[12], 0, 255, "每点剩余能量加成", line_number, errors)
+	var multipliers := _parse_uint_list(row[13], 0, 255, "效果倍率", line_number, errors)
+	var chances := _parse_uint_list(row[14], 0, 100, "触发概率", line_number, errors)
+	var interrupts := _parse_uint_list(row[15], 0, 1, "成功后中断", line_number, errors)
+	var source_file := row[16].strip_edges()
 	if source_file.is_empty() or not _is_safe_resource_name(source_file):
 		errors.append("第%d行资源文件名无效：%s" % [line_number, source_file])
-		return
-	if numeric_id < 0 or cost < 0 or card_type < 0 or shot_type < 0 or rarity < 0 or delay < 0 or interval < 0.0 or effect_index < 0 or effect_type < 0 or target < 0 or amount < 0 or hits < 0 or amount_per_energy < 0 or multiplier_percent < 0 or chance_percent < 0 or interrupt < 0:
-		return
+		return -1
+	if numeric_id < 0 or cost < 0 or card_type < 0 or shot_type < 0 or rarity < 0 or delay < 0 or interval < 0.0 or effect_id < 0:
+		return -1
+	var value_count := amounts.size()
+	if value_count == 0 or hits.size() != value_count or amounts_per_energy.size() != value_count or multipliers.size() != value_count or chances.size() != value_count or interrupts.size() != value_count:
+		errors.append("卡牌主表第%d行各数值列的参数组数必须相同且不为空" % line_number)
+		return -1
 	if not _id_matches_card_type(numeric_id, card_type):
 		errors.append("第%d行ID %d 不在卡牌类型%d对应号段内" % [line_number, numeric_id, row[4].to_int()])
-		return
+		return -1
+	if ids.has(numeric_id):
+		errors.append("卡牌主表第%d行ID %d 重复" % [line_number, numeric_id])
+		return -1
+	if cards.has(source_file):
+		errors.append("卡牌主表第%d行资源文件名 %s 重复" % [line_number, source_file])
+		return -1
 
 	var card_data := {
 		"id": numeric_id,
@@ -99,29 +188,58 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 		"rarity": rarity,
 		"attack_delay_beats": delay,
 		"multi_hit_interval_beats": interval,
+		"effect_id": effect_id,
+		"values": [],
 		"effects": [],
 	}
-	if cards.has(source_file):
-		for key in ["id", "display_name", "description", "cost", "card_type", "shot_type", "rarity", "attack_delay_beats", "multi_hit_interval_beats"]:
-			if cards[source_file][key] != card_data[key]:
-				errors.append("第%d行与同卡牌前序效果的字段 %s 不一致" % [line_number, key])
-				return
-	else:
-		cards[source_file] = card_data
-	var effects: Array = cards[source_file]["effects"]
-	if effects.size() != effect_index - 1:
-		errors.append("第%d行效果序号必须从1连续递增" % line_number)
-		return
-	effects.append({
-		"effect_type": effect_type,
-		"target": target,
-		"amount": amount,
-		"hits": hits,
-		"amount_per_energy": amount_per_energy,
-		"multiplier": multiplier_percent / 100.0,
-		"chance_percent": chance_percent,
-		"interrupt_on_success": interrupt == 1,
-	})
+	for index in range(value_count):
+		card_data.values.append({
+			"amount": amounts[index], "hits": hits[index],
+			"amount_per_energy": amounts_per_energy[index],
+			"multiplier": multipliers[index] / 100.0,
+			"chance_percent": chances[index],
+			"interrupt_on_success": interrupts[index] == 1,
+		})
+	cards[source_file] = card_data
+	ids[numeric_id] = source_file
+	return numeric_id
+
+
+# 效果模板 ID 独立于卡牌 ID；末列描述仅供策划查看，不参与资源生成或战斗结算。
+func _parse_effect_row(row: PackedStringArray, line_number: int, templates: Dictionary, errors: Array[String]) -> int:
+	if row.size() != EFFECT_FIELD_NAMES.size():
+		errors.append("效果模板表第%d行列数应为%d，实际为%d" % [line_number, EFFECT_FIELD_NAMES.size(), row.size()])
+		return -1
+	var numeric_id := _parse_uint(row[0], 1, 65535, "效果ID", line_number, errors)
+	if numeric_id < 0:
+		return -1
+	if row[1].strip_edges().is_empty() or templates.has(numeric_id):
+		errors.append("效果模板表第%d行名称为空或ID %d 重复" % [line_number, numeric_id])
+		return -1
+	templates[numeric_id] = {"name": row[1], "steps": []}
+	return numeric_id
+
+
+# 步骤只定义行为与目标；末列描述仅供策划查看，战斗数值从引用模板的卡牌行填入。
+func _parse_step_row(row: PackedStringArray, line_number: int, templates: Dictionary, errors: Array[String]) -> int:
+	if row.size() != STEP_FIELD_NAMES.size():
+		errors.append("效果步骤表第%d行列数应为%d，实际为%d" % [line_number, STEP_FIELD_NAMES.size(), row.size()])
+		return -1
+	var numeric_id := _parse_uint(row[0], 1, 65535, "效果ID", line_number, errors)
+	var effect_index := _parse_uint(row[1], 1, 255, "效果序号", line_number, errors)
+	var effect_type := _map_value(row[2], {1: EFFECT_DEFINITION.EffectType.DAMAGE, 2: EFFECT_DEFINITION.EffectType.SHIELD, 3: EFFECT_DEFINITION.EffectType.HEAL, 4: EFFECT_DEFINITION.EffectType.ENERGY, 5: EFFECT_DEFINITION.EffectType.APPLY_STRENGTH, 6: EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS, 7: EFFECT_DEFINITION.EffectType.BGM_PITCH_UP, 8: EFFECT_DEFINITION.EffectType.BGM_PITCH_DOWN, 9: EFFECT_DEFINITION.EffectType.BGM_PITCH_RESET, 10: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_LEFT, 11: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_RIGHT}, "效果类型", line_number, errors)
+	var target := _map_value(row[3], {1: EFFECT_DEFINITION.Target.SELF, 2: EFFECT_DEFINITION.Target.ENEMY}, "效果目标", line_number, errors)
+	if numeric_id < 0 or effect_index < 0 or effect_type < 0 or target < 0:
+		return -1
+	if not templates.has(numeric_id):
+		errors.append("效果步骤表第%d行引用不存在的效果ID %d" % [line_number, numeric_id])
+		return -1
+	var steps: Array = templates[numeric_id]["steps"]
+	if steps.size() != effect_index - 1:
+		errors.append("效果步骤表第%d行序号必须从1连续递增" % line_number)
+		return -1
+	steps.append({"effect_type": effect_type, "target": target})
+	return numeric_id
 
 
 # 保存后强制绕过旧缓存重新加载并逐字段比对；只有回读一致才算导入成功。
@@ -223,17 +341,6 @@ func _id_matches_card_type(numeric_id: int, card_type: int) -> bool:
 	return false
 
 
-# 同一卡牌的多效果允许重复 ID，不同资源文件之间禁止共用数字 ID。
-func _validate_unique_ids(cards: Dictionary, errors: Array[String]) -> void:
-	var owners := {}
-	for source_file in cards:
-		var numeric_id: int = cards[source_file]["id"]
-		if owners.has(numeric_id):
-			errors.append("数字ID %d 同时用于 %s 和 %s" % [numeric_id, owners[numeric_id], source_file])
-		else:
-			owners[numeric_id] = source_file
-
-
 func _parse_uint(value: String, minimum: int, maximum: int, label: String, line_number: int, errors: Array[String]) -> int:
 	var text := value.strip_edges()
 	if not text.is_valid_int():
@@ -244,6 +351,17 @@ func _parse_uint(value: String, minimum: int, maximum: int, label: String, line_
 		errors.append("第%d行%s必须在%d到%d之间" % [line_number, label, minimum, maximum])
 		return -1
 	return parsed
+
+
+# 多步骤数值在同一单元格用竖线分隔；逐项执行原有范围检查，避免隐式转换吞掉坏值。
+func _parse_uint_list(value: String, minimum: int, maximum: int, label: String, line_number: int, errors: Array[String]) -> Array[int]:
+	var values: Array[int] = []
+	for part in value.split("|", true):
+		var parsed := _parse_uint(part, minimum, maximum, label, line_number, errors)
+		if parsed < 0:
+			return []
+		values.append(parsed)
+	return values
 
 
 func _parse_float(value: String, minimum: float, maximum: float, label: String, line_number: int, errors: Array[String]) -> float:

@@ -1,5 +1,5 @@
 @tool
-# 编辑器手动入口：在 Godot 脚本编辑器执行本文件，即可将 tables/cards.csv 写入 data/cards。
+# 编辑器手动入口：读取卡牌、效果模板与步骤三张表，校验后写入 data/cards。
 extends EditorScript
 
 const CARD_CSV_IMPORTER_SCRIPT := preload("res://scripts/cards/card_csv_importer.gd")
