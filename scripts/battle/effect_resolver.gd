@@ -3,6 +3,7 @@ class_name EffectResolver
 extends RefCounted
 
 const EFFECT_DEFINITION := preload("res://scripts/cards/effect_definition.gd")
+const ITEM_EFFECT := preload("res://scripts/items/item_effect_definition.gd")
 
 # 直接调用且未注入战斗随机数时使用的后备随机数生成器。
 var _fallback_rng := RandomNumberGenerator.new()
@@ -16,7 +17,9 @@ func resolve_card(
 		rng: RandomNumberGenerator = null,
 		damage_modifiers: Dictionary = {},
 		rhythm_result: Dictionary = {},
-		defer_enemy_shot_damage := false
+		defer_enemy_shot_damage := false,
+		item_runtime = null,
+		action_context: Dictionary = {}
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	# 节奏倍率只作用于对手受到的直接伤害；自伤、治疗、护盾和状态保持卡牌原始规则。
@@ -47,15 +50,17 @@ func resolve_card(
 				var applied_rhythm_multiplier := rhythm_multiplier if recipient == opponent else 1.0
 				_resolve_damage(
 					effect,
-					card.shot_type,
+					int(action_context.get("shot_type", card.shot_type)),
 					card.attack_delay_beats,
 					card.multi_hit_interval_beats,
-					defer_enemy_shot_damage and recipient == opponent and card.shot_type != 0,
+					defer_enemy_shot_damage and recipient == opponent and int(action_context.get("shot_type", card.shot_type)) != 0,
 					source,
 					recipient,
 					events,
 					damage_modifiers,
-					applied_rhythm_multiplier
+					applied_rhythm_multiplier,
+					item_runtime,
+					action_context
 				)
 			EFFECT_DEFINITION.EffectType.SHIELD:
 				var gained: int = recipient.gain_shield(effect.amount)
@@ -124,23 +129,33 @@ func _resolve_damage(
 		recipient,
 		events: Array[Dictionary],
 		damage_modifiers: Dictionary,
-		rhythm_multiplier: float
+		rhythm_multiplier: float,
+		item_runtime = null,
+		action_context: Dictionary = {}
 ) -> void:
 	for hit_index in range(effect.hits):
 		# 能量加成读取费用支付后的运行时能量，不回写 EffectDefinition。
 		var energy_bonus: int = source.energy * effect.amount_per_energy
 		var item_bonus := _get_shot_damage_bonus(shot_type, damage_modifiers)
 		var scaled_amount: int = effect.amount + energy_bonus + item_bonus
-		var damage := maxi(roundi(
-			scaled_amount * source.strength_multiplier * rhythm_multiplier
-		), 0)
+		var damage_context := action_context.duplicate(true)
+		damage_context["amount"] = scaled_amount * source.strength_multiplier * rhythm_multiplier
+		damage_context["hit"] = hit_index + 1
+		damage_context["hits"] = effect.hits
+		damage_context["shot_type"] = shot_type
+		damage_context["is_enemy_target"] = recipient != source
+		var before_commands: Array[Dictionary] = []
+		if item_runtime != null:
+			before_commands = item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_DAMAGE, damage_context)
+		# 所有倍率的最终结果统一向上取整，避免战斗状态和表现事件出现小数。
+		var damage := maxi(ceili(float(damage_context.get("amount", 0.0))), 0)
 		# 实战射门只生成待命中事件；实际护盾消耗、扣血和死亡判断由足球命中帧提交。
 		var result: Dictionary = (
 			{"absorbed": 0, "health_damage": 0}
 			if defer_damage
 			else recipient.take_damage(damage)
 		)
-		events.append({
+		var damage_event := {
 			"type": "damage",
 			"amount": damage,
 			"base_amount": effect.amount,
@@ -152,6 +167,9 @@ func _resolve_damage(
 			"hit": hit_index + 1,
 			"hits": effect.hits,
 			"shot_type": shot_type,
+			"shot_direction": int(action_context.get("shot_direction", 0)),
+			"item_context": damage_context.duplicate(true),
+			"item_commands": before_commands,
 			# 表现层读取事件快照，避免结算期间修改 Resource 导致已发出的球改变时序。
 			"attack_delay_beats": maxf(attack_delay_beats, 0.0),
 			"multi_hit_interval_beats": maxf(multi_hit_interval_beats, 0.0),
@@ -159,7 +177,15 @@ func _resolve_damage(
 			"target": recipient,
 			"health_after": recipient.health,
 			"shield_after": recipient.shield,
-		})
+		}
+		if item_runtime != null and not defer_damage:
+			var after_context := damage_context.duplicate(true)
+			after_context["amount"] = damage
+			after_context["health_damage"] = result.health_damage
+			damage_event.item_commands.append_array(
+				item_runtime.trigger(ITEM_EFFECT.Trigger.AFTER_DAMAGE, after_context)
+			)
+		events.append(damage_event)
 		if not defer_damage and recipient.is_dead():
 			break
 

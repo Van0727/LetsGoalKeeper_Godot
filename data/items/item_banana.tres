@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
+[sub_resource type="Resource" id="Effect_all_banana"]
+script = ExtResource("2")
+trigger = 9
+operation = 2
+target_key = "shot_type"
+amount = 2.0
+requires_shot = true
+[resource]
+script = ExtResource("1")
+item_id = "item_banana"
+display_name = "香蕉"
+description = "所有踢出的球都变为香蕉球"
+modifier_type = 4
+effects = Array[Resource]([SubResource("Effect_all_banana")])

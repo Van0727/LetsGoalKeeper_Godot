@@ -16,12 +16,24 @@ const NORMAL_ITEMS: Array[Resource] = [
 	preload("res://data/items/item_golden_boot.tres"),
 	preload("res://data/items/item_lob_badge.tres"),
 	preload("res://data/items/item_banana_scarf.tres"),
+	preload("res://data/items/item_golden_left_foot.tres"),
+	preload("res://data/items/item_golden_right_foot.tres"),
+	preload("res://data/items/item_banana.tres"),
+	preload("res://data/items/item_gorilla_doll.tres"),
+	preload("res://data/items/item_free_kick_master_license.tres"),
 ]
 const BOSS_ITEMS: Array[Resource] = [
 	preload("res://data/items/item_number_7.tres"),
 	preload("res://data/items/item_number_10.tres"),
 	preload("res://data/items/item_corner_flag_disabled.tres"),
 ]
+
+
+# GM 清单读取普通与 Boss 的完整登记表，包含禁用占位物；不使用三选一抽样结果。
+func get_all_items() -> Array[Resource]:
+	var result: Array[Resource] = NORMAL_ITEMS.duplicate()
+	result.append_array(BOSS_ITEMS)
+	return result
 
 
 # 根据稳定ID加载卡牌；无效ID输出明确错误并返回空值。
@@ -32,6 +44,26 @@ func get_card_by_id(card_id: String) -> Resource:
 		_record_missing_resource("card", card_id)
 		return null
 	return load(path)
+
+
+# 根据奖励池中的稳定 ID 返回战利品定义；旧存档遇到已下架 ID 时安全忽略并记录诊断。
+func get_item_by_id(item_id: String) -> Resource:
+	for item in get_all_items():
+		if item.item_id == item_id:
+			return item
+	push_error("找不到战利品ID：%s" % item_id)
+	_record_missing_resource("item", item_id)
+	return null
+
+
+# 批量解析本局已拥有战利品，保持获得顺序，以便多个同阶段效果得到稳定结算顺序。
+func get_items_by_ids(item_ids: Array[String]) -> Array[Resource]:
+	var result: Array[Resource] = []
+	for item_id in item_ids:
+		var item := get_item_by_id(item_id)
+		if item != null:
+			result.append(item)
+	return result
 
 
 # 缺失固定定义同时写入结构化诊断，便于外部测试包定位坏 ID。

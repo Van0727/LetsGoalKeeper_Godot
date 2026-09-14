@@ -1,4 +1,4 @@
-# 战利品固定定义：保存稳定ID、稀有度和射门伤害修正，不保存是否已拥有。
+# 战利品固定定义：保存稳定ID、旧版射门加成和通用触发效果，不保存单场战斗运行状态。
 class_name ItemDefinition
 extends Resource
 
@@ -12,6 +12,8 @@ enum ModifierType { ALL_SHOTS, STRAIGHT, BANANA, LOB, DISABLED }
 @export var modifier_type := ModifierType.ALL_SHOTS
 @export_range(0, 999, 1) var amount := 0
 @export var enabled := true
+# 新奖励品使用效果数组配置；旧奖励品继续走 modifier_type，迁移期间两套数据可以并存。
+@export var effects: Array[Resource] = []
 
 
 # 将枚举转换为 RunState 的稳定修正键，禁用效果返回空字符串。

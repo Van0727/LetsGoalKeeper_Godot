@@ -3,6 +3,7 @@ extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
+const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 
 var _failed := false
 
@@ -139,6 +140,34 @@ func _run() -> void:
 	battle_screen._on_gm_menu_pressed()
 	_assert_true(battle_screen.gm_overlay.visible, "点击GM入口显示二级面板")
 	_assert_true(battle_screen.end_turn_button.disabled, "GM面板打开时锁住结束回合")
+	# 战利品页读取完整奖励表；旧式加成及新式触发效果勾选后立即生效，取消即撤销。
+	battle_screen._on_gm_items_pressed()
+	_assert_true(battle_screen.gm_items_page.visible, "战利品页在GM面板内打开")
+	_assert_equal(battle_screen.gm_items_list.get_child_count(), REWARD_SERVICE.new().get_all_items().size(), "GM列出全部普通、Boss和禁用战利品")
+	var golden_boot := _find_gm_item_checkbox(battle_screen, "金靴")
+	var left_foot := _find_gm_item_checkbox(battle_screen, "黄金左脚")
+	var disabled_item := _find_gm_item_checkbox(battle_screen, "角旗杆（未启用）")
+	_assert_true(golden_boot != null and left_foot != null and disabled_item != null, "GM显示新旧和禁用奖励名称")
+	if golden_boot != null and left_foot != null and disabled_item != null:
+		_assert_true(disabled_item.disabled, "禁用占位奖励不能勾选")
+		_assert_true(not golden_boot.button_pressed, "未持有奖励初始未勾选")
+		golden_boot.button_pressed = true
+		_assert_true("item_golden_boot" in battle_screen.run_state.owned_item_ids, "勾选立即写入本局持有")
+		_assert_equal(battle_screen.controller.damage_modifiers.all, 1, "旧式奖励即时增加战斗伤害")
+		left_foot.button_pressed = true
+		_assert_equal(battle_screen.controller.item_runtime.items.size(), 2, "新式奖励即时接入战斗运行时")
+		golden_boot.button_pressed = false
+		_assert_equal(battle_screen.controller.damage_modifiers.all, 0, "取消旧式奖励即时撤销加成")
+		left_foot.button_pressed = false
+		_assert_true("item_golden_left_foot" not in battle_screen.run_state.owned_item_ids, "取消新式奖励立即移出本局")
+		_assert_equal(battle_screen.controller.item_runtime.items.size(), 0, "取消新式奖励立即停止触发")
+		left_foot.button_pressed = true
+		battle_screen._on_gm_items_back_pressed()
+		battle_screen._on_gm_items_pressed()
+		var refreshed_left := _find_gm_item_checkbox(battle_screen, "黄金左脚")
+		_assert_true(refreshed_left != null and refreshed_left.button_pressed, "返回后从真实持有状态恢复勾选")
+		if refreshed_left != null:
+			refreshed_left.button_pressed = false
 	battle_screen._on_gm_close_pressed()
 	_assert_true(not battle_screen.gm_overlay.visible, "关闭按钮隐藏GM面板")
 	_assert_true(not battle_screen.end_turn_button.disabled, "关闭GM面板后恢复战斗输入")
@@ -184,6 +213,15 @@ func _wait_for_resolution(battle_screen) -> void:
 			return
 		await process_frame
 	_assert_true(false, "卡牌动画队列在限定帧数内完成")
+
+
+# 从真实 GM 行节点查找复选框，避免测试依赖奖励池顺序或滚动位置。
+func _find_gm_item_checkbox(battle_screen, display_name: String) -> CheckBox:
+	for entry in battle_screen.gm_items_list.get_children():
+		for child in entry.get_children():
+			if child is CheckBox and child.text == display_name:
+				return child
+	return null
 
 
 # 随机轮廓必须保持中部占主导、最高点留在中区，并确保所有竖条高度处于绘制安全范围。

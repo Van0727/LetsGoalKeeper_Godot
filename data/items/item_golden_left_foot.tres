@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
+[sub_resource type="Resource" id="Effect_left_damage"]
+script = ExtResource("2")
+trigger = 4
+operation = 0
+target_key = "amount"
+amount = 2.0
+shot_filter = 3
+direction_filter = 1
+target_filter = 1
+[resource]
+script = ExtResource("1")
+item_id = "item_golden_left_foot"
+display_name = "黄金左脚"
+description = "所有向左踢出的香蕉球每段伤害+2"
+modifier_type = 4
+effects = Array[Resource]([SubResource("Effect_left_damage")])

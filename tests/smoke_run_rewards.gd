@@ -48,6 +48,11 @@ func _run() -> void:
 	_assert_true(_run_state.add_item(NUMBER_7), "获得直球专属战利品")
 	_assert_equal(_run_state.damage_modifiers.all, 1, "所有射门加成汇总")
 	_assert_equal(_run_state.damage_modifiers.straight, 1, "直球加成汇总")
+	_assert_true(_run_state.remove_item(NUMBER_7), "GM 可移除已拥有直球战利品")
+	_assert_equal(_run_state.damage_modifiers.straight, 0, "移除后撤销旧式射门加成")
+	_assert_true(not _run_state.remove_item(NUMBER_7), "重复移除不能影响其他本局数据")
+	_assert_true(_run_state.add_item(NUMBER_7), "移除后可以重新勾选获得")
+	_assert_equal(_run_state.damage_modifiers.straight, 1, "重新获得后只加成一次")
 
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)

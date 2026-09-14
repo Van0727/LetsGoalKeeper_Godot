@@ -15,6 +15,8 @@ enum JudgementGrade {
 @export_range(20.0, 300.0, 0.1) var bpm := 100.0
 @export_range(0.0, 60.0, 0.001) var first_beat_offset := 0.0
 @export_range(1, 16, 1) var beats_per_bar := 4
+# 节奏细分使用全音符分母表达：4 为四分音符、8 为八分音符，奖励品据此判断“1/8和更快”。
+@export_range(1, 64, 1) var rhythm_subdivision := 4
 @export_range(1.0, 500.0, 1.0) var perfect_window_ms := 60.0
 @export_range(1.0, 500.0, 1.0) var good_window_ms := 140.0
 # 正值会把判定时间向后移动，供后续设置页补偿设备与玩家的稳定输入偏移。
@@ -160,6 +162,8 @@ func judge_at(music_time: float) -> Dictionary:
 		"target_time": target_time,
 		"beat_index": beat_index,
 		"bar_index": floori(beat_index / float(maxi(beats_per_bar, 1))),
+		"beat_in_bar": posmod(beat_index, maxi(beats_per_bar, 1)),
+		"subdivision": rhythm_subdivision,
 	}
 
 

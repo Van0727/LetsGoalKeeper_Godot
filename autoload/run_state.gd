@@ -137,6 +137,19 @@ func add_item(item: Resource) -> bool:
 	return true
 
 
+# GM 取消勾选只移除指定已拥有战利品，并撤销它贡献的旧式静态伤害加成。
+# 新式触发效果由当前 BattleItemRuntime 同步移除；存档仍只保存稳定 ID。
+func remove_item(item: Resource) -> bool:
+	if item == null or item.item_id not in owned_item_ids:
+		return false
+	owned_item_ids.erase(item.item_id)
+	var modifier_key: String = item.get_modifier_key()
+	if not modifier_key.is_empty():
+		damage_modifiers[modifier_key] = maxi(int(damage_modifiers.get(modifier_key, 0)) - item.amount, 0)
+	run_changed.emit()
+	return true
+
+
 # 完成卡牌和战利品两步奖励后推进房间计数，下一战据此选择敌人。
 func complete_reward() -> void:
 	battles_won += 1

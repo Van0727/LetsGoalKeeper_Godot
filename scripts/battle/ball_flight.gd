@@ -57,7 +57,7 @@ func _ready() -> void:
 	_build_ball_mesh(0)
 
 
-# 播放一次射门并等待足球抵达目标；随机射门只影响表现，不消耗战斗核心随机数。
+# 播放一次射门并等待足球抵达目标；实战使用已解析球型与方向，独立调用时保留视觉随机回退。
 func play_shot(
 		shot_type: int,
 		start_position: Vector2,
@@ -69,10 +69,11 @@ func play_shot(
 		launch_music_time := -1.0,
 		hit_music_time := -1.0,
 		play_impact_on_animation_end := true,
-		super_scale_multiplier := 2.0
+		super_scale_multiplier := 2.0,
+		banana_direction_override := 0
 ) -> void:
 	var visual_rng := rng if rng != null else RandomNumberGenerator.new()
-	var resolved := _resolve_visual_shot(shot_type, visual_rng)
+	var resolved := _resolve_visual_shot(shot_type, visual_rng, banana_direction_override)
 	last_actual_shot_type = resolved.shot_type
 	last_banana_direction = resolved.banana_direction
 	_start_position = start_position
@@ -228,8 +229,12 @@ static func sample_quadratic_bezier(
 	)
 
 
-# RANDOM 等概率映射到直球、挑射、左香蕉和右香蕉；普通香蕉独立随机左右方向。
-func _resolve_visual_shot(shot_type: int, rng: RandomNumberGenerator) -> Dictionary:
+# RANDOM 等概率映射到直球、挑射、左香蕉和右香蕉；普通香蕉优先服从核心方向，未指定时才随机。
+func _resolve_visual_shot(
+		shot_type: int,
+		rng: RandomNumberGenerator,
+		banana_direction_override := 0
+) -> Dictionary:
 	if shot_type == CARD_DEFINITION.ShotType.RANDOM:
 		match rng.randi_range(0, 3):
 			0:
@@ -243,7 +248,8 @@ func _resolve_visual_shot(shot_type: int, rng: RandomNumberGenerator) -> Diction
 	if shot_type == CARD_DEFINITION.ShotType.BANANA:
 		return {
 			"shot_type": shot_type,
-			"banana_direction": -1 if rng.randi_range(0, 1) == 0 else 1,
+			# 核心上下文指定方向时表现必须服从；0 才保留旧版随机方向。
+			"banana_direction": signi(banana_direction_override) if banana_direction_override != 0 else (-1 if rng.randi_range(0, 1) == 0 else 1),
 		}
 	return {"shot_type": shot_type, "banana_direction": 0}
 

@@ -15,6 +15,9 @@ const COMBATANT_STATE := preload("res://scripts/battle/combatant_state.gd")
 const EFFECT_RESOLVER := preload("res://scripts/battle/effect_resolver.gd")
 const COMBO_STATE := preload("res://scripts/battle/combo_state.gd")
 const SKILL_RESOLVER := preload("res://scripts/battle/skill_resolver.gd")
+const BATTLE_ITEM_RUNTIME := preload("res://scripts/battle/battle_item_runtime.gd")
+const BATTLE_ACTION_CONTEXT := preload("res://scripts/battle/battle_action_context.gd")
+const ITEM_EFFECT := preload("res://scripts/items/item_effect_definition.gd")
 const ENEMY_DEFINITION := preload("res://scripts/enemies/enemy_definition.gd")
 const ENEMY_ACTION_DEFINITION := preload("res://scripts/enemies/enemy_action_definition.gd")
 const PLAYER_MAX_HEALTH := 100
@@ -45,19 +48,31 @@ var damage_modifiers: Dictionary = {}
 var current_enemy_definition: Resource
 var current_enemy_action: Resource
 var combo_state := COMBO_STATE.new()
+var item_runtime := BATTLE_ITEM_RUNTIME.new()
+# 最近一次成功提交的出牌上下文供表现、命中和测试读取；每次出牌都会创建新实例。
+var current_action_context
+var banana_shot_direction := 0
 var player_cards_played_this_turn := 0
 var red_card_pending := false
 
 var _rng := RandomNumberGenerator.new()
+# 球路随机流与卡牌概率、敌人行动隔离；固定种子保证相同战局仍可复现。
+var _shot_rng := RandomNumberGenerator.new()
 var _effect_resolver = EFFECT_RESOLVER.new()
 var _skill_resolver = SKILL_RESOLVER.new()
 var _enemy_action_index := 0
 
 
 # 用指定种子和可选敌人定义重置战斗；不传定义时保留阶段 1 的企鹅测试行为。
-func setup(seed_value := 20260902, enemy_definition: Resource = null, run_damage_modifiers: Dictionary = {}) -> void:
+func setup(
+		seed_value := 20260902,
+		enemy_definition: Resource = null,
+		run_damage_modifiers: Dictionary = {},
+		item_definitions: Array[Resource] = []
+) -> void:
 	battle_seed = seed_value
 	_rng.seed = battle_seed
+	_shot_rng.seed = battle_seed * 31 + 17
 	damage_modifiers = run_damage_modifiers.duplicate()
 	player = COMBATANT_STATE.new("玩家", PLAYER_MAX_HEALTH, PLAYER_MAX_ENERGY)
 	current_enemy_definition = enemy_definition
@@ -71,11 +86,15 @@ func setup(seed_value := 20260902, enemy_definition: Resource = null, run_damage
 	current_enemy_action = null
 	_enemy_action_index = 0
 	combo_state = COMBO_STATE.new()
+	item_runtime.setup(item_definitions, battle_seed + 7919)
+	current_action_context = null
+	banana_shot_direction = 0
 	player_cards_played_this_turn = 0
 	red_card_pending = false
 	turn_number = 1
 	phase = Phase.NOT_STARTED
 	_log("战斗开始，seed=%d" % battle_seed)
+	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.BATTLE_STARTED, _base_item_context()))
 	_start_player_turn()
 
 
@@ -158,6 +177,16 @@ func play_card(
 		return false
 
 	_log("打出 %s，支付 %d 能量" % [card.display_name, card.cost])
+	current_action_context = BATTLE_ACTION_CONTEXT.new()
+	current_action_context.setup(card, rhythm_result)
+	var shot_context: Dictionary = current_action_context.to_trigger_context()
+	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_SHOT_RESOLVED, shot_context))
+	_resolve_actual_shot(current_action_context, int(shot_context.get("shot_type", card.shot_type)))
+	var action_context: Dictionary = current_action_context.to_trigger_context()
+	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_CARD_PLAYED, action_context))
+	current_action_context.actual_shot_type = int(action_context.get("shot_type", card.shot_type))
+	current_action_context.shot_direction = int(action_context.get("shot_direction", 0))
+	current_action_context.value_multiplier = float(action_context.get("value_multiplier", 1.0))
 	if not rhythm_result.is_empty():
 		_log("节奏判定：%s（%+.0fms）" % [
 			rhythm_result.get("grade_name", "Miss"),
@@ -170,9 +199,12 @@ func play_card(
 		_rng,
 		damage_modifiers,
 		rhythm_result,
-		defer_enemy_shot_damage
+		defer_enemy_shot_damage,
+		item_runtime,
+		current_action_context.to_trigger_context()
 	)
 	for event in events:
+		_resolve_item_commands(event.get("item_commands", []))
 		if not event.get("deferred_damage", false):
 			_log_effect_event(event)
 		effect_resolved.emit(event)
@@ -181,6 +213,10 @@ func play_card(
 		if player.is_dead():
 			break
 	combo_state.register_card(card.card_type)
+	_resolve_item_commands(item_runtime.trigger(
+		ITEM_EFFECT.Trigger.AFTER_CARD_PLAYED,
+		current_action_context.to_trigger_context()
+	))
 
 	# 乌龟反伤导致双方同时死亡时按玩家失败裁定，避免死亡状态继续领奖。
 	if player.is_dead():
@@ -191,6 +227,31 @@ func play_card(
 		_register_successful_card_play()
 		state_changed.emit()
 	return true
+
+
+# 后续方向技能通过该接口切换香蕉球方向；0 保留未指定状态，-1/1 分别表示玩家视角左/右。
+func set_banana_shot_direction(direction: int) -> void:
+	banana_shot_direction = signi(direction)
+
+
+# GM 勾选变化只同步持有定义与旧式加成，不重新 setup 或恢复已失去的战斗生命等临时状态。
+func debug_sync_items(item_definitions: Array[Resource], run_damage_modifiers: Dictionary) -> void:
+	item_runtime.sync_items(item_definitions)
+	damage_modifiers = run_damage_modifiers.duplicate()
+	state_changed.emit()
+
+
+# 同一张牌在计算伤害前锁定实际球型和方向；所有段数及表现事件共用该决定。
+func _resolve_actual_shot(action, configured_type: int) -> void:
+	action.actual_shot_type = configured_type
+	action.shot_direction = 0
+	if configured_type == 4:
+		match _shot_rng.randi_range(0, 3):
+			0: action.actual_shot_type = 1
+			1: action.actual_shot_type = 3
+			_: action.actual_shot_type = 2
+	if action.actual_shot_type == 2:
+		action.shot_direction = banana_shot_direction if banana_shot_direction != 0 else (-1 if _shot_rng.randi_range(0, 1) == 0 else 1)
 
 
 # 释放与当前连击类型匹配的主动技；结算完成后无论结果都清空类型与点数。
@@ -215,10 +276,15 @@ func play_active_skill(skill: Resource) -> bool:
 		damage_multiplier
 	)
 	for event in events:
+		_resolve_item_commands(event.get("item_commands", []))
 		_log_effect_event(event)
 		effect_resolved.emit(event)
 		_resolve_reactive_passive(event)
 	combo_state.clear()
+	_resolve_item_commands(item_runtime.trigger(
+		ITEM_EFFECT.Trigger.ACTIVE_SKILL_FINISHED,
+		_base_item_context()
+	))
 
 	if player.is_dead():
 		_finish_battle(false)
@@ -276,6 +342,10 @@ func commit_deferred_damage(event: Dictionary) -> bool:
 	event.health_after = target.health
 	event.shield_after = target.shield
 	event.deferred_damage = false
+	var after_context: Dictionary = event.get("item_context", {}).duplicate(true)
+	after_context["amount"] = int(event.get("amount", 0))
+	after_context["health_damage"] = result.health_damage
+	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.AFTER_DAMAGE, after_context))
 	_log_effect_event(event)
 	_resolve_reactive_passive(event)
 	# 命中造成双方同时死亡时仍按玩家失败裁定，与同步卡牌结算规则一致。
@@ -308,6 +378,7 @@ func force_end_turn_for_red_card() -> bool:
 func _end_player_turn() -> void:
 	phase = Phase.PLAYER_END
 	_log("玩家结束第 %d 回合" % turn_number)
+	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.TURN_ENDED, _base_item_context()))
 	_advance_strength_status(player)
 	_execute_enemy_turn()
 
@@ -332,9 +403,11 @@ func _start_player_turn() -> void:
 	# 每个玩家回合独立计数；黄牌不会跨回合累计，红牌也不能泄漏到下一回合。
 	player_cards_played_this_turn = 0
 	red_card_pending = false
+	item_runtime.start_turn()
 	var cleared_shield := player.clear_shield()
 	var restored_energy := player.refill_energy()
 	phase = Phase.PLAYER_TURN
+	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.TURN_STARTED, _base_item_context()))
 	_prepare_enemy_intent()
 	_log("第 %d 回合：玩家行动（清除护盾 %d，恢复能量 %d）" % [turn_number, cleared_shield, restored_energy])
 	_log("敌人意图：%s" % get_enemy_intent_text())
@@ -543,8 +616,35 @@ func _register_successful_card_play() -> void:
 		_log("红牌！本回合已打出 %d 张牌，当前卡牌结算后强制结束回合" % player_cards_played_this_turn)
 		discipline_card_issued.emit("red", player_cards_played_this_turn)
 	elif player_cards_played_this_turn == YELLOW_CARD_THRESHOLD:
+		_resolve_item_commands(item_runtime.trigger(
+			ITEM_EFFECT.Trigger.YELLOW_CARD_ISSUED,
+			_base_item_context()
+		))
 		_log("黄牌警告！本回合已打出 %d 张牌" % player_cards_played_this_turn)
 		discipline_card_issued.emit("yellow", player_cards_played_this_turn)
+
+
+# 框架阶段只执行无歧义的即时资源命令；换牌、改阈值和强制结束回合等结构命令留给具体奖励品接入。
+func _resolve_item_commands(commands: Array[Dictionary]) -> void:
+	for command in commands:
+		match String(command.get("command", "")):
+			"gain_health":
+				player.heal(ceili(float(command.get("amount", 0.0))))
+			"gain_energy":
+				player.gain_energy(ceili(float(command.get("amount", 0.0))))
+			"gain_shield":
+				player.gain_shield(ceili(float(command.get("amount", 0.0))))
+
+
+# 通用触发上下文只暴露结算所需状态，奖励品不得持有或修改控制器节点本身。
+func _base_item_context() -> Dictionary:
+	return {
+		"turn_number": turn_number,
+		"cards_played_this_turn": player_cards_played_this_turn,
+		"player_health": player.health,
+		"player_max_health": player.max_health,
+		"player_energy": player.energy,
+	}
 
 
 # 锁定战斗状态、清除意图并广播最终胜负。

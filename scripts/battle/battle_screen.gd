@@ -64,6 +64,10 @@ const VICTORY_RESULT_DELAY_SECONDS := 1.0
 @onready var gm_menu_button: Button = %GMMenuButton
 @onready var gm_overlay: TextureRect = %GMOverlay
 @onready var gm_skip_button: Button = %GMSkipButton
+@onready var gm_items_button: Button = %GMItemsButton
+@onready var gm_items_page: VBoxContainer = %GMItemsPage
+@onready var gm_items_list: VBoxContainer = %GMItemsList
+@onready var gm_hint: Label = $GMOverlay/Center/Panel/Content/Hint
 @onready var result_overlay: TextureRect = %ResultOverlay
 @onready var result_title: Label = %ResultTitle
 @onready var result_detail: Label = %ResultDetail
@@ -170,6 +174,7 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_victory_result_delay_pending = false
 	gm_overlay.hide()
 	_gm_menu_open = false
+	_show_gm_tools_page()
 	ball_flight.hide()
 	shot_type_label.hide()
 	_pending_effect_events.clear()
@@ -199,10 +204,15 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 		_enemy_index = run_state.battles_won % _enemy_sequence.size()
 		selected_enemy = _enemy_sequence[_enemy_index]
 	var current_seed: int = run_state.seed + run_state.battles_won * 101
-	# 表现随机数使用独立种子，避免弹道左右选择改变战斗数值的确定性。
+	# 表现随机数仍独立于核心球路随机流；实际球型与方向由控制器先锁定并写入事件。
 	_visual_rng.seed = current_seed * 31 + 7
 	deck_state.setup(starting_deck, current_seed)
-	controller.setup(current_seed, selected_enemy, run_state.damage_modifiers)
+	controller.setup(
+		current_seed,
+		selected_enemy,
+		run_state.damage_modifiers,
+		REWARD_SERVICE.new().get_items_by_ids(run_state.owned_item_ids)
+	)
 	var diagnostics := get_node_or_null("/root/DiagnosticsService")
 	if diagnostics != null:
 		diagnostics.record("battle", "started", {
@@ -499,14 +509,78 @@ func _on_gm_menu_pressed() -> void:
 	if _input_locked or controller.phase != BATTLE_CONTROLLER.Phase.PLAYER_TURN:
 		return
 	_gm_menu_open = true
+	_show_gm_tools_page()
 	gm_overlay.show()
 	_update_input_state()
+
+
+# GM 战利品页每次打开都从 RunState 真实持有列表重建，避免上次关闭后的旧勾选残留。
+func _on_gm_items_pressed() -> void:
+	if not _gm_menu_open or _input_locked:
+		return
+	gm_hint.hide()
+	gm_skip_button.hide()
+	gm_items_button.hide()
+	gm_items_page.show()
+	_rebuild_gm_items_list()
+
+
+func _on_gm_items_back_pressed() -> void:
+	_show_gm_tools_page()
+
+
+# 返回工具主页只改变显示，不操作战斗数值或战利品持有状态。
+func _show_gm_tools_page() -> void:
+	gm_items_page.hide()
+	gm_hint.show()
+	gm_skip_button.show()
+	gm_items_button.show()
+
+
+# 按完整奖励目录生成可滚动的复选框和配置说明；禁用占位物可查看但不可勾选。
+func _rebuild_gm_items_list() -> void:
+	for child in gm_items_list.get_children():
+		gm_items_list.remove_child(child)
+		child.queue_free()
+	for item in _reward_service.get_all_items():
+		var entry := VBoxContainer.new()
+		entry.custom_minimum_size = Vector2(270.0, 0.0)
+		gm_items_list.add_child(entry)
+		var checkbox := CheckBox.new()
+		checkbox.text = item.display_name
+		checkbox.disabled = not item.enabled
+		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
+		checkbox.toggled.connect(_on_gm_item_toggled.bind(item, checkbox))
+		entry.add_child(checkbox)
+		var effect_label := Label.new()
+		effect_label.text = item.description if item.enabled else "%s（未启用，不可勾选）" % item.description
+		effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		effect_label.custom_minimum_size = Vector2(270.0, 0.0)
+		effect_label.add_theme_font_size_override("font_size", 12)
+		entry.add_child(effect_label)
+
+
+# 勾选只调用本局唯一持有接口；成功后立即同步当前战斗，不重新创建控制器或重置生命。
+func _on_gm_item_toggled(checked: bool, item: Resource, checkbox: CheckBox) -> void:
+	if not _gm_menu_open or not gm_items_page.visible or _input_locked or not item.enabled:
+		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
+		return
+	var changed: bool = run_state.add_item(item) if checked else run_state.remove_item(item)
+	if not changed:
+		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
+		return
+	controller.debug_sync_items(
+		_reward_service.get_items_by_ids(run_state.owned_item_ids),
+		run_state.damage_modifiers
+	)
+	_refresh_all()
 
 
 # 关闭 GM 面板并恢复此前的战斗输入状态，不改变任何核心数值。
 func _on_gm_close_pressed() -> void:
 	_gm_menu_open = false
 	gm_overlay.hide()
+	_show_gm_tools_page()
 	_update_input_state()
 
 
@@ -756,7 +830,9 @@ func _play_shot_visual(
 		rhythm_clock,
 		launch_music_time,
 		hit_music_time,
-		false
+		false,
+		2.0,
+		int(event.get("shot_direction", 0))
 	)
 	visual_state.finished = true
 
