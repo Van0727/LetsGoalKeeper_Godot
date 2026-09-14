@@ -2,6 +2,8 @@
 extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
+const CARD_SCENE := preload("res://scenes/card_view.tscn")
+const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 
@@ -30,6 +32,17 @@ func _run() -> void:
 
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")
+	# 单独实例化射门牌，验证圆角插画已经进入独立画框且不会依赖随机起手。
+	var straight_shot_view = CARD_SCENE.instantiate()
+	root.add_child(straight_shot_view)
+	straight_shot_view.configure(STRAIGHT_SHOT, 0)
+	await process_frame
+	_assert_true(
+		straight_shot_view.illustration_rect.texture == STRAIGHT_SHOT.illustration,
+		"射门牌在固定画框中使用专属圆角插画"
+	)
+	_assert_equal(straight_shot_view.illustration_rect.size, Vector2(88, 66), "插画槽保持4:3固定尺寸")
+	straight_shot_view.queue_free()
 	_assert_equal(battle_screen.controller.player.energy, 3, "玩家初始能量")
 	_assert_equal(battle_screen.rhythm_clock.bpm, 100.0, "战斗使用基础鼓点的100 BPM配置")
 	_assert_true(battle_screen.rhythm_clock.music != null, "战斗已绑定基础鼓点BGM")

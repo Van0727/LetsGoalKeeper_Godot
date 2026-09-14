@@ -1,18 +1,14 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/card_view.gd" id="1_card"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/card_background.png" id="2_card_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/icon_energy.png" id="3_cost_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/resource_and_combo.png" id="4_shot_art"]
 
 [sub_resource type="StyleBoxTexture" id="Style_card"]
 texture = ExtResource("2_card_art")
 
 [sub_resource type="StyleBoxTexture" id="Style_cost"]
 texture = ExtResource("3_cost_art")
-
-[sub_resource type="StyleBoxTexture" id="Style_shot"]
-texture = ExtResource("4_shot_art")
 
 [node name="CardView" type="PanelContainer"]
 custom_minimum_size = Vector2(104, 146)
@@ -21,25 +17,29 @@ mouse_default_cursor_shape = 6
 theme_override_styles/panel = SubResource("Style_card")
 script = ExtResource("1_card")
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="Canvas" type="Control" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
+mouse_filter = 2
 
-[node name="Content" type="VBoxContainer" parent="Margin"]
-layout_mode = 2
-theme_override_constants/separation = 1
-
-[node name="Header" type="HBoxContainer" parent="Margin/Content"]
-layout_mode = 2
-theme_override_constants/separation = 3
-
-[node name="CostLabel" type="Label" parent="Margin/Content/Header"]
+[node name="Illustration" type="TextureRect" parent="Canvas"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 96.0
+offset_bottom = 74.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CostLabel" type="Label" parent="Canvas"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = 34.0
+offset_bottom = 32.0
+mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("Style_cost")
@@ -47,41 +47,59 @@ text = "1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="NameLabel" type="Label" parent="Margin/Content/Header"]
+[node name="NameLabel" type="Label" parent="Canvas"]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 0
+offset_left = 8.0
+offset_top = 76.0
+offset_right = 96.0
+offset_bottom = 91.0
+mouse_filter = 2
 theme_override_colors/font_color = Color(0.08, 0.12, 0.16, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "射门"
 horizontal_alignment = 1
+vertical_alignment = 1
 text_overrun_behavior = 3
 
-[node name="TypeLabel" type="Label" parent="Margin/Content"]
+[node name="TypeLabel" type="Label" parent="Canvas"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.3, 0.38, 0.43, 1)
-theme_override_font_sizes/font_size = 9
+layout_mode = 0
+offset_left = 14.0
+offset_top = 92.0
+offset_right = 54.0
+offset_bottom = 104.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.08, 0.2, 0.35, 1)
+theme_override_font_sizes/font_size = 8
 text = "攻击"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="ShotLabel" type="Label" parent="Margin/Content"]
+[node name="ShotLabel" type="Label" parent="Canvas"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-layout_mode = 2
+layout_mode = 0
+offset_left = 54.0
+offset_top = 92.0
+offset_right = 94.0
+offset_bottom = 104.0
+mouse_filter = 2
 theme_override_colors/font_color = Color(0.1, 0.25, 0.33, 1)
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("Style_shot")
+theme_override_font_sizes/font_size = 8
 text = "直球"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DescriptionLabel" type="Label" parent="Margin/Content"]
+[node name="DescriptionLabel" type="Label" parent="Canvas"]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
+layout_mode = 0
+offset_left = 8.0
+offset_top = 105.0
+offset_right = 96.0
+offset_bottom = 141.0
+mouse_filter = 2
 theme_override_colors/font_color = Color(0.12, 0.16, 0.19, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "造成6点伤害"
 horizontal_alignment = 1
 vertical_alignment = 1

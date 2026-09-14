@@ -30,6 +30,8 @@ enum Rarity {
 @export var display_name := ""
 @export_multiline var description := ""
 @export_range(0, 99, 1) var cost := 1
+# 可选的卡牌专属插画；卡框、文字和交互仍由统一场景负责，旧资源留空即可兼容。
+@export var illustration: Texture2D
 @export var card_type := CardType.ATTACK
 @export var shot_type := ShotType.NONE
 # 攻击牌的时间统一以当前战斗 BPM 换算：延迟与多段间隔都支持万分之一拍精度；

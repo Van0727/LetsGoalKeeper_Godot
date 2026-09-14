@@ -8,6 +8,7 @@ var card_definition: Resource
 var hand_index := -1
 
 @onready var cost_label: Label = %CostLabel
+@onready var illustration_rect: TextureRect = %Illustration
 @onready var name_label: Label = %NameLabel
 @onready var type_label: Label = %TypeLabel
 @onready var shot_label: Label = %ShotLabel
@@ -20,12 +21,19 @@ func configure(definition: Resource, index: int) -> void:
 	hand_index = index
 	if not is_node_ready():
 		await ready
+	_apply_illustration(definition.illustration)
 	cost_label.text = str(definition.cost)
 	name_label.text = definition.display_name
 	type_label.text = _get_card_type_text(definition.card_type)
 	shot_label.text = _get_shot_type_text(definition.shot_type)
 	description_label.text = definition.description
 	tooltip_text = definition.description
+
+
+# 专属插画只覆盖卡牌上方的固定画框；留空时隐藏节点，继续显示通用卡牌底板。
+func _apply_illustration(illustration: Texture2D) -> void:
+	illustration_rect.texture = illustration
+	illustration_rect.visible = illustration != null
 
 
 # 不同卡牌大类使用固定中文短标签，方便小屏快速辨认。
