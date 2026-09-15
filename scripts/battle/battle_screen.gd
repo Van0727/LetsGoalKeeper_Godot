@@ -43,12 +43,19 @@ const PERFECT_SHAKE_AMPLITUDE := 18.0
 const PARTIAL_SHAKE_AMPLITUDE := 6.0
 const VICTORY_RESULT_DELAY_SECONDS := 1.0
 const TEST_ENEMY_MAX_HEALTH := 100
+const ITEM_ICON_SELECTED_SCALE := Vector2(1.2, 1.2)
+const ITEM_ICON_NORMAL_SCALE := Vector2.ONE
+const ITEM_ICON_SCALE_DURATION := 0.12
 
 @onready var controller: BattleController = %BattleController
 @onready var pause_overlay: CanvasLayer = $PauseOverlay
 @onready var background: TextureRect = $Background
 @onready var player_display: CharacterDisplay = %PlayerDisplay
 @onready var owned_item_icons: HFlowContainer = %OwnedItemIcons
+@onready var item_detail_popup: PanelContainer = %ItemDetailPopup
+@onready var item_detail_icon: TextureRect = %Icon
+@onready var item_detail_name: Label = %Name
+@onready var item_detail_description: Label = %Description
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
 # 使用基础控件类型避免新增脚本的全局类缓存尚未刷新时阻塞战斗场景解析。
 @onready var drag_threshold_guide: Control = %DragThresholdGuide
@@ -95,6 +102,9 @@ var _reward_service := REWARD_SERVICE.new()
 var run_state: Node
 # 已显示的持有ID用于避免每次生命刷新都重复创建图标；GM即时增删和下一战切换仍会触发重建。
 var _displayed_owned_item_ids: Array[int] = []
+# 当前悬停或按住的图标独占详情浮层；每个图标的 Tween 独立缓存，避免快速切换时缩放互相覆盖。
+var _selected_item_icon: TextureRect
+var _item_icon_scale_tweens: Dictionary = {}
 # 卡牌结算期间核心仍同步计算；这里缓存逐段事件并按足球命中顺序更新可见状态。
 var _is_presenting_resolution := false
 var _gm_menu_open := false
@@ -786,9 +796,11 @@ func _refresh_owned_item_icons() -> void:
 			current_item_ids.append(int(item_id))
 	if current_item_ids == _displayed_owned_item_ids:
 		return
+	_hide_owned_item_detail()
 	for child in owned_item_icons.get_children():
 		owned_item_icons.remove_child(child)
 		child.queue_free()
+	_item_icon_scale_tweens.clear()
 	_displayed_owned_item_ids = current_item_ids
 	if current_item_ids.is_empty():
 		owned_item_icons.hide()
@@ -796,11 +808,85 @@ func _refresh_owned_item_icons() -> void:
 	for item in _reward_service.get_items_by_ids(current_item_ids):
 		var icon := TextureRect.new()
 		icon.custom_minimum_size = Vector2(16.0, 16.0)
+		icon.pivot_offset = icon.custom_minimum_size * 0.5
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.texture = BOSS_ITEM_PLACEHOLDER if item.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# 图标必须接收按住事件；它位于底部空白区，不会遮挡手牌拖拽输入。
+		icon.mouse_filter = Control.MOUSE_FILTER_STOP
+		icon.gui_input.connect(_on_owned_item_icon_gui_input.bind(icon, item))
+		icon.mouse_entered.connect(_on_owned_item_icon_mouse_entered.bind(icon, item))
+		icon.mouse_exited.connect(_on_owned_item_icon_mouse_exited.bind(icon))
 		owned_item_icons.add_child(icon)
 	owned_item_icons.visible = owned_item_icons.get_child_count() > 0
+
+
+# 图标按住时显示完整战利品信息；鼠标与触屏都在松开时关闭，避免详情残留在战斗操作区。
+func _on_owned_item_icon_gui_input(event: InputEvent, icon: TextureRect, item: Resource) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_select_owned_item_icon(icon, item)
+		else:
+			_hide_owned_item_detail()
+	elif event is InputEventScreenTouch:
+		if event.pressed:
+			_select_owned_item_icon(icon, item)
+		else:
+			_hide_owned_item_detail()
+
+
+# 鼠标悬停可直接查看详情；触屏不会触发这两个信号，仍只使用按住语义。
+func _on_owned_item_icon_mouse_entered(icon: TextureRect, item: Resource) -> void:
+	_select_owned_item_icon(icon, item)
+
+
+func _on_owned_item_icon_mouse_exited(icon: TextureRect) -> void:
+	if icon == _selected_item_icon:
+		_hide_owned_item_detail()
+
+
+# 详情浮层只在按住期间存在，释放发生在图标外部时也由全局输入路径兜底关闭。
+func _input(event: InputEvent) -> void:
+	if not item_detail_popup.visible:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+		_hide_owned_item_detail()
+	elif event is InputEventScreenTouch and not event.pressed:
+		_hide_owned_item_detail()
+
+
+# 详情内容复用战利品选择页的品级色块；后续替换正式插画时只需在此替换纹理来源。
+func _select_owned_item_icon(icon: TextureRect, item: Resource) -> void:
+	if item == null:
+		_hide_owned_item_detail()
+		return
+	if _selected_item_icon != null and _selected_item_icon != icon:
+		_animate_owned_item_icon_scale(_selected_item_icon, ITEM_ICON_NORMAL_SCALE)
+	_selected_item_icon = icon
+	_animate_owned_item_icon_scale(icon, ITEM_ICON_SELECTED_SCALE)
+	item_detail_icon.texture = BOSS_ITEM_PLACEHOLDER if item.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
+	item_detail_name.text = item.display_name
+	item_detail_description.text = item.description
+	item_detail_popup.show()
+
+
+func _hide_owned_item_detail() -> void:
+	item_detail_popup.hide()
+	if _selected_item_icon != null:
+		_animate_owned_item_icon_scale(_selected_item_icon, ITEM_ICON_NORMAL_SCALE)
+		_selected_item_icon = null
+
+
+# 每个图标仅保留一个线性缩放 Tween；中途切换时从当前尺寸接续，避免残留在放大状态。
+func _animate_owned_item_icon_scale(icon: TextureRect, target_scale: Vector2) -> void:
+	if icon == null or not is_instance_valid(icon):
+		return
+	var previous_tween := _item_icon_scale_tweens.get(icon) as Tween
+	if previous_tween != null and previous_tween.is_valid():
+		previous_tween.kill()
+	var scale_tween := create_tween().bind_node(icon)
+	scale_tween.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	scale_tween.tween_property(icon, "scale", target_scale, ITEM_ICON_SCALE_DURATION)
+	_item_icon_scale_tweens[icon] = scale_tween
 
 
 # 费用不足的卡牌保持可见但禁止拖拽；结算、结束和 GM 面板统一锁住战斗操作。

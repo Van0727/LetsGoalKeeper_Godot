@@ -172,6 +172,28 @@ func _run() -> void:
 		_assert_true(4011 in battle_screen.run_state.owned_item_ids, "勾选立即写入本局持有")
 		_assert_true(battle_screen.owned_item_icons.visible, "获得战利品后显示底部图标区")
 		_assert_equal(battle_screen.owned_item_icons.get_child_count(), 1, "底部只为已持有战利品创建一个图标")
+		# 长按图标显示图片、名称和描述，松开后立即隐藏详情浮层。
+		var item_press := InputEventMouseButton.new()
+		item_press.button_index = MOUSE_BUTTON_LEFT
+		item_press.pressed = true
+		var held_item_icon := battle_screen.owned_item_icons.get_child(0) as TextureRect
+		battle_screen._on_owned_item_icon_gui_input(item_press, held_item_icon, REWARD_SERVICE.new().get_item_by_id(4011))
+		_assert_true(battle_screen.item_detail_popup.visible, "按住战利品图标显示详情")
+		await create_timer(battle_screen.ITEM_ICON_SCALE_DURATION + 0.05).timeout
+		_assert_equal(held_item_icon.scale, Vector2(1.2, 1.2), "按住战利品图标线性放大至1.2倍")
+		_assert_equal(battle_screen.item_detail_name.text, "金靴", "详情显示战利品名称")
+		_assert_equal(battle_screen.item_detail_description.text, "所有射门伤害+1", "详情显示战利品描述")
+		var item_release := InputEventMouseButton.new()
+		item_release.button_index = MOUSE_BUTTON_LEFT
+		item_release.pressed = false
+		battle_screen._on_owned_item_icon_gui_input(item_release, held_item_icon, REWARD_SERVICE.new().get_item_by_id(4011))
+		_assert_true(not battle_screen.item_detail_popup.visible, "松开战利品图标隐藏详情")
+		await create_timer(battle_screen.ITEM_ICON_SCALE_DURATION + 0.05).timeout
+		_assert_equal(held_item_icon.scale, Vector2.ONE, "松开战利品图标线性恢复原大小")
+		battle_screen._on_owned_item_icon_mouse_entered(held_item_icon, REWARD_SERVICE.new().get_item_by_id(4011))
+		_assert_true(battle_screen.item_detail_popup.visible, "鼠标悬停战利品图标显示详情")
+		battle_screen._on_owned_item_icon_mouse_exited(held_item_icon)
+		_assert_true(not battle_screen.item_detail_popup.visible, "鼠标移出战利品图标隐藏详情")
 		_assert_equal(battle_screen.controller.damage_modifiers.all, 1, "旧式奖励即时增加战斗伤害")
 		left_foot.button_pressed = true
 		_assert_equal(battle_screen.owned_item_icons.get_child_count(), 2, "多个已持有战利品各显示一个图标")
