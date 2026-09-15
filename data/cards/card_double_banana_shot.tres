@@ -10,9 +10,11 @@ hits = 2
 
 [resource]
 script = ExtResource("1_card")
+id = 1008
 card_id = "card_double_banana_shot"
 display_name = "双向香蕉球"
 description = "香蕉球攻击2次，每次造成3点伤害"
+archetype_hint = "桑巴精灵·多段香蕉"
 shot_type = 2
 rarity = 1
 effects = Array[Resource]([SubResource("Resource_8ogyh")])

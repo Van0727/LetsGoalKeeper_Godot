@@ -12,8 +12,10 @@ multiplier = 1.5
 
 [resource]
 script = ExtResource("1_card")
+id = 2002
 card_id = "card_run_up"
 display_name = "助跑"
 description = "伤害变为1.5倍，持续2个自身回合"
+archetype_hint = "通用·强化"
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_i6dss")])

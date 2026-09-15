@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_ho4t1"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_21k8w"]
+
+[sub_resource type="Resource" id="Resource_wy66h"]
+script = ExtResource("1_ho4t1")
+effect_type = 11
+target = 0
+
+[resource]
+script = ExtResource("2_21k8w")
+id = 2013
+card_id = "card_chain_feint"
+display_name = "连续假动作"
+description = "下一张香蕉球每段伤害+2；若本回合此前已打出技能牌，恢复1点能量"
+archetype_hint = "桑巴精灵·技能连打"
+card_type = 2
+effects = Array[Resource]([SubResource("Resource_wy66h")])

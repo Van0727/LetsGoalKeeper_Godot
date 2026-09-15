@@ -10,8 +10,10 @@ target = 0
 
 [resource]
 script = ExtResource("1_card")
+id = 2008
 card_id = "card_pitch_reset"
 display_name = "原调"
 description = "BGM恢复原始音调"
+archetype_hint = "鼓手·音调"
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_1syoi")])

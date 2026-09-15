@@ -115,6 +115,9 @@ func resolve_card(
 				events.append({"type": "banana_direction", "direction": -1})
 			EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_RIGHT:
 				events.append({"type": "banana_direction", "direction": 1})
+			EFFECT_DEFINITION.EffectType.CUSTOM_RULE:
+				# 专属规则已由战斗控制器在整张牌边界处理，此步骤不重复产出表现事件。
+				pass
 			_:
 				events.append({"type": "unsupported", "effect_type": effect.effect_type})
 
@@ -143,29 +146,49 @@ func _resolve_damage(
 		action_context: Dictionary = {},
 		shot_rng: RandomNumberGenerator = null
 ) -> void:
-	for hit_index in range(effect.hits):
+	var extra_hits := maxi(int(action_context.get("extra_hits", 0)), 0)
+	var base_hits := maxi(int(action_context.get("base_hits_override", effect.hits)), 1)
+	var resolved_hits := base_hits + extra_hits
+	for hit_index in range(resolved_hits):
 		# 能量加成读取费用支付后的运行时能量，不回写 EffectDefinition。
 		var energy_bonus: int = source.energy * effect.amount_per_energy
 		var item_bonus := _get_shot_damage_bonus(shot_type, damage_modifiers)
-		var scaled_amount: int = effect.amount + energy_bonus + item_bonus
+		# 狂欢节拍追加的球使用独立基础伤害，原牌每段数值和逐段战利品加成保持不变。
+		var base_amount: int = int(effect.amount) if hit_index < base_hits else int(action_context.get("extra_hit_amount", effect.amount))
+		var scaled_amount: int = base_amount + energy_bonus + item_bonus
 		var damage_context := action_context.duplicate(true)
 		# 下一次攻击叠层与十牌倍率在整张牌级别锁定；每段分别加固定值，再统一向上取整。
 		var attack_bonus := float(action_context.get("attack_bonus", 0.0)) if recipient != source else 0.0
 		var attack_multiplier := float(action_context.get("value_multiplier", 1.0)) if recipient != source else 1.0
 		damage_context["amount"] = (scaled_amount * source.strength_multiplier * rhythm_multiplier + attack_bonus) * attack_multiplier * float(action_context.get("card_effect_multiplier", 1.0))
 		damage_context["hit"] = hit_index + 1
-		damage_context["hits"] = effect.hits
+		damage_context["hits"] = resolved_hits
 		# 连拍由同一张牌在 BGM 上的相邻击打间隔定义，不读取玩家出牌间隔。
-		damage_context["rapid_hits"] = effect.hits > 1 and multi_hit_interval_beats <= 0.5
+		damage_context["rapid_hits"] = resolved_hits > 1 and multi_hit_interval_beats <= 0.5
 		damage_context["shot_type"] = shot_type
 		damage_context["is_enemy_target"] = recipient != source
 		damage_context["source_health"] = source.health
 		damage_context["source_max_health"] = source.max_health
 		# 只有非香蕉球被战利品转换且没有固定方向时，每颗真正射向敌人的球独立掷左右。
 		# 原生香蕉球继续读取出牌上下文，避免改变“双向香蕉球”等既有牌的方向逻辑。
-		if recipient != source and shot_type == 2 and bool(action_context.get("converted_banana_per_hit", false)) and int(damage_context.get("shot_direction", 0)) == 0:
+		var direction_sequence: Array = action_context.get("shot_direction_sequence", [])
+		if recipient != source and shot_type == 2 and hit_index < direction_sequence.size():
+			damage_context["shot_direction"] = int(direction_sequence[hit_index])
+		elif recipient != source and shot_type == 2 and bool(action_context.get("converted_banana_per_hit", false)) and int(damage_context.get("shot_direction", 0)) == 0:
 			var direction_rng: RandomNumberGenerator = shot_rng if shot_rng != null else _fallback_rng
 			damage_context["shot_direction"] = -1 if direction_rng.randi_range(0, 1) == 0 else 1
+		# 桑巴方向奖励逐颗比较并即时推进上一颗香蕉球，同一张交替多段牌也能正确触发。
+		if recipient != source and shot_type == 2:
+			var current_direction := int(damage_context.get("shot_direction", 0))
+			var previous_direction := int(action_context.get("previous_banana_direction", 0))
+			var direction_mode := int(action_context.get("banana_direction_bonus_mode", 0))
+			if current_direction != 0 and previous_direction != 0:
+				if direction_mode == 1 and current_direction != previous_direction:
+					damage_context["amount"] = float(damage_context.get("amount", 0.0)) + float(action_context.get("banana_direction_bonus", 0.0))
+				elif direction_mode == 2 and current_direction == previous_direction:
+					damage_context["amount"] = float(damage_context.get("amount", 0.0)) + float(action_context.get("banana_direction_bonus", 0.0))
+			if current_direction != 0:
+				action_context["previous_banana_direction"] = current_direction
 		var before_commands: Array[Dictionary] = []
 		if item_runtime != null:
 			before_commands = item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_DAMAGE, damage_context)
@@ -186,14 +209,14 @@ func _resolve_damage(
 		var damage_event := {
 			"type": "damage",
 			"amount": damage,
-			"base_amount": effect.amount,
+			"base_amount": base_amount,
 			"energy_bonus": energy_bonus,
 			"item_bonus": item_bonus,
 			"rhythm_multiplier": rhythm_multiplier,
 			"absorbed": result.absorbed,
 			"health_damage": result.health_damage,
 			"hit": hit_index + 1,
-			"hits": effect.hits,
+			"hits": resolved_hits,
 			"shot_type": shot_type,
 			"shot_direction": int(damage_context.get("shot_direction", 0)),
 			"item_context": damage_context.duplicate(true),

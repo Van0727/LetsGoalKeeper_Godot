@@ -21,8 +21,8 @@ func _run() -> void:
 	_assert_true(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_output_directory)), "校验失败前不创建输出目录")
 	var result: Dictionary = importer.import_cards("res://tables/cards.csv", _output_directory)
 	_assert_true(result.ok, "真实卡牌 CSV 可完成导入")
-	_assert_equal(result.card_count, 22, "CSV 导入22张卡牌")
-	_assert_equal(result.effect_count, 26, "CSV 导入26条效果")
+	_assert_equal(result.card_count, 32, "CSV 导入32张卡牌")
+	_assert_equal(result.effect_count, 36, "CSV 导入36条效果")
 	if result.ok:
 		_test_imported_values_affect_battle()
 	_cleanup()
@@ -51,9 +51,12 @@ func _test_attack_delay_float_validation(importer: RefCounted) -> void:
 func _test_imported_values_affect_battle() -> void:
 	var group = load("%s/card_shot_group.tres" % _output_directory)
 	var run_up = load("%s/card_run_up.tres" % _output_directory)
+	var samba_duet = load("%s/card_samba_duet.tres" % _output_directory)
 	_assert_equal(group.effects[0].hits, 4, "CSV 的一组射门按数值列导入4段")
 	_assert_equal(group.multi_hit_interval_beats, 0.25, "CSV 的攻击间隔写入资源")
 	_assert_equal(run_up.effects[0].multiplier, 1.5, "CSV 百分比倍率150转换为1.5")
+	_assert_equal(samba_duet.id, 1013, "数字ID写入卡牌资源")
+	_assert_equal(samba_duet.archetype_hint, "桑巴精灵·左右香蕉", "流派倾向写入资源但不参与结算")
 	var source = COMBATANT_STATE.new("导入测试球员", 20, 3)
 	var target = COMBATANT_STATE.new("导入测试目标", 30)
 	var resolver = EFFECT_RESOLVER.new()

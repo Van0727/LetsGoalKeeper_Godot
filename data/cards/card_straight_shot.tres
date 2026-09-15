@@ -9,8 +9,10 @@ amount = 6
 
 [resource]
 script = ExtResource("1_card")
+id = 1001
 card_id = "card_straight_shot"
 display_name = "射门"
 description = "造成6点伤害"
+archetype_hint = "通用·直球"
 shot_type = 1
 effects = Array[Resource]([SubResource("Resource_bce7s")])

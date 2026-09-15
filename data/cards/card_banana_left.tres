@@ -10,8 +10,10 @@ target = 0
 
 [resource]
 script = ExtResource("1")
+id = 2009
 card_id = "card_banana_left"
 display_name = "弹道偏左"
 description = "本场战斗所有香蕉球改为向左踢出，直到当前怪物死亡"
+archetype_hint = "桑巴精灵·方向控制"
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_dvq83")])

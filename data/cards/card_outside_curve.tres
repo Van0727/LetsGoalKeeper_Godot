@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_t3agc"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_pc5mo"]
+
+[sub_resource type="Resource" id="Resource_dhpbw"]
+script = ExtResource("1_t3agc")
+amount = 5
+
+[resource]
+script = ExtResource("2_pc5mo")
+id = 1012
+card_id = "card_outside_curve"
+display_name = "外脚背弧线"
+description = "造成5点香蕉球伤害；若与上一颗香蕉球方向相反，额外造成3点伤害"
+archetype_hint = "桑巴精灵·换向香蕉"
+shot_type = 2
+effects = Array[Resource]([SubResource("Resource_dhpbw")])

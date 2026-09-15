@@ -10,9 +10,11 @@ amount_per_energy = 2
 
 [resource]
 script = ExtResource("1_card")
+id = 1006
 card_id = "card_energy_shot"
 display_name = "能量射门"
 description = "造成6点伤害，每有1点剩余能量额外造成2点伤害"
+archetype_hint = "通用·能量保留"
 shot_type = 1
 rarity = 1
 effects = Array[Resource]([SubResource("Resource_8rhej")])

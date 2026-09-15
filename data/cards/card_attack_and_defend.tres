@@ -15,9 +15,11 @@ amount = 5
 
 [resource]
 script = ExtResource("1_card")
+id = 2001
 card_id = "card_attack_and_defend"
 display_name = "攻守兼备"
 description = "造成5点伤害，获得5点护盾"
+archetype_hint = "通用·攻防一体"
 cost = 2
 card_type = 2
 shot_type = 1

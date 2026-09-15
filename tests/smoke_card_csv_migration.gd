@@ -16,7 +16,7 @@ func _run() -> void:
 	var bad_cards := {}
 	var ids := {}
 	var errors: Array[String] = []
-	var card_row := PackedStringArray(["1001", "射门", "测试", "1", "1", "1", "1", "0.5", "0.5", "2", "3|6", "1|1", "0|0", "100|100", "100|100", "0|0", "card_test"])
+	var card_row := PackedStringArray(["1001", "射门", "测试", "1", "1", "1", "1", "0.5", "0.5", "2", "3|6", "1|1", "0|0", "100|100", "100|100", "0|0", "card_test", "测试流派"])
 	importer._parse_card_row(card_row, 4, bad_cards, ids, errors)
 	importer._parse_card_row(card_row, 5, bad_cards, ids, errors)
 	_assert_true(not errors.is_empty(), "重复卡牌 ID 被拒绝")
@@ -54,8 +54,8 @@ func _run() -> void:
 	var result: Dictionary = importer.import_cards("res://tables/cards.csv", _output_directory)
 	_assert_true(result.ok, "双表可以导入")
 	if result.ok:
-		_assert_equal(result.card_count, 22, "主表共22张唯一卡牌")
-		_assert_equal(result.effect_count, 26, "子表共26条效果")
+		_assert_equal(result.card_count, 32, "主表共32张唯一卡牌")
+		_assert_equal(result.effect_count, 36, "子表共36条效果")
 		var multi = load("%s/card_attack_and_defend.tres" % _output_directory)
 		_assert_equal(multi.effects.size(), 2, "同一卡牌组装两个有序效果")
 		_assert_equal(multi.effects[0].effect_type, 0, "先造成伤害")

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_v6fnc"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_pd1bh"]
+
+[sub_resource type="Resource" id="Resource_2i2by"]
+script = ExtResource("1_v6fnc")
+effect_type = 11
+target = 0
+
+[resource]
+script = ExtResource("2_pd1bh")
+id = 2014
+card_id = "card_carnival_beat"
+display_name = "狂欢节拍"
+description = "本回合已打出的每张技能牌使下一张香蕉球追加1段2点伤害，最多追加3段"
+archetype_hint = "桑巴精灵·技能爆发"
+card_type = 2
+effects = Array[Resource]([SubResource("Resource_2i2by")])

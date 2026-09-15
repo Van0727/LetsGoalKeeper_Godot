@@ -9,8 +9,10 @@ amount = 6
 
 [resource]
 script = ExtResource("1_card")
+id = 1011
 card_id = "card_rugby_ball"
 display_name = "橄榄球"
 description = "使用随机射门造成6点伤害"
+archetype_hint = "通用·随机球型"
 shot_type = 4
 effects = Array[Resource]([SubResource("Resource_4oj46")])

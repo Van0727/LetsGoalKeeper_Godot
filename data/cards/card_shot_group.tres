@@ -10,9 +10,11 @@ hits = 4
 
 [resource]
 script = ExtResource("1_card")
+id = 1007
 card_id = "card_shot_group"
 display_name = "一组射门"
 description = "随机射门4次，每次造成2点伤害，间隔0.25拍"
+archetype_hint = "鼓手·快速多段"
 shot_type = 4
 multi_hit_interval_beats = 0.25
 rarity = 1

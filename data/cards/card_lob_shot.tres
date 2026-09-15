@@ -9,9 +9,11 @@ amount = 6
 
 [resource]
 script = ExtResource("1_card")
+id = 1003
 card_id = "card_lob_shot"
 display_name = "挑射"
 description = "足球飞行2拍后造成6点伤害"
+archetype_hint = "通用·挑射"
 shot_type = 3
 attack_delay_beats = 2.0
 effects = Array[Resource]([SubResource("Resource_f8yg0")])

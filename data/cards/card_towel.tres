@@ -11,8 +11,10 @@ amount = 2
 
 [resource]
 script = ExtResource("1_card")
+id = 2005
 card_id = "card_towel"
 display_name = "毛巾"
 description = "恢复2点能量"
+archetype_hint = "通用·能量"
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_ya7jv")])

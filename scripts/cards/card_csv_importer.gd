@@ -13,11 +13,12 @@ const FIELD_NAMES := [
 	"id", "display_name", "description", "cost", "card_type", "shot_type", "rarity",
 	"attack_delay_beats", "multi_hit_interval_beats", "effect_id", "amounts", "hits",
 	"amounts_per_energy", "multipliers", "chances", "interrupts", "source_file",
+	"archetype_hint",
 ]
 const FIELD_TYPES := [
 	"uint16", "string", "string", "uint8", "uint8", "uint8", "uint8", "float32", "float32",
 	"uint16", "uint16_list", "uint8_list", "uint8_list", "uint8_list",
-	"uint8_list", "uint8_list", "string",
+	"uint8_list", "uint8_list", "string", "string",
 ]
 const EFFECT_FIELD_NAMES := [
 	"effect_id", "name", "description",
@@ -182,6 +183,7 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 	var chances := _parse_uint_list(row[14], 0, 100, "触发概率", line_number, errors)
 	var interrupts := _parse_uint_list(row[15], 0, 1, "成功后中断", line_number, errors)
 	var source_file := row[16].strip_edges()
+	var archetype_hint := row[17].strip_edges()
 	if source_file.is_empty() or not _is_safe_resource_name(source_file):
 		errors.append("第%d行资源文件名无效：%s" % [line_number, source_file])
 		return -1
@@ -206,6 +208,7 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 		"source_file": source_file,
 		"display_name": row[1],
 		"description": row[2],
+		"archetype_hint": archetype_hint,
 		"cost": cost,
 		"card_type": card_type,
 		"shot_type": shot_type,
@@ -251,7 +254,7 @@ func _parse_step_row(row: PackedStringArray, line_number: int, templates: Dictio
 		return -1
 	var numeric_id := _parse_uint(row[0], 1, 65535, "效果ID", line_number, errors)
 	var effect_index := _parse_uint(row[1], 1, 255, "效果序号", line_number, errors)
-	var effect_type := _map_value(row[2], {1: EFFECT_DEFINITION.EffectType.DAMAGE, 2: EFFECT_DEFINITION.EffectType.SHIELD, 3: EFFECT_DEFINITION.EffectType.HEAL, 4: EFFECT_DEFINITION.EffectType.ENERGY, 5: EFFECT_DEFINITION.EffectType.APPLY_STRENGTH, 6: EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS, 7: EFFECT_DEFINITION.EffectType.BGM_PITCH_UP, 8: EFFECT_DEFINITION.EffectType.BGM_PITCH_DOWN, 9: EFFECT_DEFINITION.EffectType.BGM_PITCH_RESET, 10: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_LEFT, 11: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_RIGHT}, "效果类型", line_number, errors)
+	var effect_type := _map_value(row[2], {1: EFFECT_DEFINITION.EffectType.DAMAGE, 2: EFFECT_DEFINITION.EffectType.SHIELD, 3: EFFECT_DEFINITION.EffectType.HEAL, 4: EFFECT_DEFINITION.EffectType.ENERGY, 5: EFFECT_DEFINITION.EffectType.APPLY_STRENGTH, 6: EFFECT_DEFINITION.EffectType.APPLY_WEAKNESS, 7: EFFECT_DEFINITION.EffectType.BGM_PITCH_UP, 8: EFFECT_DEFINITION.EffectType.BGM_PITCH_DOWN, 9: EFFECT_DEFINITION.EffectType.BGM_PITCH_RESET, 10: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_LEFT, 11: EFFECT_DEFINITION.EffectType.BANANA_DIRECTION_RIGHT, 12: EFFECT_DEFINITION.EffectType.CUSTOM_RULE}, "效果类型", line_number, errors)
 	var target := _map_value(row[3], {1: EFFECT_DEFINITION.Target.SELF, 2: EFFECT_DEFINITION.Target.ENEMY}, "效果目标", line_number, errors)
 	if numeric_id < 0 or effect_index < 0 or effect_type < 0 or target < 0:
 		return -1
@@ -276,9 +279,11 @@ func _save_and_verify_card(data: Dictionary, output_directory: String) -> String
 		if existing_id is String and not String(existing_id).is_empty():
 			stable_id = existing_id
 	var card := CARD_DEFINITION.new()
+	card.id = data.id
 	card.card_id = stable_id
 	card.display_name = data.display_name
 	card.description = data.description
+	card.archetype_hint = data.archetype_hint
 	card.cost = data.cost
 	card.card_type = data.card_type
 	card.shot_type = data.shot_type
@@ -307,7 +312,7 @@ func _save_and_verify_card(data: Dictionary, output_directory: String) -> String
 func _verify_saved_card(saved_card: Resource, expected_card: Resource, resource_path: String) -> String:
 	if saved_card == null:
 		return "导入后无法重新加载卡牌：%s" % resource_path
-	for property_name in ["card_id", "display_name", "description", "cost", "card_type", "shot_type", "rarity"]:
+	for property_name in ["id", "card_id", "display_name", "description", "archetype_hint", "cost", "card_type", "shot_type", "rarity"]:
 		if saved_card.get(property_name) != expected_card.get(property_name):
 			return "导入回读不一致：%s 的 %s" % [resource_path, property_name]
 	if not is_equal_approx(saved_card.attack_delay_beats, expected_card.attack_delay_beats):

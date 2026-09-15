@@ -9,9 +9,13 @@ const COMMON_CARD_IDS: Array[String] = [
 	"card_sports_drink", "card_towel",
 	"card_pitch_up", "card_pitch_down", "card_pitch_reset",
 	"card_banana_left", "card_banana_right",
+	"card_outside_curve", "card_samba_duet", "card_spinning_hat_trick",
+	"card_cutback_triangle", "card_rainbow_dribble", "card_agile_switch",
+	"card_chain_feint", "card_carnival_beat", "card_mexican_wave",
 ]
 const BOSS_CARD_IDS: Array[String] = [
 	"card_energy_shot", "card_shot_group", "card_double_banana_shot",
+	"card_carnival_finale",
 ]
 const ITEM_CATALOG := preload("res://data/items/item_catalog.tres")
 

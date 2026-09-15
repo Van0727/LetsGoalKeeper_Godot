@@ -16,9 +16,11 @@ amount = 12
 
 [resource]
 script = ExtResource("1_card")
+id = 1005
 card_id = "card_explosion_ball"
 display_name = "爆炸球"
 description = "50%概率爆炸：自身受到3点伤害并中断；否则造成12点伤害"
+archetype_hint = "暴力·风险攻击"
 shot_type = 1
 rarity = 1
 effects = Array[Resource]([SubResource("Resource_bbt8l"), SubResource("Resource_mlhow")])

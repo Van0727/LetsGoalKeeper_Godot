@@ -15,8 +15,10 @@ amount = 3
 
 [resource]
 script = ExtResource("1_card")
+id = 1009
 card_id = "card_bloodthirsty_ball"
 display_name = "嗜血球"
 description = "造成6点伤害，然后恢复3点生命"
+archetype_hint = "通用·续航"
 shot_type = 1
 effects = Array[Resource]([SubResource("Resource_jah0n"), SubResource("Resource_5s3t7")])

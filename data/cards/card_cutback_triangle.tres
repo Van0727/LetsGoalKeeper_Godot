@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_dempw"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_fhdkm"]
+
+[sub_resource type="Resource" id="Resource_vbpva"]
+script = ExtResource("1_dempw")
+amount = 4
+
+[resource]
+script = ExtResource("2_fhdkm")
+id = 1015
+card_id = "card_cutback_triangle"
+display_name = "底线倒三角"
+description = "造成4点香蕉球伤害；若与上一颗香蕉球方向相同，额外造成2点伤害"
+archetype_hint = "桑巴精灵·同向香蕉"
+shot_type = 2
+effects = Array[Resource]([SubResource("Resource_vbpva")])

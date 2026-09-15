@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_6fgre"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_lxp7d"]
+
+[sub_resource type="Resource" id="Resource_0tjig"]
+script = ExtResource("1_6fgre")
+amount = 4
+
+[resource]
+script = ExtResource("2_lxp7d")
+id = 1016
+card_id = "card_carnival_finale"
+display_name = "嘉年华终曲"
+description = "造成4点香蕉球伤害；本回合每打出1张技能牌便追加1颗，最多追加4颗"
+archetype_hint = "桑巴精灵·技能终结"
+cost = 3
+shot_type = 2
+multi_hit_interval_beats = 0.25
+rarity = 1
+effects = Array[Resource]([SubResource("Resource_0tjig")])

@@ -11,8 +11,10 @@ multiplier = 0.5
 
 [resource]
 script = ExtResource("1_card")
+id = 2003
 card_id = "card_weakness"
 display_name = "虚弱"
 description = "目标伤害变为0.5倍，持续2个目标回合"
+archetype_hint = "通用·削弱"
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_7e11x")])

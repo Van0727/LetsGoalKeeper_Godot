@@ -10,8 +10,10 @@ target = 0
 
 [resource]
 script = ExtResource("1_card")
+id = 2007
 card_id = "card_pitch_down"
 display_name = "降调"
 description = "BGM降低1个半音"
+archetype_hint = "鼓手·音调"
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_1n4c8")])

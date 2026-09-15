@@ -16,6 +16,8 @@ enum EffectType {
 	BGM_PITCH_RESET,
 	BANANA_DIRECTION_LEFT,
 	BANANA_DIRECTION_RIGHT,
+	# 专属规则由战斗控制器按卡牌数字 ID 处理；占位步骤让 CSV 仍保持统一三表结构。
+	CUSTOM_RULE,
 }
 
 # 效果目标相对于出牌者确定。

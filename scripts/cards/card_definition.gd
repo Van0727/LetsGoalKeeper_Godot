@@ -25,10 +25,13 @@ enum Rarity {
 	BOSS,
 }
 
-# 英文稳定 ID 是存档和代码引用键；中文名称只负责显示。
+# 数字 ID 是运行时玩法判断的正式键；英文稳定 ID 继续兼容资源路径和旧存档。
+@export_range(1, 65535, 1) var id := 1
 @export var card_id := ""
 @export var display_name := ""
 @export_multiline var description := ""
+# 流派倾向仅供策划和调试界面阅读，战斗程序不得据此判断效果。
+@export var archetype_hint := ""
 @export_range(0, 99, 1) var cost := 1
 # 可选的卡牌专属插画；卡框、文字和交互仍由统一场景负责，旧资源留空即可兼容。
 @export var illustration: Texture2D

@@ -10,9 +10,11 @@ hits = 4
 
 [resource]
 script = ExtResource("1_card")
+id = 1004
 card_id = "card_barrage_shot"
 display_name = "连续射门"
 description = "以0.25拍间隔连续攻击4次，每次造成3点伤害"
+archetype_hint = "鼓手·快速多段"
 cost = 2
 shot_type = 4
 multi_hit_interval_beats = 0.25

@@ -37,6 +37,17 @@ const ITEM_REST_SCORE := 4023
 const ITEM_RHYTHM_GAME_TROPHY := 4024
 const ITEM_SPIKED_DRUM_MALLET := 4026
 const ITEM_TATTOO_STICKER := 4027
+# 桑巴专属卡统一使用配表数字 ID；英文资源名不参与运行时规则判断。
+const CARD_OUTSIDE_CURVE := 1012
+const CARD_SAMBA_DUET := 1013
+const CARD_SPINNING_HAT_TRICK := 1014
+const CARD_CUTBACK_TRIANGLE := 1015
+const CARD_CARNIVAL_FINALE := 1016
+const CARD_RAINBOW_DRIBBLE := 2011
+const CARD_AGILE_SWITCH := 2012
+const CARD_CHAIN_FEINT := 2013
+const CARD_CARNIVAL_BEAT := 2014
+const CARD_MEXICAN_WAVE := 2015
 
 # 战斗阶段限制玩家只能在自己的行动阶段操作。
 enum Phase {
@@ -65,6 +76,14 @@ var current_action_context
 var banana_shot_direction := 0
 var player_cards_played_this_turn := 0
 var red_card_pending := false
+# 桑巴状态只属于当前战斗：最近球向跨回合保留，技能计数和“本回合”增益在回合开始清空。
+var last_banana_direction := 0
+var skill_cards_played_this_turn := 0
+var pending_force_attack_banana := false
+var pending_next_banana_bonus := 0
+var pending_turn_banana_bonus := 0
+var pending_turn_banana_extra_hits := 0
+var pending_turn_multihit_shield := false
 # 暴力流物品的充能与待消费倍率只存在于当前战斗；GM 取消对应物品时同步清理。
 var blindfold_charges := 0
 var pending_first_card_multiplier := 1.0
@@ -111,6 +130,13 @@ func setup(
 	banana_shot_direction = 0
 	player_cards_played_this_turn = 0
 	red_card_pending = false
+	last_banana_direction = 0
+	skill_cards_played_this_turn = 0
+	pending_force_attack_banana = false
+	pending_next_banana_bonus = 0
+	pending_turn_banana_bonus = 0
+	pending_turn_banana_extra_hits = 0
+	pending_turn_multihit_shield = false
 	blindfold_charges = 0
 	pending_first_card_multiplier = 1.0
 	pending_first_card_item_id = 0
@@ -212,6 +238,10 @@ func play_card(
 	current_action_context = BATTLE_ACTION_CONTEXT.new()
 	current_action_context.setup(card, effective_rhythm_result)
 	var shot_context: Dictionary = current_action_context.to_trigger_context()
+	# 彩虹过人只消费下一张攻击牌；费用不足在此之前已返回，不会误消耗待用状态。
+	if int(card.card_type) == 0 and pending_force_attack_banana:
+		shot_context["shot_type"] = 2
+		pending_force_attack_banana = false
 	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_SHOT_RESOLVED, shot_context))
 	# 仅标记“非香蕉球被战利品转换”的射门；原生香蕉球仍保留整张牌既有方向规则。
 	var converted_banana: bool = int(card.shot_type) != 2 and int(shot_context.get("shot_type", card.shot_type)) == 2
@@ -236,6 +266,7 @@ func play_card(
 	resolved_context["card_effect_multiplier"] = float(action_context.get("card_effect_multiplier", 1.0))
 	resolved_context["pending_damage_multiplier"] = pending_next_damage_multiplier
 	resolved_context["converted_banana_per_hit"] = converted_banana
+	_prepare_samba_attack_context(card, resolved_context)
 	var events := _effect_resolver.resolve_card(
 		card,
 		player,
@@ -249,6 +280,7 @@ func play_card(
 		_shot_rng
 	)
 	pending_next_damage_multiplier = float(resolved_context.get("pending_damage_multiplier", 1.0))
+	last_banana_direction = int(resolved_context.get("previous_banana_direction", last_banana_direction))
 	for event in events:
 		# 方向牌在费用支付和效果成功后才改写本场状态；死亡结算前已发出的球保留原方向快照。
 		if event.get("type") == "banana_direction":
@@ -259,11 +291,15 @@ func play_card(
 		effect_resolved.emit(event)
 		if not event.get("deferred_damage", false):
 			_resolve_reactive_passive(event)
+			_resolve_samba_hit_shield(event)
 		if player.is_dead():
 			break
 	# 人字拖是每张攻击牌独立掷一次的追加打击，不附着在多段射门的每颗球上。
 	if not player.is_dead() and not enemy.is_dead() and float(action_context.get("slipper_damage", 0.0)) > 0.0:
 		_resolve_slipper_damage(ceili(float(action_context["slipper_damage"])), defer_enemy_shot_damage)
+	_apply_samba_skill_rule(card, skill_cards_played_this_turn)
+	if int(card.card_type) == 2:
+		skill_cards_played_this_turn += 1
 	combo_state.register_card(card.card_type)
 	_resolve_item_commands(item_runtime.trigger(
 		ITEM_EFFECT.Trigger.AFTER_CARD_PLAYED,
@@ -279,6 +315,90 @@ func play_card(
 		_register_successful_card_play()
 		state_changed.emit()
 	return true
+
+
+# 攻击牌在整牌结算前锁定方向序列、动态段数和待消费增益，避免延迟命中时读取到后续状态。
+func _prepare_samba_attack_context(card: Resource, context: Dictionary) -> void:
+	if int(card.card_type) != 0:
+		return
+	var card_id := int(card.get("id"))
+	var shot_type := int(context.get("shot_type", card.shot_type))
+	var base_hits := _card_enemy_damage_hits(card)
+	context["previous_banana_direction"] = last_banana_direction
+	match card_id:
+		CARD_OUTSIDE_CURVE:
+			context["banana_direction_bonus_mode"] = 1
+			context["banana_direction_bonus"] = 3
+		CARD_SAMBA_DUET:
+			context["shot_direction_sequence"] = [-1, 1]
+		CARD_SPINNING_HAT_TRICK:
+			var first_direction := int(context.get("shot_direction", 0))
+			if first_direction == 0:
+				first_direction = -1
+			context["shot_direction_sequence"] = [first_direction, -first_direction, first_direction]
+		CARD_CUTBACK_TRIANGLE:
+			context["banana_direction_bonus_mode"] = 2
+			context["banana_direction_bonus"] = 2
+		CARD_CARNIVAL_FINALE:
+			context["base_hits_override"] = 1 + mini(skill_cards_played_this_turn, 4)
+	if shot_type == 2:
+		var bonus := pending_next_banana_bonus + pending_turn_banana_bonus
+		if bonus > 0:
+			context["attack_bonus"] = float(context.get("attack_bonus", 0.0)) + bonus
+			pending_next_banana_bonus = 0
+			pending_turn_banana_bonus = 0
+		if pending_turn_banana_extra_hits > 0:
+			context["extra_hits"] = pending_turn_banana_extra_hits
+			context["extra_hit_amount"] = 2
+			pending_turn_banana_extra_hits = 0
+	var resolved_hits := int(context.get("base_hits_override", base_hits)) + int(context.get("extra_hits", 0))
+	if pending_turn_multihit_shield and resolved_hits > 1:
+		context["samba_shield_per_hit"] = 1
+		pending_turn_multihit_shield = false
+
+
+# 技能牌在自身数值步骤结束后设置后续牌状态；此前技能数用于判定连打和动态上限。
+func _apply_samba_skill_rule(card: Resource, previous_skill_count: int) -> void:
+	match int(card.get("id")):
+		CARD_RAINBOW_DRIBBLE:
+			pending_force_attack_banana = true
+			pending_next_banana_bonus += 1
+		CARD_AGILE_SWITCH:
+			set_banana_shot_direction(-banana_shot_direction if banana_shot_direction != 0 else -1)
+			pending_turn_banana_bonus += 1
+			_log("效果：切换香蕉球方向至%s" % ("左" if banana_shot_direction < 0 else "右"))
+			effect_resolved.emit({"type": "banana_direction", "direction": banana_shot_direction})
+		CARD_CHAIN_FEINT:
+			pending_next_banana_bonus += 2
+			if previous_skill_count > 0:
+				var restored := player.gain_energy(1)
+				_log("效果：连续假动作恢复 %d 能量" % restored)
+				effect_resolved.emit({"type": "energy", "amount": restored, "target": player})
+		CARD_CARNIVAL_BEAT:
+			pending_turn_banana_extra_hits = mini(previous_skill_count + 1, 3)
+		CARD_MEXICAN_WAVE:
+			pending_turn_multihit_shield = true
+
+
+# 只统计对敌伤害步骤的原始段数；动态追加段数稍后叠加，非攻击效果不能误触发人浪助威。
+func _card_enemy_damage_hits(card: Resource) -> int:
+	var total := 0
+	for effect in card.effects:
+		if int(effect.effect_type) == 0 and int(effect.target) == 1:
+			total += int(effect.hits)
+	return total
+
+
+# 人浪助威在真实命中后逐段给盾；延迟伤害由 commit_deferred_damage 在命中帧调用同一入口。
+func _resolve_samba_hit_shield(event: Dictionary) -> void:
+	if event.get("type") != "damage" or event.get("target") != enemy:
+		return
+	var amount := int(event.get("item_context", {}).get("samba_shield_per_hit", 0))
+	if amount <= 0:
+		return
+	var gained := player.gain_shield(amount)
+	_log("效果：人浪助威获得 %d 护盾" % gained)
+	effect_resolved.emit({"type": "shield", "amount": gained, "target": player})
 
 
 # 追加打击在同步模式即时生效；实战飞球模式排到原球命中后，避免提前击杀目标。
@@ -493,6 +613,7 @@ func commit_deferred_damage(event: Dictionary) -> bool:
 	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.AFTER_DAMAGE, after_context))
 	_log_effect_event(event)
 	_resolve_reactive_passive(event)
+	_resolve_samba_hit_shield(event)
 	# 命中造成双方同时死亡时仍按玩家失败裁定，与同步卡牌结算规则一致。
 	if player.is_dead():
 		_finish_battle(false)
@@ -559,6 +680,10 @@ func get_phase_text() -> String:
 func _start_player_turn() -> void:
 	# 每个玩家回合独立计数；黄牌不会跨回合累计，红牌也不能泄漏到下一回合。
 	player_cards_played_this_turn = 0
+	skill_cards_played_this_turn = 0
+	pending_turn_banana_bonus = 0
+	pending_turn_banana_extra_hits = 0
+	pending_turn_multihit_shield = false
 	red_card_pending = false
 	item_runtime.start_turn()
 	blindfold_charges = 3 if item_runtime.has_item(ITEM_BLINDFOLD) else 0

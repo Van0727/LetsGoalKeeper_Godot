@@ -9,8 +9,10 @@ amount = 6
 
 [resource]
 script = ExtResource("1_card")
+id = 1002
 card_id = "card_banana_shot"
 display_name = "香蕉球"
 description = "造成6点伤害"
+archetype_hint = "桑巴精灵·香蕉基础"
 shot_type = 2
 effects = Array[Resource]([SubResource("Resource_53kan")])

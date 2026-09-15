@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_uhqu0"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_x5dyg"]
+
+[sub_resource type="Resource" id="Resource_cawl3"]
+script = ExtResource("1_uhqu0")
+amount = 3
+hits = 2
+
+[resource]
+script = ExtResource("2_x5dyg")
+id = 1013
+card_id = "card_samba_duet"
+display_name = "桑巴二重奏"
+description = "向左、向右各踢出1颗香蕉球，每颗造成3点伤害"
+archetype_hint = "桑巴精灵·左右香蕉"
+shot_type = 2
+effects = Array[Resource]([SubResource("Resource_cawl3")])

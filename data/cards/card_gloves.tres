@@ -11,8 +11,10 @@ amount = 6
 
 [resource]
 script = ExtResource("1_card")
+id = 3001
 card_id = "card_gloves"
 display_name = "手套"
 description = "获得6点护盾"
+archetype_hint = "通用·防御"
 card_type = 1
 effects = Array[Resource]([SubResource("Resource_se7j4")])
