@@ -1,26 +1,29 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=5 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
-[sub_resource type="Resource" id="Effect_update_streak"]
-script = ExtResource("2")
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_1gxdm"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_jtrbd"]
+
+[sub_resource type="Resource" id="Resource_1gxdm"]
+script = ExtResource("1_1gxdm")
 trigger = 2
 operation = 6
+requires_shot = true
 counter_key = "banana_streak"
 counter_maximum = 5
-requires_shot = true
-[sub_resource type="Resource" id="Effect_streak_damage"]
-script = ExtResource("2")
-trigger = 4
+
+[sub_resource type="Resource" id="Resource_jtrbd"]
+script = ExtResource("1_1gxdm")
 operation = 7
-target_key = "amount"
 amount = 1.0
 shot_filter = 3
-counter_key = "banana_streak"
 target_filter = 1
+counter_key = "banana_streak"
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_jtrbd")
+id = 4010
 item_id = "item_free_kick_master_license"
 display_name = "任意球大师证"
 description = "连续踢出香蕉球时，每张后续香蕉球每段伤害累计+1，最多+5；其他球打断连击"
 modifier_type = 4
-effects = Array[Resource]([SubResource("Effect_update_streak"), SubResource("Effect_streak_damage")])
+effects = Array[Resource]([SubResource("Resource_1gxdm"), SubResource("Resource_jtrbd")])

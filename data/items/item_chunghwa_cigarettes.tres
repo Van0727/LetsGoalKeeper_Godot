@@ -1,7 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_vr0v3"]
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_vr0v3")
+id = 4007
 item_id = "item_chunghwa_cigarettes"
 display_name = "一条中华"
 description = "本回合红牌阈值从10张改为20张；黄牌阈值仍为5张"

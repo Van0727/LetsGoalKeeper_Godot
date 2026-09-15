@@ -128,6 +128,7 @@ func _test_streak_cap_and_random_shot() -> void:
 # 用同一配置的测试副本把概率设为 100%，明确验证治疗仅在真实命中后发生。
 func _test_delayed_healing() -> void:
 	var guaranteed := ITEM_DEFINITION.new()
+	guaranteed.id = 65002
 	guaranteed.item_id = "test_gorilla_guaranteed"
 	var effect := ITEM_EFFECT.new()
 	effect.trigger = ITEM_EFFECT.Trigger.AFTER_DAMAGE

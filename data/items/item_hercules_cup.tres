@@ -1,15 +1,18 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=6 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
-[sub_resource type="Resource" id="count"]
-script = ExtResource("2")
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_l6f5u"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_6me8l"]
+
+[sub_resource type="Resource" id="Resource_l6f5u"]
+script = ExtResource("1_l6f5u")
 trigger = 3
 operation = 3
 amount = 1.0
 counter_key = "hercules_cup_cards"
 counter_maximum = 10
-[sub_resource type="Resource" id="double"]
-script = ExtResource("2")
+
+[sub_resource type="Resource" id="Resource_6me8l"]
+script = ExtResource("1_l6f5u")
 trigger = 2
 operation = 2
 target_key = "value_multiplier"
@@ -17,17 +20,20 @@ amount = 2.0
 card_filter = 1
 counter_key = "hercules_cup_cards"
 counter_minimum = 10
-[sub_resource type="Resource" id="consume"]
-script = ExtResource("2")
+
+[sub_resource type="Resource" id="Resource_84keq"]
+script = ExtResource("1_l6f5u")
 trigger = 2
 operation = 4
 card_filter = 1
 counter_key = "hercules_cup_cards"
 counter_minimum = 10
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_6me8l")
+id = 4015
 item_id = "item_hercules_cup"
 display_name = "大力神杯"
 description = "累计打出10张牌后，下一张攻击牌每段伤害翻倍，然后重新计数"
 modifier_type = 4
-effects = Array[Resource]([SubResource("count"), SubResource("double"), SubResource("consume")])
+effects = Array[Resource]([SubResource("Resource_l6f5u"), SubResource("Resource_6me8l"), SubResource("Resource_84keq")])

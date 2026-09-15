@@ -1,18 +1,22 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
-[sub_resource type="Resource" id="first_beat"]
-script = ExtResource("2")
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_qslhm"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_buvji"]
+
+[sub_resource type="Resource" id="Resource_qslhm"]
+script = ExtResource("1_qslhm")
 trigger = 2
 operation = 1
 target_key = "card_effect_multiplier"
 amount = 2.0
-beat_in_bar_filter = 0
 once_per_turn = true
+beat_in_bar_filter = 0
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_buvji")
+id = 4004
 item_id = "item_big_drum_mallet"
 display_name = "大鼓槌"
 description = "当前BGM小节第一拍打出的卡牌数值效果翻倍，每回合生效一次"
 modifier_type = 4
-effects = Array[Resource]([SubResource("first_beat")])
+effects = Array[Resource]([SubResource("Resource_qslhm")])

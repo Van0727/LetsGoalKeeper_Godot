@@ -22,10 +22,10 @@ func start_turn() -> void:
 	_used_this_turn.clear()
 
 
-# 结构性战利品可查询本场持有状态；通用数值效果仍走 trigger 配置表。
-func has_item_id(item_id: String) -> bool:
+# 结构性战利品只按数字 ID 查询；通用数值效果仍走 trigger 配置表。
+func has_item(item_id: int) -> bool:
 	for item in items:
-		if item != null and item.item_id == item_id:
+		if item != null and item.id == item_id:
 			return true
 	return false
 
@@ -40,15 +40,15 @@ func sync_items(item_definitions: Array[Resource]) -> void:
 	var next_ids := {}
 	for item in item_definitions:
 		if item != null:
-			next_ids[item.item_id] = true
+			next_ids[item.id] = true
 	for item in items:
-		if item == null or next_ids.has(item.item_id):
+		if item == null or next_ids.has(item.id):
 			continue
 		for effect in item.effects:
 			if effect != null and not effect.counter_key.is_empty():
 				counters.erase(effect.counter_key)
 		for usage_key in _used_this_turn.keys():
-			if String(usage_key).begins_with(item.item_id + ":"):
+			if String(usage_key).begins_with("%d:" % item.id):
 				_used_this_turn.erase(usage_key)
 	items = item_definitions.duplicate()
 
@@ -63,7 +63,7 @@ func trigger(trigger_type: int, context: Dictionary) -> Array[Dictionary]:
 			var effect: Resource = item.effects[effect_index]
 			if effect == null or effect.trigger != trigger_type:
 				continue
-			var usage_key := "%s:%d" % [item.item_id, effect_index]
+			var usage_key := "%d:%d" % [item.id, effect_index]
 			if effect.once_per_turn and _used_this_turn.get(usage_key, false):
 				continue
 			if not _matches(effect, context):
@@ -71,7 +71,7 @@ func trigger(trigger_type: int, context: Dictionary) -> Array[Dictionary]:
 			var chance := clampi(effect.chance_percent, 0, 100)
 			if chance <= 0 or (chance < 100 and _rng.randi_range(1, 100) > chance):
 				continue
-			_apply_effect(effect, context, commands, item.item_id)
+			_apply_effect(effect, context, commands, item.id)
 			if effect.once_per_turn:
 				_used_this_turn[usage_key] = true
 	return commands
@@ -114,7 +114,7 @@ func _apply_effect(
 		effect: Resource,
 		context: Dictionary,
 		commands: Array[Dictionary],
-		item_id: String
+		item_id: int
 ) -> void:
 	match effect.operation:
 		ITEM_EFFECT.Operation.ADD:

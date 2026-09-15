@@ -28,6 +28,8 @@ func _run() -> void:
 	_assert_true(not _run_state.deck_card_ids.has("card_sports_drink"), "初始牌组移除治疗牌")
 	_assert_true(not _run_state.deck_card_ids.has("card_towel"), "初始牌组移除回能牌")
 	_assert_equal(_run_state.owned_item_ids.size(), 0, "新游戏清空战利品")
+	_assert_equal(service.get_item_by_id(4011), GOLDEN_BOOT, "数字 ID 可查找金靴")
+	_assert_equal(service.get_item_by_id(9999), null, "无效数字 ID 安全返回空值")
 
 	var first_rng := RandomNumberGenerator.new()
 	var second_rng := RandomNumberGenerator.new()
@@ -44,6 +46,7 @@ func _run() -> void:
 	_assert_equal(_run_state.deck_card_ids.size(), 13, "奖励卡加入本局牌库")
 
 	_assert_true(_run_state.add_item(GOLDEN_BOOT), "首次获得金靴")
+	_assert_true(4011 in _run_state.owned_item_ids, "本局仅保存金靴数字 ID")
 	_assert_true(not _run_state.add_item(GOLDEN_BOOT), "已拥有战利品不能重复获得")
 	_assert_true(_run_state.add_item(NUMBER_7), "获得直球专属战利品")
 	_assert_equal(_run_state.damage_modifiers.all, 1, "所有射门加成汇总")

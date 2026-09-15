@@ -16,6 +16,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_cleanup()
 	_test_round_trip_and_map_restore()
+	_test_v1_item_id_migration()
 	_test_corrupt_save_fallback()
 	_test_new_run_overwrites_old_save()
 	_cleanup()
@@ -37,7 +38,7 @@ func _test_round_trip_and_map_restore() -> void:
 	source.player_hp = 63
 	source.max_hp = 110
 	source.deck_card_ids.append("card_banana_shot")
-	source.owned_item_ids.append("item_golden_boot")
+	source.owned_item_ids.append(4011)
 	source.damage_modifiers.straight = 4
 	source.battles_won = 5
 	var room: Dictionary = source.map_state.get_attainable_rooms()[0]
@@ -50,6 +51,28 @@ func _test_round_trip_and_map_restore() -> void:
 	_assert_equal(restored.map_state.current_room_id, room.id, "恢复当前地图房间")
 	_assert_equal(restored.map_state.get_enemy_id(room.id), "enemy_turtle", "恢复房间敌人缓存")
 	source.free()
+	restored.free()
+	service.free()
+
+
+# v1 英文战利品键迁移为数字 ID；未知、重复和非字符串值不得污染新契约。
+func _test_v1_item_id_migration() -> void:
+	var legacy_state = RUN_STATE_SCRIPT.new()
+	legacy_state.start_new_run(717)
+	var payload := {
+		"save_version": 1,
+		"run_state": legacy_state.to_dict(),
+	}
+	payload.run_state["owned_item_ids"] = ["item_golden_boot", "missing_legacy_item", "item_golden_boot", 5001]
+	var file := FileAccess.open(_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(payload))
+	file.close()
+	var restored = RUN_STATE_SCRIPT.new()
+	var service = SAVE_SERVICE_SCRIPT.new()
+	service.save_path = _path
+	_assert_true(service.load_game(restored), "v1 英文战利品存档可迁移")
+	_assert_equal(restored.owned_item_ids, [4011], "旧键映射、排重并忽略无效值")
+	legacy_state.free()
 	restored.free()
 	service.free()
 
@@ -78,7 +101,7 @@ func _test_new_run_overwrites_old_save() -> void:
 	service.save_path = _path
 	state.start_new_run(11)
 	state.battles_won = 8
-	state.owned_item_ids.append("item_number_10")
+	state.owned_item_ids.append(5002)
 	_assert_true(service.save_game(state), "旧局可保存")
 	state.start_new_run(22)
 	_assert_true(service.save_game(state), "新游戏覆盖旧档")

@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_u2q6r"]
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_u2q6r")
+id = 4011
 item_id = "item_golden_boot"
 display_name = "金靴"
 description = "所有射门伤害+1"
-rarity = 0
-modifier_type = 0
 amount = 1

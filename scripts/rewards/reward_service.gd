@@ -1,4 +1,4 @@
-# 奖励服务：按战斗级别生成确定性且不重复的卡牌、战利品候选，并从配表生成目录解析稳定ID。
+# 奖励服务：卡牌仍按英文稳定 ID；战利品只按 CSV 数字 ID 参与运行时查询和排重。
 class_name RewardService
 extends RefCounted
 
@@ -43,10 +43,10 @@ func get_card_by_id(card_id: String) -> Resource:
 	return load(path)
 
 
-# 根据奖励池中的稳定 ID 返回战利品定义；旧存档遇到已下架 ID 时安全忽略并记录诊断。
-func get_item_by_id(item_id: String) -> Resource:
+# 根据唯一数字 ID 返回战利品定义；无效值安全忽略并记录诊断。
+func get_item_by_id(item_id: int) -> Resource:
 	for item in get_all_items():
-		if item.item_id == item_id:
+		if item.id == item_id:
 			return item
 	push_error("找不到战利品ID：%s" % item_id)
 	_record_missing_resource("item", item_id)
@@ -54,7 +54,7 @@ func get_item_by_id(item_id: String) -> Resource:
 
 
 # 批量解析本局已拥有战利品，保持获得顺序，以便多个同阶段效果得到稳定结算顺序。
-func get_items_by_ids(item_ids: Array[String]) -> Array[Resource]:
+func get_items_by_ids(item_ids: Array[int]) -> Array[Resource]:
 	var result: Array[Resource] = []
 	for item_id in item_ids:
 		var item := get_item_by_id(item_id)
@@ -64,7 +64,7 @@ func get_items_by_ids(item_ids: Array[String]) -> Array[Resource]:
 
 
 # 缺失固定定义同时写入结构化诊断，便于外部测试包定位坏 ID。
-func _record_missing_resource(resource_type: String, resource_id: String) -> void:
+func _record_missing_resource(resource_type: String, resource_id: Variant) -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return
@@ -74,6 +74,14 @@ func _record_missing_resource(resource_type: String, resource_id: String) -> voi
 			"resource_type": resource_type,
 			"resource_id": resource_id,
 		})
+
+
+# 英文键只服务 v1 旧存档迁移，不供战斗、奖励或 GM 运行时调用。
+func get_item_id_by_legacy_key(legacy_key: String) -> int:
+	for item in get_all_items():
+		if item.item_id == legacy_key:
+			return item.id
+	return 0
 
 
 # 生成最多三张互不重复的卡牌，Boss战只使用Boss卡池。
@@ -91,13 +99,13 @@ func generate_card_choices(is_boss: bool, rng: RandomNumberGenerator) -> Array[R
 # 排除已拥有及禁用战利品后生成最多三个选项；不足时不复制占位奖励。
 func generate_item_choices(
 		is_boss: bool,
-		owned_item_ids: Array[String],
+		owned_item_ids: Array[int],
 		rng: RandomNumberGenerator
 ) -> Array[Resource]:
 	var candidates: Array[Resource] = []
 	var expected_rarity := 1 if is_boss else 0
 	for item in get_all_items():
-		if item.rarity == expected_rarity and item.enabled and item.item_id not in owned_item_ids:
+		if item.rarity == expected_rarity and item.enabled and item.id not in owned_item_ids:
 			candidates.append(item)
 	_shuffle(candidates, rng)
 	candidates.resize(mini(3, candidates.size()))

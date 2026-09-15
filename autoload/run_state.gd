@@ -55,7 +55,8 @@ var run_status := RunStatus.NOT_STARTED
 var player_hp := DEFAULT_MAX_HEALTH
 var max_hp := DEFAULT_MAX_HEALTH
 var deck_card_ids: Array[String] = []
-var owned_item_ids: Array[String] = []
+# 战利品持有顺序使用 CSV 第一列数字 ID；英文资源键不得进入运行时状态。
+var owned_item_ids: Array[int] = []
 var damage_modifiers := {"all": 0, "straight": 0, "banana": 0, "lob": 0}
 var battles_won := 0
 var pending_reward_is_boss := false
@@ -139,9 +140,9 @@ func add_card(card_id: String) -> bool:
 
 # 战利品不可重复；拾取时把固定定义的加成立即汇总到本局数值。
 func add_item(item: Resource) -> bool:
-	if item == null or item.item_id in owned_item_ids or not item.enabled:
+	if item == null or item.id in owned_item_ids or not item.enabled:
 		return false
-	owned_item_ids.append(item.item_id)
+	owned_item_ids.append(item.id)
 	var modifier_key: String = item.get_modifier_key()
 	if not modifier_key.is_empty():
 		damage_modifiers[modifier_key] = damage_modifiers.get(modifier_key, 0) + item.amount
@@ -150,11 +151,11 @@ func add_item(item: Resource) -> bool:
 
 
 # GM 取消勾选只移除指定已拥有战利品，并撤销它贡献的旧式静态伤害加成。
-# 新式触发效果由当前 BattleItemRuntime 同步移除；存档仍只保存稳定 ID。
+# 新式触发效果由当前 BattleItemRuntime 同步移除；存档只保存唯一数字 ID。
 func remove_item(item: Resource) -> bool:
-	if item == null or item.item_id not in owned_item_ids:
+	if item == null or item.id not in owned_item_ids:
 		return false
-	owned_item_ids.erase(item.item_id)
+	owned_item_ids.erase(item.id)
 	var modifier_key: String = item.get_modifier_key()
 	if not modifier_key.is_empty():
 		damage_modifiers[modifier_key] = maxi(int(damage_modifiers.get(modifier_key, 0)) - item.amount, 0)
@@ -269,7 +270,7 @@ func from_dict(data: Dictionary) -> bool:
 	max_hp = maxi(int(data.get("max_hp", DEFAULT_MAX_HEALTH)), 1)
 	player_hp = clampi(int(data.get("player_hp", max_hp)), 0, max_hp)
 	deck_card_ids = _string_array(data.get("deck_card_ids", DEFAULT_DECK))
-	owned_item_ids = _string_array(data.get("owned_item_ids", []))
+	owned_item_ids = _positive_int_array(data.get("owned_item_ids", []))
 	var saved_modifiers: Dictionary = data.get("damage_modifiers", {}) if data.get("damage_modifiers", {}) is Dictionary else {}
 	damage_modifiers = {
 		"all": int(saved_modifiers.get("all", 0)),
@@ -298,4 +299,17 @@ func _string_array(value: Variant) -> Array[String]:
 	for entry in value:
 		if entry is String and not entry.is_empty():
 			result.append(entry)
+	return result
+
+
+# JSON 数值统一显式转回整数；布尔、字符串、零和负数均视为损坏字段并忽略。
+func _positive_int_array(value: Variant) -> Array[int]:
+	var result: Array[int] = []
+	if value is not Array:
+		return result
+	for entry in value:
+		if (entry is int or entry is float) and not entry is bool:
+			var item_id := int(entry)
+			if item_id > 0 and item_id not in result:
+				result.append(item_id)
 	return result

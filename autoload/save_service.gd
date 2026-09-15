@@ -1,8 +1,9 @@
-# 持久化存档服务：负责 v1 JSON 校验、迁移入口、崩溃安全替换和启动恢复，不持有玩法状态。
+# 持久化存档服务：负责版本化 JSON 校验、v1 英文战利品键迁移和崩溃安全替换。
 extends Node
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const DEFAULT_SAVE_PATH := "user://run_save.json"
+const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 
 # 测试可覆盖路径以隔离真实玩家存档；正式运行始终使用 user:// 下的固定文件。
 var save_path := DEFAULT_SAVE_PATH
@@ -14,11 +15,30 @@ func _ready() -> void:
 	load_game()
 
 
-# 当前仅接受 v1；此入口为后续版本逐级迁移预留，未知新版本必须拒绝以免误读。
+# v1 的 owned_item_ids 是英文键；迁移到 v2 时逐项映射，未知键忽略并留下诊断。
 func _migrate_payload(payload: Dictionary) -> Dictionary:
 	var version := int(payload.get("save_version", 0))
 	if version == SAVE_VERSION:
 		return payload
+	if version == 1 and payload.get("run_state") is Dictionary:
+		var migrated := payload.duplicate(true)
+		var state: Dictionary = migrated.run_state
+		var numeric_ids: Array[int] = []
+		var legacy_values: Variant = state.get("owned_item_ids", [])
+		if legacy_values is Array:
+			var rewards := REWARD_SERVICE.new()
+			for value in legacy_values:
+				if value is not String:
+					continue
+				var numeric_id: int = rewards.get_item_id_by_legacy_key(value)
+				if numeric_id > 0 and numeric_id not in numeric_ids:
+					numeric_ids.append(numeric_id)
+				else:
+					_record_diagnostic("legacy_item_ignored", {"legacy_item_id": value})
+		state["owned_item_ids"] = numeric_ids
+		migrated["run_state"] = state
+		migrated["save_version"] = SAVE_VERSION
+		return migrated
 	return {}
 
 

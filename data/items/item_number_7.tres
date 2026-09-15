@@ -1,7 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_wlluc"]
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_wlluc")
+id = 5001
 item_id = "item_number_7"
 display_name = "葡萄牙7号"
 description = "直球射门伤害+1"

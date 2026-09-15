@@ -454,7 +454,7 @@ func import_items(
 	return {"ok": true, "item_count": items.size(), "effect_count": _item_effect_count(items)}
 
 
-# 主表用数字 ID 保证策划排序稳定；item_id 和 source_file 分离以保护旧存档和历史文件名。
+# 主表数字 ID 同时是运行时唯一键；item_id 只保留旧存档迁移与效果表关联用途。
 func _read_items_table(path: String, errors: Array[String]) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -510,7 +510,7 @@ func _parse_item_row(row: PackedStringArray, line_number: int, items: Dictionary
 	if rarity == ITEM_DEFINITION.Rarity.BOSS and numeric_id < 5000:
 		errors.append("战利品主表第%d行Boss品级必须使用5001-5999号段" % line_number)
 		return -1
-	items[item_id] = {"item_id": item_id, "source_file": source_file, "display_name": row[2], "description": row[3], "rarity": rarity, "modifier_type": modifier_type, "amount": amount, "enabled": enabled == 1, "effects": []}
+	items[item_id] = {"id": numeric_id, "item_id": item_id, "source_file": source_file, "display_name": row[2], "description": row[3], "rarity": rarity, "modifier_type": modifier_type, "amount": amount, "enabled": enabled == 1, "effects": []}
 	numeric_ids[numeric_id] = item_id
 	return numeric_id
 
@@ -588,6 +588,7 @@ func _parse_item_effect_row(row: PackedStringArray, line_number: int, items: Dic
 func _save_and_verify_item(data: Dictionary, output_directory: String, saved_items: Array[Resource]) -> String:
 	var resource_path := "%s/%s.tres" % [output_directory, data.source_file]
 	var item := ITEM_DEFINITION.new()
+	item.id = data.id
 	item.item_id = data.item_id
 	item.display_name = data.display_name
 	item.description = data.description
@@ -604,7 +605,7 @@ func _save_and_verify_item(data: Dictionary, output_directory: String, saved_ite
 	if save_error != OK:
 		return "保存战利品失败：%s（错误码%d）" % [resource_path, save_error]
 	var saved_item := ResourceLoader.load(resource_path, "", ResourceLoader.CACHE_MODE_REPLACE)
-	if saved_item == null or saved_item.item_id != item.item_id or saved_item.effects.size() != item.effects.size():
+	if saved_item == null or saved_item.id != item.id or saved_item.item_id != item.item_id or saved_item.effects.size() != item.effects.size():
 		return "战利品导入回读不一致：%s" % resource_path
 	saved_items.append(saved_item)
 	return ""

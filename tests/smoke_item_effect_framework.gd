@@ -16,6 +16,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var item := ITEM_DEFINITION.new()
+	item.id = 65001
 	item.item_id = "test_left_banana"
 	var bonus := ITEM_EFFECT.new()
 	bonus.trigger = ITEM_EFFECT.Trigger.BEFORE_DAMAGE

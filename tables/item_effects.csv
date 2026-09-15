@@ -1,4 +1,4 @@
-# 战利品效果表；每行对应一个按 effect_index 顺序执行的通用效果，未配置结构性效果的战利品不在此表出现。
+﻿稳定战利品ID,效果序号（同一战利品从1连续递增）,触发时机,效果操作,目标键或命令名,效果数值,触发概率百分比,卡牌过滤（0任意，1攻击，2防御，3技能）,球型过滤（0任意，1无，2直球，3香蕉球，4挑射，5随机）,方向过滤（0任意，1左，2右）,节奏过滤（0任意，1Perfect，2Good，3Miss）,目标过滤（0任意，1敌方，2自身）,是否要求有效射门（0否1是）,计数器键,计数下限,计数上限,每回合一次（0否1是）,小节拍位过滤（-1任意）,是否要求小节最后一拍（0否1是）,最小节拍细分,最大回合数,是否要求快速连击（0否1是）,生命百分比阈值
 item_id,effect_index,trigger,operation,target_key,amount,chance_percent,card_filter,shot_filter,direction_filter,rhythm_filter,target_filter,requires_shot,counter_key,counter_minimum,counter_maximum,once_per_turn,beat_in_bar_filter,requires_last_beat,minimum_subdivision,maximum_turn,requires_rapid_hits,source_health_below_percent
 string,uint8,uint8,uint8,string,float32,uint8,uint8,uint8,uint8,uint8,uint8,uint8,string,uint16,uint16,uint8,int8,uint8,uint8,uint16,uint8,uint8
 item_banana,1,9,2,shot_type,2,100,0,0,0,0,0,1,,0,999,0,-1,0,0,999,0,0

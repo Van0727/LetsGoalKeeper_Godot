@@ -15,7 +15,10 @@ const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
 const BALL_FLIGHT_SCENE := preload("res://scenes/ball_flight.tscn")
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const BARE_CHESTED := preload("res://data/cards/card_bare_chested.tres")
-const NUDE_LICENSE_ID := "item_nude_license"
+# 战斗 UI 与 GM 面板只读数字战利品 ID；英文资源名不参与运行时判断。
+const NUDE_LICENSE_ID := 4020
+const BLINDFOLD_ID := 4006
+const IN_EAR_MONITOR_ID := 4016
 const HIT_AUDIO_STREAM := preload("res://sound/sounds/hit.mp3")
 const MISS_AUDIO_STREAM := preload("res://sound/sounds/miss.mp3")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
@@ -218,7 +221,7 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	deck_state.setup(starting_deck, current_seed)
 	# 从 RunState 原始牌组生成本场可玩投影，读档不需要额外保存替换来源。
 	deck_state.sync_defense_replacement(NUDE_LICENSE_ID in run_state.owned_item_ids, BARE_CHESTED)
-	deck_state.set_hand_limit(1 if "item_blindfold" in run_state.owned_item_ids else STARTING_HAND_SIZE)
+	deck_state.set_hand_limit(1 if BLINDFOLD_ID in run_state.owned_item_ids else STARTING_HAND_SIZE)
 	controller.setup(
 		current_seed,
 		selected_enemy,
@@ -287,7 +290,7 @@ func _on_card_played(card_view: DraggableCard) -> void:
 	if card_view is BattleCardView:
 		var rhythm_result: Dictionary = rhythm_clock.judge_now()
 		# 耳返改变本次出牌的判定反馈与伤害，不改 BGM 拍位或实际音频时间。
-		if controller.item_runtime.has_item_id("item_in_ear_monitor"):
+		if controller.item_runtime.has_item(IN_EAR_MONITOR_ID):
 			rhythm_result["grade"] = rhythm_clock.JudgementGrade.PERFECT
 			rhythm_result["grade_name"] = "Perfect"
 			rhythm_result["effect_multiplier"] = 1.0
@@ -355,7 +358,7 @@ func _on_end_turn_pressed() -> void:
 func _on_skill_pressed() -> void:
 	if _input_locked:
 		return
-	if controller.item_runtime.has_item_id("item_blindfold"):
+	if controller.item_runtime.has_item(BLINDFOLD_ID):
 		if controller.use_blindfold_swap(deck_state):
 			_rebuild_hand()
 			_refresh_all()
@@ -602,7 +605,7 @@ func _rebuild_gm_items_list() -> void:
 		var checkbox := CheckBox.new()
 		checkbox.text = item.display_name
 		checkbox.disabled = not item.enabled
-		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
+		checkbox.set_pressed_no_signal(item.id in run_state.owned_item_ids)
 		checkbox.toggled.connect(_on_gm_item_toggled.bind(item, checkbox))
 		entry.add_child(checkbox)
 		var effect_label := Label.new()
@@ -616,19 +619,19 @@ func _rebuild_gm_items_list() -> void:
 # 勾选只调用本局唯一持有接口；成功后立即同步当前战斗，不重新创建控制器或重置生命。
 func _on_gm_item_toggled(checked: bool, item: Resource, checkbox: CheckBox) -> void:
 	if not _gm_menu_open or not gm_items_page.visible or _input_locked or not item.enabled:
-		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
+		checkbox.set_pressed_no_signal(item.id in run_state.owned_item_ids)
 		return
-	var had_blindfold: bool = "item_blindfold" in run_state.owned_item_ids
+	var had_blindfold: bool = BLINDFOLD_ID in run_state.owned_item_ids
 	var changed: bool = run_state.add_item(item) if checked else run_state.remove_item(item)
 	if not changed:
-		checkbox.set_pressed_no_signal(item.item_id in run_state.owned_item_ids)
+		checkbox.set_pressed_no_signal(item.id in run_state.owned_item_ids)
 		return
 	controller.debug_sync_items(
 		_reward_service.get_items_by_ids(run_state.owned_item_ids),
 		run_state.damage_modifiers
 	)
 	deck_state.sync_defense_replacement(NUDE_LICENSE_ID in run_state.owned_item_ids, BARE_CHESTED)
-	deck_state.set_hand_limit(1 if "item_blindfold" in run_state.owned_item_ids else STARTING_HAND_SIZE)
+	deck_state.set_hand_limit(1 if BLINDFOLD_ID in run_state.owned_item_ids else STARTING_HAND_SIZE)
 	# 只有解除蒙眼布上限才补回常规手牌；切换其他GM物品不能绕过狼牙鼓槌停抽。
 	if had_blindfold and deck_state.hand_limit == STARTING_HAND_SIZE:
 		deck_state.draw_cards(STARTING_HAND_SIZE)
@@ -687,7 +690,7 @@ func _rebuild_deck_after_gm_card_change() -> void:
 			cards.append(definition)
 	deck_state.setup(cards, controller.battle_seed)
 	deck_state.sync_defense_replacement(NUDE_LICENSE_ID in run_state.owned_item_ids, BARE_CHESTED)
-	deck_state.set_hand_limit(1 if "item_blindfold" in run_state.owned_item_ids else STARTING_HAND_SIZE)
+	deck_state.set_hand_limit(1 if BLINDFOLD_ID in run_state.owned_item_ids else STARTING_HAND_SIZE)
 	deck_state.draw_cards(STARTING_HAND_SIZE)
 	_rebuild_hand()
 	_refresh_all()
@@ -784,14 +787,14 @@ func _update_input_state() -> void:
 	gm_skip_button.disabled = _input_locked or controller.phase == BATTLE_CONTROLLER.Phase.FINISHED
 	var current_skill := _get_current_skill()
 	var combo_count: int = controller.combo_state.count
-	if controller.item_runtime.has_item_id("item_blindfold"):
+	if controller.item_runtime.has_item(BLINDFOLD_ID):
 		skill_button.text = "换牌 %d/3" % controller.blindfold_charges
 		skill_button.disabled = not can_act or controller.blindfold_charges <= 0
 	elif current_skill == null:
 		skill_button.text = "连击 0/3"
 	else:
 		skill_button.text = "%s %d/3" % [current_skill.display_name, combo_count]
-	if not controller.item_runtime.has_item_id("item_blindfold"):
+	if not controller.item_runtime.has_item(BLINDFOLD_ID):
 		skill_button.disabled = not can_act or not controller.combo_state.can_activate()
 	for child in hand_layer.get_children():
 		if child is BattleCardView:

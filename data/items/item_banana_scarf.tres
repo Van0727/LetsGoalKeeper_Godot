@@ -1,10 +1,12 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_dwj6d"]
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_dwj6d")
+id = 4001
 item_id = "item_banana_scarf"
 display_name = "弧线围巾"
 description = "香蕉球伤害+1"
-rarity = 0
 modifier_type = 2
 amount = 1

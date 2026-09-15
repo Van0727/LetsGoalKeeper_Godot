@@ -1,18 +1,22 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
-[sub_resource type="Resource" id="slipper"]
-script = ExtResource("2")
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_ss1fm"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_gs0ux"]
+
+[sub_resource type="Resource" id="Resource_ss1fm"]
+script = ExtResource("1_ss1fm")
 trigger = 2
 operation = 2
 target_key = "slipper_damage"
 amount = 5.0
 chance_percent = 10
 card_filter = 1
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_gs0ux")
+id = 4019
 item_id = "item_national_flip_flops"
 display_name = "国民人字拖"
 description = "每打出1张攻击牌，有10%概率追加踢出人字拖，造成5点伤害"
 modifier_type = 4
-effects = Array[Resource]([SubResource("slipper")])
+effects = Array[Resource]([SubResource("Resource_ss1fm")])

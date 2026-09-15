@@ -1,7 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_5ysbi"]
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_5ysbi")
+id = 4024
 item_id = "item_rhythm_game_trophy"
 display_name = "音游奖杯"
 description = "主动技QTE四次全部Perfect时，效果数值翻倍；持续回合不翻倍"

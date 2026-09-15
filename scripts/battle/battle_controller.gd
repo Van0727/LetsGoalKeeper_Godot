@@ -27,6 +27,16 @@ const ENEMY_BASE_DAMAGE := 8
 const YELLOW_CARD_THRESHOLD := 5
 const RED_CARD_THRESHOLD := 10
 const CHUNGHWA_RED_CARD_THRESHOLD := 20
+# 特殊战利品统一引用 CSV 数字 ID，避免玩法逻辑依赖英文资源名。
+const ITEM_BAR_DICE := 4003
+const ITEM_BLANK_SCORE := 4005
+const ITEM_BLINDFOLD := 4006
+const ITEM_CHUNGHWA_CIGARETTES := 4007
+const ITEM_IN_EAR_MONITOR := 4016
+const ITEM_REST_SCORE := 4023
+const ITEM_RHYTHM_GAME_TROPHY := 4024
+const ITEM_SPIKED_DRUM_MALLET := 4026
+const ITEM_TATTOO_STICKER := 4027
 
 # 战斗阶段限制玩家只能在自己的行动阶段操作。
 enum Phase {
@@ -58,7 +68,7 @@ var red_card_pending := false
 # 暴力流物品的充能与待消费倍率只存在于当前战斗；GM 取消对应物品时同步清理。
 var blindfold_charges := 0
 var pending_first_card_multiplier := 1.0
-var pending_first_card_item_id := ""
+var pending_first_card_item_id := 0
 var pending_next_damage_multiplier := 1.0
 var bar_dice_end_turn_pending := false
 # 红牌阈值按本场持有物动态推导；GM 取消后立即恢复默认值，不写入存档。
@@ -103,7 +113,7 @@ func setup(
 	red_card_pending = false
 	blindfold_charges = 0
 	pending_first_card_multiplier = 1.0
-	pending_first_card_item_id = ""
+	pending_first_card_item_id = 0
 	pending_next_damage_multiplier = 1.0
 	bar_dice_end_turn_pending = false
 	turn_number = 1
@@ -194,7 +204,7 @@ func play_card(
 	_log("打出 %s，支付 %d 能量" % [card.display_name, card.cost])
 	# 耳返只覆盖本次出牌判定，不修改节拍时钟或传入字典；拍位仍由真实 BGM 时间决定。
 	var effective_rhythm_result: Dictionary = rhythm_result.duplicate(true)
-	if item_runtime.has_item_id("item_in_ear_monitor"):
+	if item_runtime.has_item(ITEM_IN_EAR_MONITOR):
 		effective_rhythm_result["grade"] = 0
 		effective_rhythm_result["grade_name"] = "Perfect"
 		effective_rhythm_result["effect_multiplier"] = 1.0
@@ -210,7 +220,7 @@ func play_card(
 	# 上回合乐谱待用倍率只在成功支付费用的首张牌消费，其他物品可再按配置相乘。
 	action_context["card_effect_multiplier"] = pending_first_card_multiplier
 	pending_first_card_multiplier = 1.0
-	pending_first_card_item_id = ""
+	pending_first_card_item_id = 0
 	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.BEFORE_CARD_PLAYED, action_context))
 	current_action_context.actual_shot_type = int(action_context.get("shot_type", card.shot_type))
 	current_action_context.shot_direction = int(action_context.get("shot_direction", 0))
@@ -273,7 +283,7 @@ func play_card(
 
 # 追加打击在同步模式即时生效；实战飞球模式排到原球命中后，避免提前击杀目标。
 func _resolve_slipper_damage(amount: int, defer_damage := false) -> void:
-	if item_runtime.has_item_id("item_tattoo_sticker") and player.health * 100 < player.max_health * 30:
+	if item_runtime.has_item(ITEM_TATTOO_STICKER) and player.health * 100 < player.max_health * 30:
 		amount = ceili(amount * 1.5)
 	if pending_next_damage_multiplier > 1.0:
 		amount = ceili(amount * pending_next_damage_multiplier)
@@ -307,16 +317,16 @@ func set_banana_shot_direction(direction: int) -> void:
 
 # GM 勾选变化只同步持有定义与旧式加成，不重新 setup 或恢复已失去的战斗生命等临时状态。
 func debug_sync_items(item_definitions: Array[Resource], run_damage_modifiers: Dictionary) -> void:
-	var had_blindfold := item_runtime.has_item_id("item_blindfold")
+	var had_blindfold := item_runtime.has_item(ITEM_BLINDFOLD)
 	item_runtime.sync_items(item_definitions)
-	if not item_runtime.has_item_id("item_blindfold"):
+	if not item_runtime.has_item(ITEM_BLINDFOLD):
 		blindfold_charges = 0
 	elif not had_blindfold:
 		blindfold_charges = 3
-	if pending_first_card_item_id != "" and not item_runtime.has_item_id(pending_first_card_item_id):
+	if pending_first_card_item_id != 0 and not item_runtime.has_item(pending_first_card_item_id):
 		pending_first_card_multiplier = 1.0
-		pending_first_card_item_id = ""
-	if not item_runtime.has_item_id("item_bar_dice"):
+		pending_first_card_item_id = 0
+	if not item_runtime.has_item(ITEM_BAR_DICE):
 		pending_next_damage_multiplier = 1.0
 		bar_dice_end_turn_pending = false
 	_sync_red_card_threshold()
@@ -328,7 +338,7 @@ func debug_sync_items(item_definitions: Array[Resource], run_damage_modifiers: D
 func _sync_red_card_threshold() -> void:
 	red_card_threshold = RED_CARD_THRESHOLD
 	for item in item_runtime.items:
-		if item != null and item.item_id == "item_chunghwa_cigarettes":
+		if item != null and item.id == ITEM_CHUNGHWA_CIGARETTES:
 			red_card_threshold = CHUNGHWA_RED_CARD_THRESHOLD
 			break
 	if phase == Phase.PLAYER_TURN and player_cards_played_this_turn >= red_card_threshold and not red_card_pending:
@@ -366,13 +376,13 @@ func play_active_skill(skill: Resource, qte_result: Dictionary = {}, defer_turn_
 	var points: int = combo_state.count
 	_log("释放%s，消耗%d点连击" % [skill.display_name, points])
 	var damage_multiplier := _get_enemy_damage_multiplier("active_skill")
-	if item_runtime.has_item_id("item_tattoo_sticker") and player.health * 100 < player.max_health * 30:
+	if item_runtime.has_item(ITEM_TATTOO_STICKER) and player.health * 100 < player.max_health * 30:
 		damage_multiplier *= 1.5
 	if int(skill.card_type) == 0 and pending_next_damage_multiplier > 1.0:
 		damage_multiplier *= pending_next_damage_multiplier
 		pending_next_damage_multiplier = 1.0
 	# 音游奖杯要求四音全部 Perfect；只翻倍数值，不翻倍强化持续回合或 QTE 次数。
-	var perfect_skill_multiplier := 2.0 if item_runtime.has_item_id("item_rhythm_game_trophy") and int(qte_result.get("perfect", 0)) == 4 and int(qte_result.get("good", 0)) == 0 and int(qte_result.get("miss", 0)) == 0 else 1.0
+	var perfect_skill_multiplier := 2.0 if item_runtime.has_item(ITEM_RHYTHM_GAME_TROPHY) and int(qte_result.get("perfect", 0)) == 4 and int(qte_result.get("good", 0)) == 0 and int(qte_result.get("miss", 0)) == 0 else 1.0
 	var events := _skill_resolver.resolve_skill(
 		skill,
 		points,
@@ -392,7 +402,7 @@ func play_active_skill(skill: Resource, qte_result: Dictionary = {}, defer_turn_
 		_base_item_context()
 	))
 	# 酒吧骰子在本次主动技结算后掷骰，增伤只留给后续伤害；结束回合由界面等动画播完再提交。
-	if item_runtime.has_item_id("item_bar_dice") and not player.is_dead() and not enemy.is_dead():
+	if item_runtime.has_item(ITEM_BAR_DICE) and not player.is_dead() and not enemy.is_dead():
 		if item_runtime.roll_percent(50):
 			pending_next_damage_multiplier = 2.0
 		else:
@@ -411,7 +421,7 @@ func play_active_skill(skill: Resource, qte_result: Dictionary = {}, defer_turn_
 
 # 蒙眼布每回合至多换牌三次；换牌失败不消耗次数。
 func use_blindfold_swap(deck_state) -> bool:
-	if not _can_player_act() or not item_runtime.has_item_id("item_blindfold") or blindfold_charges <= 0:
+	if not _can_player_act() or not item_runtime.has_item(ITEM_BLINDFOLD) or blindfold_charges <= 0:
 		return false
 	if not deck_state.swap_single_hand_card():
 		return false
@@ -460,7 +470,7 @@ func play_card_from_hand(
 	if not play_card(card, rhythm_result, defer_enemy_shot_damage):
 		return false
 	# 狼牙鼓槌只取消成功出牌后的自动补牌，不影响回合开始或显式换牌抽取。
-	deck_state.play_card_at(hand_index, not item_runtime.has_item_id("item_spiked_drum_mallet"))
+	deck_state.play_card_at(hand_index, not item_runtime.has_item(ITEM_SPIKED_DRUM_MALLET))
 	return true
 
 
@@ -514,13 +524,13 @@ func _end_player_turn(rhythm_result: Dictionary = {}) -> void:
 	phase = Phase.PLAYER_END
 	# 乐谱按本回合成功出牌数决定下一回合首张牌倍率，不跨多个空回合叠乘。
 	pending_first_card_multiplier = 1.0
-	pending_first_card_item_id = ""
-	if player_cards_played_this_turn == 0 and item_runtime.has_item_id("item_blank_score"):
+	pending_first_card_item_id = 0
+	if player_cards_played_this_turn == 0 and item_runtime.has_item(ITEM_BLANK_SCORE):
 		pending_first_card_multiplier = 4.0
-		pending_first_card_item_id = "item_blank_score"
-	elif player_cards_played_this_turn == 1 and item_runtime.has_item_id("item_rest_score"):
+		pending_first_card_item_id = ITEM_BLANK_SCORE
+	elif player_cards_played_this_turn == 1 and item_runtime.has_item(ITEM_REST_SCORE):
 		pending_first_card_multiplier = 2.0
-		pending_first_card_item_id = "item_rest_score"
+		pending_first_card_item_id = ITEM_REST_SCORE
 	_log("玩家结束第 %d 回合" % turn_number)
 	var end_context: Dictionary = _base_item_context()
 	end_context["beat_in_bar"] = int(rhythm_result.get("beat_in_bar", -1))
@@ -551,7 +561,7 @@ func _start_player_turn() -> void:
 	player_cards_played_this_turn = 0
 	red_card_pending = false
 	item_runtime.start_turn()
-	blindfold_charges = 3 if item_runtime.has_item_id("item_blindfold") else 0
+	blindfold_charges = 3 if item_runtime.has_item(ITEM_BLINDFOLD) else 0
 	var cleared_shield := player.clear_shield()
 	var restored_energy := player.refill_energy()
 	phase = Phase.PLAYER_TURN

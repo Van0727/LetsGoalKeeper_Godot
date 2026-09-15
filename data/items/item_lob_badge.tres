@@ -1,10 +1,12 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_0w2w0"]
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_0w2w0")
+id = 4017
 item_id = "item_lob_badge"
 display_name = "挑射徽章"
 description = "挑射伤害+1"
-rarity = 0
 modifier_type = 3
 amount = 1

@@ -22,7 +22,8 @@ func _run() -> void:
 	settings_service.set_metronome_style(settings_service.MetronomeStyle.WAVEFORM)
 	var battle_screen := BATTLE_SCENE.instantiate()
 	root.add_child(battle_screen)
-	await process_frame
+	# _ready 会等待战斗转场音效；先等其首次建局完成，避免测试手动建局被迟到的初始化覆盖。
+	_assert_true(await _wait_until_next_battle(battle_screen, 0, 2.0), "战斗界面异步初始化完成")
 	# 显式重置本局，避免本机 user:// 残留存档让玩家以濒死状态进入冒烟测试。
 	battle_screen.run_state.start_new_run(7301)
 	battle_screen.start_new_battle(TURTLE)
@@ -165,14 +166,14 @@ func _run() -> void:
 		_assert_true(disabled_item.disabled, "禁用占位奖励不能勾选")
 		_assert_true(not golden_boot.button_pressed, "未持有奖励初始未勾选")
 		golden_boot.button_pressed = true
-		_assert_true("item_golden_boot" in battle_screen.run_state.owned_item_ids, "勾选立即写入本局持有")
+		_assert_true(4011 in battle_screen.run_state.owned_item_ids, "勾选立即写入本局持有")
 		_assert_equal(battle_screen.controller.damage_modifiers.all, 1, "旧式奖励即时增加战斗伤害")
 		left_foot.button_pressed = true
 		_assert_equal(battle_screen.controller.item_runtime.items.size(), 2, "新式奖励即时接入战斗运行时")
 		golden_boot.button_pressed = false
 		_assert_equal(battle_screen.controller.damage_modifiers.all, 0, "取消旧式奖励即时撤销加成")
 		left_foot.button_pressed = false
-		_assert_true("item_golden_left_foot" not in battle_screen.run_state.owned_item_ids, "取消新式奖励立即移出本局")
+		_assert_true(4012 not in battle_screen.run_state.owned_item_ids, "取消新式奖励立即移出本局")
 		_assert_equal(battle_screen.controller.item_runtime.items.size(), 0, "取消新式奖励立即停止触发")
 		left_foot.button_pressed = true
 		battle_screen._on_gm_items_back_pressed()
@@ -202,13 +203,16 @@ func _run() -> void:
 	battle_screen.run_state.start_test_battle(7302)
 	battle_screen.start_new_battle()
 	battle_screen.controller.player.health = 67
+	var test_battle_generation: int = battle_screen._battle_generation
 	_assert_true(battle_screen.controller.debug_force_victory(), "测试玩法可击杀当前怪物")
-	await create_timer(battle_screen.VICTORY_RESULT_DELAY_SECONDS + 0.1).timeout
+	_assert_true(await _wait_until_next_battle(battle_screen, test_battle_generation, battle_screen.VICTORY_RESULT_DELAY_SECONDS + 1.0), "测试玩法胜利后完成下一场刷新")
 	_assert_equal(battle_screen.controller.enemy.max_health, 100, "测试玩法怪物固定100血")
 	_assert_equal(battle_screen.controller.enemy.health, 100, "测试玩法怪物死亡后重新刷出")
 	_assert_equal(battle_screen.controller.player.health, 67, "测试玩法刷新怪物时保留玩家当前生命")
 	_assert_true(not battle_screen.result_overlay.visible, "测试玩法不会展示通关或奖励结算")
 	battle_screen.run_state.start_new_run(7303)
+	# 切回正式本局后同步重建控制器，不能继续复用测试玩法刚刷新的战斗实例。
+	battle_screen.start_new_battle()
 
 	# 面板内跳过按钮绕过乌龟反伤，直接复用正常胜利与奖励入口。
 	battle_screen.controller.player.health = 1
@@ -220,8 +224,8 @@ func _run() -> void:
 	_assert_true(not battle_screen.result_overlay.visible, "怪物死亡后不立即显示胜利结果层")
 	_assert_true(battle_screen.end_turn_button.disabled, "胜利后锁定结束回合")
 	_assert_true(battle_screen.gm_menu_button.disabled, "胜利后锁定GM入口")
-	await create_timer(battle_screen.VICTORY_RESULT_DELAY_SECONDS + 0.1).timeout
-	_assert_true(battle_screen.result_overlay.visible, "怪物死亡一秒后显示胜利结果层")
+	# 固定计时器到点与协程恢复可能落在同一帧；在有限超时内等待真实 UI 状态，避免把调度顺序误报为失败。
+	_assert_true(await _wait_until_visible(battle_screen.result_overlay, battle_screen.VICTORY_RESULT_DELAY_SECONDS + 1.0), "怪物死亡一秒后显示胜利结果层")
 
 	# 重开后把玩家置于濒死状态，验证敌方行动可进入失败结果且不会再抽牌。
 	battle_screen.start_new_battle()
@@ -309,3 +313,19 @@ func _assert_true(value: bool, label: String) -> void:
 		return
 	_failed = true
 	push_error("%s：条件未满足" % label)
+
+
+# 每帧观察控件状态并设置硬超时；只消除同帧协程恢复竞态，不允许胜利层无限期延迟。
+func _wait_until_visible(control: CanvasItem, timeout_seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + roundi(timeout_seconds * 1000.0)
+	while not control.visible and Time.get_ticks_msec() < deadline:
+		await process_frame
+	return control.visible
+
+
+# 测试玩法胜利必须等新战斗代次真正建立后才能切回正式局，避免旧异步刷新覆盖下一次胜利。
+func _wait_until_next_battle(battle_screen: Control, previous_generation: int, timeout_seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + roundi(timeout_seconds * 1000.0)
+	while battle_screen._battle_generation <= previous_generation and Time.get_ticks_msec() < deadline:
+		await process_frame
+	return battle_screen._battle_generation > previous_generation

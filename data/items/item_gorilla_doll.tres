@@ -1,8 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" load_steps=4 format=3]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="2"]
-[sub_resource type="Resource" id="Effect_banana_heal"]
-script = ExtResource("2")
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_h5bev"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_2rd64"]
+
+[sub_resource type="Resource" id="Resource_h5bev"]
+script = ExtResource("1_h5bev")
 trigger = 5
 operation = 5
 target_key = "gain_health"
@@ -10,10 +12,12 @@ amount = 1.0
 chance_percent = 25
 shot_filter = 3
 target_filter = 1
+
 [resource]
-script = ExtResource("1")
+script = ExtResource("2_2rd64")
+id = 4014
 item_id = "item_gorilla_doll"
 display_name = "猩猩玩偶"
 description = "香蕉球每段命中后有25%概率立即恢复1点生命"
 modifier_type = 4
-effects = Array[Resource]([SubResource("Effect_banana_heal")])
+effects = Array[Resource]([SubResource("Resource_h5bev")])

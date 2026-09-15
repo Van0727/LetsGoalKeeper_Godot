@@ -1,10 +1,11 @@
-# 战利品固定定义：保存稳定ID、旧版射门加成和通用触发效果，不保存单场战斗运行状态。
+# 战利品固定定义：数字 ID 是唯一运行时键；英文 item_id 仅保留给资源文件与旧存档迁移。
 class_name ItemDefinition
 extends Resource
 
 enum Rarity { NORMAL, BOSS }
 enum ModifierType { ALL_SHOTS, STRAIGHT, BANANA, LOB, DISABLED }
 
+@export_range(1, 65535, 1) var id := 1
 @export var item_id := ""
 @export var display_name := "战利品"
 @export_multiline var description := ""
