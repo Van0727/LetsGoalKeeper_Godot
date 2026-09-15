@@ -72,18 +72,25 @@ func clear_shield() -> int:
 	return cleared
 
 
-# 将能量恢复到上限，并返回实际恢复量。
+# 将能量恢复到基础上限；上一回合未消费的临时溢出能量在此被清除。
 func refill_energy() -> int:
-	var restored := max_energy - energy
+	var restored := maxi(max_energy - energy, 0)
 	energy = max_energy
 	return restored
 
 
-# 恢复能量但不超过上限。
+# 恢复能量但不超过基础上限；已有临时溢出时不能因普通回能反而降低当前能量。
 func gain_energy(raw_amount: int) -> int:
 	var previous_energy := energy
-	energy = mini(energy + maxi(raw_amount, 0), max_energy)
+	energy = mini(energy + maxi(raw_amount, 0), maxi(max_energy, energy))
 	return energy - previous_energy
+
+
+# 临时额外能量允许超过基础上限，只在当前玩家回合可用，下一次 refill_energy 时清除。
+func gain_temporary_energy(raw_amount: int) -> int:
+	var gained := maxi(raw_amount, 0)
+	energy += gained
+	return gained
 
 
 # 判断当前能量是否足以支付费用，负费用按零处理。

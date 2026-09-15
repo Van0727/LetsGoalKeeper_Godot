@@ -58,6 +58,8 @@ var deck_card_ids: Array[String] = []
 # 战利品持有顺序使用 CSV 第一列数字 ID；英文资源键不得进入运行时状态。
 var owned_item_ids: Array[int] = []
 var damage_modifiers := {"all": 0, "straight": 0, "banana": 0, "lob": 0}
+# 获得战利品后在本次完整游戏历程中持续生效，只有新游戏、通关或死亡后的重开才重置。
+var run_max_energy_bonus := 0
 var battles_won := 0
 var pending_reward_is_boss := false
 var resume_point := ResumePoint.MAP
@@ -88,6 +90,7 @@ func start_new_run(seed_value: int) -> void:
 	deck_card_ids.assign(DEFAULT_DECK)
 	owned_item_ids.clear()
 	damage_modifiers = {"all": 0, "straight": 0, "banana": 0, "lob": 0}
+	run_max_energy_bonus = 0
 	battles_won = 0
 	pending_reward_is_boss = false
 	resume_point = ResumePoint.MAP
@@ -138,7 +141,7 @@ func add_card(card_id: String) -> bool:
 	return true
 
 
-# 战利品不可重复；拾取时把固定定义的加成立即汇总到本局数值。
+# 战利品不可重复；拾取时把固定定义的伤害与游戏历程级能量上限立即汇总。
 func add_item(item: Resource) -> bool:
 	if item == null or item.id in owned_item_ids or not item.enabled:
 		return false
@@ -146,11 +149,12 @@ func add_item(item: Resource) -> bool:
 	var modifier_key: String = item.get_modifier_key()
 	if not modifier_key.is_empty():
 		damage_modifiers[modifier_key] = damage_modifiers.get(modifier_key, 0) + item.amount
+	run_max_energy_bonus += maxi(int(item.run_max_energy_bonus), 0)
 	run_changed.emit()
 	return true
 
 
-# GM 取消勾选只移除指定已拥有战利品，并撤销它贡献的旧式静态伤害加成。
+# GM 取消勾选只移除指定已拥有战利品，并撤销它贡献的静态伤害及游戏历程级能量上限。
 # 新式触发效果由当前 BattleItemRuntime 同步移除；存档只保存唯一数字 ID。
 func remove_item(item: Resource) -> bool:
 	if item == null or item.id not in owned_item_ids:
@@ -159,6 +163,7 @@ func remove_item(item: Resource) -> bool:
 	var modifier_key: String = item.get_modifier_key()
 	if not modifier_key.is_empty():
 		damage_modifiers[modifier_key] = maxi(int(damage_modifiers.get(modifier_key, 0)) - item.amount, 0)
+	run_max_energy_bonus = maxi(run_max_energy_bonus - maxi(int(item.run_max_energy_bonus), 0), 0)
 	run_changed.emit()
 	return true
 
@@ -254,6 +259,7 @@ func to_dict() -> Dictionary:
 		"deck_card_ids": deck_card_ids.duplicate(),
 		"owned_item_ids": owned_item_ids.duplicate(),
 		"damage_modifiers": damage_modifiers.duplicate(true),
+		"run_max_energy_bonus": run_max_energy_bonus,
 		"battles_won": battles_won,
 		"pending_reward_is_boss": pending_reward_is_boss,
 		"resume_point": resume_point,
@@ -278,6 +284,7 @@ func from_dict(data: Dictionary) -> bool:
 		"banana": int(saved_modifiers.get("banana", 0)),
 		"lob": int(saved_modifiers.get("lob", 0)),
 	}
+	run_max_energy_bonus = maxi(int(data.get("run_max_energy_bonus", 0)), 0)
 	battles_won = maxi(int(data.get("battles_won", 0)), 0)
 	pending_reward_is_boss = bool(data.get("pending_reward_is_boss", false))
 	resume_point = clampi(int(data.get("resume_point", ResumePoint.MAP)), ResumePoint.MAP, ResumePoint.REST)

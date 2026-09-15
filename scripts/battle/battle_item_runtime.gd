@@ -80,6 +80,8 @@ func trigger(trigger_type: int, context: Dictionary) -> Array[Dictionary]:
 func _matches(effect: Resource, context: Dictionary) -> bool:
 	if int(context.get("turn_number", 1)) > effect.maximum_turn:
 		return false
+	if effect.turn_interval > 0 and int(context.get("turn_number", 1)) % effect.turn_interval != 0:
+		return false
 	if effect.beat_in_bar_filter >= 0 and int(context.get("beat_in_bar", -1)) != effect.beat_in_bar_filter:
 		return false
 	if effect.requires_last_beat and not bool(context.get("is_last_beat", false)):

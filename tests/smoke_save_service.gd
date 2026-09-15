@@ -1,4 +1,4 @@
-# 阶段 9 存档冒烟测试：覆盖完整往返、地图恢复、损坏降级和新游戏覆盖旧档。
+# 存档冒烟测试：覆盖完整往返、旧版本迁移、地图恢复、损坏降级和新游戏覆盖旧档。
 extends SceneTree
 
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
@@ -17,6 +17,7 @@ func _run() -> void:
 	_cleanup()
 	_test_round_trip_and_map_restore()
 	_test_v1_item_id_migration()
+	_test_v2_energy_bonus_migration()
 	_test_corrupt_save_fallback()
 	_test_new_run_overwrites_old_save()
 	_cleanup()
@@ -40,6 +41,7 @@ func _test_round_trip_and_map_restore() -> void:
 	source.deck_card_ids.append("card_banana_shot")
 	source.owned_item_ids.append(4011)
 	source.damage_modifiers.straight = 4
+	source.run_max_energy_bonus = 1
 	source.battles_won = 5
 	var room: Dictionary = source.map_state.get_attainable_rooms()[0]
 	source.map_state.begin_room(room.id)
@@ -72,6 +74,25 @@ func _test_v1_item_id_migration() -> void:
 	service.save_path = _path
 	_assert_true(service.load_game(restored), "v1 英文战利品存档可迁移")
 	_assert_equal(restored.owned_item_ids, [4011], "旧键映射、排重并忽略无效值")
+	legacy_state.free()
+	restored.free()
+	service.free()
+
+
+# v2 尚未保存能量上限字段；升级时必须补零，避免旧存档加载失败或凭空获得成长。
+func _test_v2_energy_bonus_migration() -> void:
+	var legacy_state = RUN_STATE_SCRIPT.new()
+	legacy_state.start_new_run(818)
+	var state_data: Dictionary = legacy_state.to_dict()
+	state_data.erase("run_max_energy_bonus")
+	var file := FileAccess.open(_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"save_version": 2, "run_state": state_data}))
+	file.close()
+	var restored = RUN_STATE_SCRIPT.new()
+	var service = SAVE_SERVICE_SCRIPT.new()
+	service.save_path = _path
+	_assert_true(service.load_game(restored), "v2 存档可迁移游戏历程能量字段")
+	_assert_equal(restored.run_max_energy_bonus, 0, "旧存档迁移后能量上限加成为零")
 	legacy_state.free()
 	restored.free()
 	service.free()

@@ -1,7 +1,7 @@
-# 持久化存档服务：负责版本化 JSON 校验、v1 英文战利品键迁移和崩溃安全替换。
+# 持久化存档服务：负责版本化 JSON 校验、旧战利品键与游戏历程能量上限迁移及崩溃安全替换。
 extends Node
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 const DEFAULT_SAVE_PATH := "user://run_save.json"
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 
@@ -15,13 +15,13 @@ func _ready() -> void:
 	load_game()
 
 
-# v1 的 owned_item_ids 是英文键；迁移到 v2 时逐项映射，未知键忽略并留下诊断。
+# v1 英文战利品键先迁移为数字 ID；v2 再补游戏历程级能量上限字段，最终统一升级到 v3。
 func _migrate_payload(payload: Dictionary) -> Dictionary:
 	var version := int(payload.get("save_version", 0))
 	if version == SAVE_VERSION:
 		return payload
+	var migrated := payload.duplicate(true)
 	if version == 1 and payload.get("run_state") is Dictionary:
-		var migrated := payload.duplicate(true)
 		var state: Dictionary = migrated.run_state
 		var numeric_ids: Array[int] = []
 		var legacy_values: Variant = state.get("owned_item_ids", [])
@@ -36,6 +36,11 @@ func _migrate_payload(payload: Dictionary) -> Dictionary:
 				else:
 					_record_diagnostic("legacy_item_ignored", {"legacy_item_id": value})
 		state["owned_item_ids"] = numeric_ids
+		migrated["run_state"] = state
+		version = 2
+	if version == 2 and migrated.get("run_state") is Dictionary:
+		var state: Dictionary = migrated.run_state
+		state["run_max_energy_bonus"] = maxi(int(state.get("run_max_energy_bonus", 0)), 0)
 		migrated["run_state"] = state
 		migrated["save_version"] = SAVE_VERSION
 		return migrated

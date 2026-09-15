@@ -3,6 +3,7 @@ extends SceneTree
 
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
+const ITEM_DEFINITION := preload("res://scripts/items/item_definition.gd")
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const GOLDEN_BOOT := preload("res://data/items/item_golden_boot.tres")
@@ -29,7 +30,19 @@ func _run() -> void:
 	_assert_true(not _run_state.deck_card_ids.has("card_towel"), "初始牌组移除回能牌")
 	_assert_equal(_run_state.owned_item_ids.size(), 0, "新游戏清空战利品")
 	_assert_equal(service.get_item_by_id(4011), GOLDEN_BOOT, "数字 ID 可查找金靴")
+	_assert_equal(service.get_item_by_id(4029).item_id, "item_energy_core", "数字 ID 可查找新增能量核心")
 	_assert_equal(service.get_item_by_id(9999), null, "无效数字 ID 安全返回空值")
+	var energy_core := ITEM_DEFINITION.new()
+	energy_core.id = 4029
+	energy_core.item_id = "item_energy_core"
+	energy_core.run_max_energy_bonus = 1
+	_assert_true(_run_state.add_item(energy_core), "获得能量核心")
+	_assert_equal(_run_state.run_max_energy_bonus, 1, "能量核心在本次游戏历程永久提高能量上限")
+	var energy_battle = BATTLE_CONTROLLER.new()
+	root.add_child(energy_battle)
+	energy_battle.setup(300, TURTLE, {}, [], _run_state.run_max_energy_bonus)
+	_assert_equal(energy_battle.player.max_energy, 4, "后续战斗继承游戏历程能量上限")
+	energy_battle.free()
 
 	var first_rng := RandomNumberGenerator.new()
 	var second_rng := RandomNumberGenerator.new()
@@ -72,6 +85,7 @@ func _run() -> void:
 	_run_state.start_new_run(303)
 	_assert_equal(_run_state.deck_card_ids.size(), 12, "再次新游戏恢复十二张初始攻击牌")
 	_assert_equal(_run_state.damage_modifiers.all, 0, "再次新游戏清除伤害加成")
+	_assert_equal(_run_state.run_max_energy_bonus, 0, "再次新游戏清除游戏历程能量上限加成")
 	_assert_equal(_run_state.player_hp, 100, "再次新游戏恢复生命")
 	_run_state.free()
 

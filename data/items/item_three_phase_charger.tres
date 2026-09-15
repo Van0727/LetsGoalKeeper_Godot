@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_luld7"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_u5iny"]
+
+[sub_resource type="Resource" id="Resource_jkctb"]
+script = ExtResource("1_luld7")
+trigger = 1
+operation = 5
+target_key = "gain_temporary_energy"
+amount = 1.0
+turn_interval = 3
+
+[resource]
+script = ExtResource("2_u5iny")
+id = 4031
+item_id = "item_three_phase_charger"
+display_name = "三相充能器"
+description = "每逢第3、6、9回合获得1点临时额外能量"
+modifier_type = 4
+effects = Array[Resource]([SubResource("Resource_jkctb")])

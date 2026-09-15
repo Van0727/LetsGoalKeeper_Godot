@@ -242,7 +242,8 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 		current_seed,
 		selected_enemy,
 		run_state.damage_modifiers,
-		REWARD_SERVICE.new().get_items_by_ids(run_state.owned_item_ids)
+		REWARD_SERVICE.new().get_items_by_ids(run_state.owned_item_ids),
+		run_state.run_max_energy_bonus
 	)
 	var diagnostics := get_node_or_null("/root/DiagnosticsService")
 	if diagnostics != null:

@@ -64,5 +64,7 @@ enum TargetFilter { ANY, ENEMY, SELF }
 @export var requires_last_beat := false
 @export_range(0, 64, 1) var minimum_subdivision := 0
 @export_range(0, 999, 1) var maximum_turn := 999
+# 大于 0 时只在回合号可被该值整除时触发，例如 3 表示第3、6、9回合。
+@export_range(0, 99, 1) var turn_interval := 0
 @export var requires_rapid_hits := false
 @export_range(0, 100, 1) var source_health_below_percent := 0

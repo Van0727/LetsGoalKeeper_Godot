@@ -111,6 +111,8 @@ var pending_first_card_multiplier := 1.0
 var pending_first_card_item_id := 0
 var pending_next_damage_multiplier := 1.0
 var bar_dice_end_turn_pending := false
+# 蓄能类战利品在回合结束记录剩余能量，下一回合回满基础上限后作为一次性溢出能量发放。
+var pending_carried_energy := 0
 # 红牌阈值按本场持有物动态推导；GM 取消后立即恢复默认值，不写入存档。
 var red_card_threshold := RED_CARD_THRESHOLD
 
@@ -127,13 +129,14 @@ func setup(
 		seed_value := 20260902,
 		enemy_definition: Resource = null,
 		run_damage_modifiers: Dictionary = {},
-		item_definitions: Array[Resource] = []
+		item_definitions: Array[Resource] = [],
+		run_max_energy_bonus := 0
 ) -> void:
 	battle_seed = seed_value
 	_rng.seed = battle_seed
 	_shot_rng.seed = battle_seed * 31 + 17
 	damage_modifiers = run_damage_modifiers.duplicate()
-	player = COMBATANT_STATE.new("玩家", PLAYER_MAX_HEALTH, PLAYER_MAX_ENERGY)
+	player = COMBATANT_STATE.new("玩家", PLAYER_MAX_HEALTH, PLAYER_MAX_ENERGY + maxi(int(run_max_energy_bonus), 0))
 	current_enemy_definition = enemy_definition
 	if current_enemy_definition == null:
 		enemy = COMBATANT_STATE.new("企鹅", ENEMY_MAX_HEALTH)
@@ -168,6 +171,7 @@ func setup(
 	pending_first_card_item_id = 0
 	pending_next_damage_multiplier = 1.0
 	bar_dice_end_turn_pending = false
+	pending_carried_energy = 0
 	turn_number = 1
 	phase = Phase.NOT_STARTED
 	_log("战斗开始，seed=%d" % battle_seed)
@@ -781,7 +785,7 @@ func get_phase_text() -> String:
 			return "尚未开始"
 
 
-# 玩家回合开始时清盾、回满能量并选定一次敌人行动及其最终随机值。
+# 玩家回合开始时清盾、回满基础能量，再发放上回合结转和配表声明的临时溢出能量。
 func _start_player_turn() -> void:
 	# 每个玩家回合独立计数；黄牌不会跨回合累计，红牌也不能泄漏到下一回合。
 	player_cards_played_this_turn = 0
@@ -795,10 +799,12 @@ func _start_player_turn() -> void:
 	blindfold_charges = 3 if item_runtime.has_item(ITEM_BLINDFOLD) else 0
 	var cleared_shield := player.clear_shield()
 	var restored_energy := player.refill_energy()
+	var carried_energy := player.gain_temporary_energy(pending_carried_energy)
+	pending_carried_energy = 0
 	phase = Phase.PLAYER_TURN
 	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.TURN_STARTED, _base_item_context()))
 	_prepare_enemy_intent()
-	_log("第 %d 回合：玩家行动（清除护盾 %d，恢复能量 %d）" % [turn_number, cleared_shield, restored_energy])
+	_log("第 %d 回合：玩家行动（清除护盾 %d，恢复能量 %d，结转能量 %d）" % [turn_number, cleared_shield, restored_energy, carried_energy])
 	_log("敌人意图：%s" % get_enemy_intent_text())
 	state_changed.emit()
 
@@ -1027,6 +1033,10 @@ func _resolve_item_commands(raw_commands: Variant) -> void:
 				player.heal(ceili(float(command.get("amount", 0.0))))
 			"gain_energy":
 				player.gain_energy(ceili(float(command.get("amount", 0.0))))
+			"gain_temporary_energy":
+				player.gain_temporary_energy(ceili(float(command.get("amount", 0.0))))
+			"carry_unspent_energy":
+				pending_carried_energy = maxi(player.energy, 0)
 			"gain_shield":
 				player.gain_shield(ceili(float(command.get("amount", 0.0))))
 
@@ -1039,6 +1049,7 @@ func _base_item_context() -> Dictionary:
 		"player_health": player.health,
 		"player_max_health": player.max_health,
 		"player_energy": player.energy,
+		"player_max_energy": player.max_energy,
 	}
 
 

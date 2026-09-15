@@ -28,10 +28,10 @@ const EFFECT_FIELD_TYPES := [
 ]
 const STEP_FIELD_NAMES := ["effect_id", "effect_index", "effect_type", "target", "description"]
 const STEP_FIELD_TYPES := ["uint16", "uint8", "uint8", "uint8", "string"]
-const ITEM_FIELD_NAMES := ["id", "item_id", "display_name", "description", "rarity", "modifier_type", "amount", "enabled", "source_file"]
-const ITEM_FIELD_TYPES := ["uint16", "string", "string", "string", "uint8", "uint8", "uint16", "uint8", "string"]
-const ITEM_EFFECT_FIELD_NAMES := ["item_id", "effect_index", "trigger", "operation", "target_key", "amount", "chance_percent", "card_filter", "shot_filter", "direction_filter", "rhythm_filter", "target_filter", "requires_shot", "counter_key", "counter_minimum", "counter_maximum", "once_per_turn", "beat_in_bar_filter", "requires_last_beat", "minimum_subdivision", "maximum_turn", "requires_rapid_hits", "source_health_below_percent"]
-const ITEM_EFFECT_FIELD_TYPES := ["string", "uint8", "uint8", "uint8", "string", "float32", "uint8", "uint8", "uint8", "uint8", "uint8", "uint8", "uint8", "string", "uint16", "uint16", "uint8", "int8", "uint8", "uint8", "uint16", "uint8", "uint8"]
+const ITEM_FIELD_NAMES := ["id", "item_id", "display_name", "description", "rarity", "modifier_type", "amount", "run_max_energy_bonus", "enabled", "source_file"]
+const ITEM_FIELD_TYPES := ["uint16", "string", "string", "string", "uint8", "uint8", "uint16", "uint8", "uint8", "string"]
+const ITEM_EFFECT_FIELD_NAMES := ["item_id", "effect_index", "trigger", "operation", "target_key", "amount", "chance_percent", "card_filter", "shot_filter", "direction_filter", "rhythm_filter", "target_filter", "requires_shot", "counter_key", "counter_minimum", "counter_maximum", "once_per_turn", "beat_in_bar_filter", "requires_last_beat", "minimum_subdivision", "maximum_turn", "requires_rapid_hits", "source_health_below_percent", "turn_interval"]
+const ITEM_EFFECT_FIELD_TYPES := ["uint16", "uint8", "uint8", "uint8", "string", "float32", "uint8", "uint8", "uint8", "uint8", "uint8", "uint8", "uint8", "string", "uint16", "uint16", "uint8", "int8", "uint8", "uint8", "uint16", "uint8", "uint8", "uint8"]
 
 
 # 统一导入入口：先完成卡牌三表，再生成战利品与目录资源；保留 import_cards 供原有测试和工具调用。
@@ -459,7 +459,7 @@ func import_items(
 	return {"ok": true, "item_count": items.size(), "effect_count": _item_effect_count(items)}
 
 
-# 主表数字 ID 同时是运行时唯一键；item_id 只保留旧存档迁移与效果表关联用途。
+# 主表数字 ID 同时是运行时与效果表唯一键；英文 item_id 只保留旧存档迁移和资源关联用途。
 func _read_items_table(path: String, errors: Array[String]) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -473,7 +473,7 @@ func _read_items_table(path: String, errors: Array[String]) -> Dictionary:
 		file.close()
 		return {}
 	var items := {}
-	var numeric_ids := {}
+	var legacy_keys := {}
 	var previous_id := 0
 	var line_number := 3
 	while not file.eof_reached():
@@ -481,7 +481,7 @@ func _read_items_table(path: String, errors: Array[String]) -> Dictionary:
 		line_number += 1
 		if row.is_empty() or (row.size() == 1 and row[0].strip_edges().is_empty()):
 			continue
-		var numeric_id := _parse_item_row(row, line_number, items, numeric_ids, errors)
+		var numeric_id := _parse_item_row(row, line_number, items, legacy_keys, errors)
 		if numeric_id > 0:
 			if numeric_id < previous_id:
 				errors.append("战利品主表第%d行ID必须从低到高排列" % line_number)
@@ -490,7 +490,7 @@ func _read_items_table(path: String, errors: Array[String]) -> Dictionary:
 	return items
 
 
-func _parse_item_row(row: PackedStringArray, line_number: int, items: Dictionary, numeric_ids: Dictionary, errors: Array[String]) -> int:
+func _parse_item_row(row: PackedStringArray, line_number: int, items: Dictionary, legacy_keys: Dictionary, errors: Array[String]) -> int:
 	if row.size() != ITEM_FIELD_NAMES.size():
 		errors.append("战利品主表第%d行列数应为%d，实际为%d" % [line_number, ITEM_FIELD_NAMES.size(), row.size()])
 		return -1
@@ -499,14 +499,15 @@ func _parse_item_row(row: PackedStringArray, line_number: int, items: Dictionary
 	var rarity := _parse_uint(row[4], 0, 1, "品级", line_number, errors)
 	var modifier_type := _parse_uint(row[5], 0, 4, "旧式加成类型", line_number, errors)
 	var amount := _parse_uint(row[6], 0, 999, "旧式加成数值", line_number, errors)
-	var enabled := _parse_uint(row[7], 0, 1, "是否启用", line_number, errors)
-	var source_file := row[8].strip_edges()
-	if numeric_id < 0 or rarity < 0 or modifier_type < 0 or amount < 0 or enabled < 0:
+	var run_max_energy_bonus := _parse_uint(row[7], 0, 99, "游戏历程能量上限加成", line_number, errors)
+	var enabled := _parse_uint(row[8], 0, 1, "是否启用", line_number, errors)
+	var source_file := row[9].strip_edges()
+	if numeric_id < 0 or rarity < 0 or modifier_type < 0 or amount < 0 or run_max_energy_bonus < 0 or enabled < 0:
 		return -1
 	if not _is_safe_resource_name(item_id) or not _is_safe_resource_name(source_file):
 		errors.append("战利品主表第%d行稳定ID或资源文件名无效" % line_number)
 		return -1
-	if row[2].strip_edges().is_empty() or numeric_ids.has(numeric_id) or items.has(item_id):
+	if row[2].strip_edges().is_empty() or items.has(numeric_id) or legacy_keys.has(item_id):
 		errors.append("战利品主表第%d行名称为空或ID重复" % line_number)
 		return -1
 	if rarity == ITEM_DEFINITION.Rarity.NORMAL and numeric_id >= 5000:
@@ -515,12 +516,12 @@ func _parse_item_row(row: PackedStringArray, line_number: int, items: Dictionary
 	if rarity == ITEM_DEFINITION.Rarity.BOSS and numeric_id < 5000:
 		errors.append("战利品主表第%d行Boss品级必须使用5001-5999号段" % line_number)
 		return -1
-	items[item_id] = {"id": numeric_id, "item_id": item_id, "source_file": source_file, "display_name": row[2], "description": row[3], "rarity": rarity, "modifier_type": modifier_type, "amount": amount, "enabled": enabled == 1, "effects": []}
-	numeric_ids[numeric_id] = item_id
+	items[numeric_id] = {"id": numeric_id, "item_id": item_id, "source_file": source_file, "display_name": row[2], "description": row[3], "rarity": rarity, "modifier_type": modifier_type, "amount": amount, "run_max_energy_bonus": run_max_energy_bonus, "enabled": enabled == 1, "effects": []}
+	legacy_keys[item_id] = numeric_id
 	return numeric_id
 
 
-# 效果表以战利品稳定 ID 外键关联；同一物品的序号必须从 1 连续递增，确保结算顺序可复现。
+# 效果表以战利品数字 ID 外键关联；同一物品的序号必须从 1 连续递增，确保结算顺序可复现。
 func _read_item_effects_table(path: String, items: Dictionary, errors: Array[String]) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -550,7 +551,7 @@ func _parse_item_effect_row(row: PackedStringArray, line_number: int, items: Dic
 		errors.append("战利品效果表第%d行列数应为%d，实际为%d" % [line_number, ITEM_EFFECT_FIELD_NAMES.size(), row.size()])
 		return
 	var error_count := errors.size()
-	var item_id := row[0].strip_edges()
+	var item_id := _parse_uint(row[0], 4001, 5999, "战利品ID", line_number, errors)
 	var effect_index := _parse_uint(row[1], 1, 255, "效果序号", line_number, errors)
 	var trigger := _parse_uint(row[2], 0, 9, "触发时机", line_number, errors)
 	var operation := _parse_uint(row[3], 0, 10, "效果操作", line_number, errors)
@@ -571,10 +572,11 @@ func _parse_item_effect_row(row: PackedStringArray, line_number: int, items: Dic
 	var maximum_turn := _parse_uint(row[20], 1, 999, "最大回合", line_number, errors)
 	var rapid_hits := _parse_uint(row[21], 0, 1, "要求快速连击", line_number, errors)
 	var low_health := _parse_uint(row[22], 0, 100, "生命阈值", line_number, errors)
+	var turn_interval := _parse_uint(row[23], 0, 99, "回合间隔", line_number, errors)
 	if errors.size() > error_count:
 		return
 	if not items.has(item_id):
-		errors.append("战利品效果表第%d行引用不存在的战利品：%s" % [line_number, item_id])
+		errors.append("战利品效果表第%d行引用不存在的战利品：%d" % [line_number, item_id])
 		return
 	if counter_minimum > counter_maximum:
 		errors.append("战利品效果表第%d行计数下限不能大于上限" % line_number)
@@ -586,7 +588,7 @@ func _parse_item_effect_row(row: PackedStringArray, line_number: int, items: Dic
 	if effects.size() != effect_index - 1:
 		errors.append("战利品效果表第%d行序号必须从1连续递增" % line_number)
 		return
-	effects.append({"trigger": trigger, "operation": operation, "target_key": row[4].strip_edges(), "amount": amount, "chance_percent": chance, "card_filter": card_filter, "shot_filter": shot_filter, "direction_filter": direction_filter, "rhythm_filter": rhythm_filter, "target_filter": target_filter, "requires_shot": requires_shot == 1, "counter_key": row[13].strip_edges(), "counter_minimum": counter_minimum, "counter_maximum": counter_maximum, "once_per_turn": once_per_turn == 1, "beat_in_bar_filter": beat_filter, "requires_last_beat": last_beat == 1, "minimum_subdivision": subdivision, "maximum_turn": maximum_turn, "requires_rapid_hits": rapid_hits == 1, "source_health_below_percent": low_health})
+	effects.append({"trigger": trigger, "operation": operation, "target_key": row[4].strip_edges(), "amount": amount, "chance_percent": chance, "card_filter": card_filter, "shot_filter": shot_filter, "direction_filter": direction_filter, "rhythm_filter": rhythm_filter, "target_filter": target_filter, "requires_shot": requires_shot == 1, "counter_key": row[13].strip_edges(), "counter_minimum": counter_minimum, "counter_maximum": counter_maximum, "once_per_turn": once_per_turn == 1, "beat_in_bar_filter": beat_filter, "requires_last_beat": last_beat == 1, "minimum_subdivision": subdivision, "maximum_turn": maximum_turn, "requires_rapid_hits": rapid_hits == 1, "source_health_below_percent": low_health, "turn_interval": turn_interval})
 	effects_by_item[item_id] = effects
 
 
@@ -600,6 +602,7 @@ func _save_and_verify_item(data: Dictionary, output_directory: String, saved_ite
 	item.rarity = data.rarity
 	item.modifier_type = data.modifier_type
 	item.amount = data.amount
+	item.run_max_energy_bonus = data.run_max_energy_bonus
 	item.enabled = data.enabled
 	for effect_data in data.effects:
 		var effect := ITEM_EFFECT_DEFINITION.new()
@@ -610,8 +613,13 @@ func _save_and_verify_item(data: Dictionary, output_directory: String, saved_ite
 	if save_error != OK:
 		return "保存战利品失败：%s（错误码%d）" % [resource_path, save_error]
 	var saved_item := ResourceLoader.load(resource_path, "", ResourceLoader.CACHE_MODE_REPLACE)
-	if saved_item == null or saved_item.id != item.id or saved_item.item_id != item.item_id or saved_item.effects.size() != item.effects.size():
+	if saved_item == null or saved_item.id != item.id or saved_item.item_id != item.item_id or saved_item.run_max_energy_bonus != item.run_max_energy_bonus or saved_item.effects.size() != item.effects.size():
 		return "战利品导入回读不一致：%s" % resource_path
+	for effect_index in item.effects.size():
+		var saved_effect: Resource = saved_item.effects[effect_index]
+		var source_effect: Resource = item.effects[effect_index]
+		if saved_effect.trigger != source_effect.trigger or saved_effect.operation != source_effect.operation or saved_effect.target_key != source_effect.target_key or saved_effect.turn_interval != source_effect.turn_interval:
+			return "战利品效果导入回读不一致：%s（效果%d）" % [resource_path, effect_index + 1]
 	saved_items.append(saved_item)
 	return ""
 
