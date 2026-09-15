@@ -94,6 +94,11 @@ func _run() -> void:
 		_assert_equal(button.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "遗物按钮均分奖励行宽度")
 		_assert_true(screen.item_contents[index].visible, "遗物阶段显示图标与文字容器")
 		_assert_true(screen.item_icons[index].texture != null, "遗物阶段分配纯色占位图片")
+		# 占位图和长文字必须受卡片槽位约束，不能按源图尺寸或内容高度撑破三选一布局。
+		_assert_equal(screen.item_icons[index].expand_mode, TextureRect.EXPAND_IGNORE_SIZE, "遗物图标忽略原图尺寸")
+		_assert_equal(screen.item_icons[index].custom_minimum_size, Vector2(80, 48), "遗物图标使用固定小尺寸")
+		_assert_equal(screen.item_name_labels[index].max_lines_visible, 2, "遗物名称最多显示两行")
+		_assert_equal(screen.item_description_labels[index].max_lines_visible, 3, "遗物描述最多显示三行")
 		_assert_equal(screen.item_name_labels[index].text, screen.choices[index].display_name, "遗物名称由独立标签显示")
 		_assert_equal(screen.item_description_labels[index].text, screen.choices[index].description, "遗物描述由独立标签自动换行")
 	_assert_equal(active_room.state, MAP_STATE.RoomState.ATTAINABLE, "只领取卡牌时房间尚未完成")
