@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_l4f2v"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_mt32e"]
+
+[sub_resource type="Resource" id="Resource_yicny"]
+script = ExtResource("1_l4f2v")
+effect_type = 1
+target = 0
+amount = 4
+
+[resource]
+script = ExtResource("2_mt32e")
+id = 3005
+card_id = "card_layered_defense"
+display_name = "层层设防"
+description = "获得4点护盾；若出牌前已有护盾，额外获得3点护盾"
+archetype_hint = "钢铁门神·连续叠盾"
+card_type = 1
+effects = Array[Resource]([SubResource("Resource_yicny")])

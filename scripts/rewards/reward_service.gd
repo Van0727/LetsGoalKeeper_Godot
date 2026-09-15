@@ -12,10 +12,16 @@ const COMMON_CARD_IDS: Array[String] = [
 	"card_outside_curve", "card_samba_duet", "card_spinning_hat_trick",
 	"card_cutback_triangle", "card_rainbow_dribble", "card_agile_switch",
 	"card_chain_feint", "card_carnival_beat", "card_mexican_wave",
+	"card_double_kick_combo", "card_rapid_fill", "card_shield_bash",
+	"card_mallet_warmup", "card_tempo_acceleration", "card_pressure_buildup",
+	"card_aftershock_armor", "card_shed_armor", "card_closing_stance",
+	"card_cymbal_block", "card_reinforced_post", "card_layered_defense",
+	"card_perfect_block",
 ]
 const BOSS_CARD_IDS: Array[String] = [
 	"card_energy_shot", "card_shot_group", "card_double_banana_shot",
 	"card_carnival_finale",
+	"card_gate_breaker",
 ]
 const ITEM_CATALOG := preload("res://data/items/item_catalog.tres")
 

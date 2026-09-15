@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_quma8"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_ebi8r"]
+
+[sub_resource type="Resource" id="Resource_8geiv"]
+script = ExtResource("1_quma8")
+amount = 5
+
+[resource]
+script = ExtResource("2_ebi8r")
+id = 1019
+card_id = "card_shield_bash"
+display_name = "盾牌冲撞"
+description = "造成5点伤害，并追加当前护盾值一半的伤害，护盾不消耗"
+archetype_hint = "钢铁门神·稳定爆发"
+shot_type = 1
+effects = Array[Resource]([SubResource("Resource_8geiv")])

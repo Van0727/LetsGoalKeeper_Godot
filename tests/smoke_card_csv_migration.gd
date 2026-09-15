@@ -54,8 +54,8 @@ func _run() -> void:
 	var result: Dictionary = importer.import_cards("res://tables/cards.csv", _output_directory)
 	_assert_true(result.ok, "双表可以导入")
 	if result.ok:
-		_assert_equal(result.card_count, 32, "主表共32张唯一卡牌")
-		_assert_equal(result.effect_count, 36, "子表共36条效果")
+		_assert_equal(result.card_count, 46, "主表共46张唯一卡牌")
+		_assert_equal(result.effect_count, 50, "子表共50条效果")
 		var multi = load("%s/card_attack_and_defend.tres" % _output_directory)
 		_assert_equal(multi.effects.size(), 2, "同一卡牌组装两个有序效果")
 		_assert_equal(multi.effects[0].effect_type, 0, "先造成伤害")

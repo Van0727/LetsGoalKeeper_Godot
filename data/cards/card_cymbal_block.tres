@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_eyo8n"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_sh43b"]
+
+[sub_resource type="Resource" id="Resource_bsaxq"]
+script = ExtResource("1_eyo8n")
+effect_type = 1
+target = 0
+amount = 6
+
+[resource]
+script = ExtResource("2_sh43b")
+id = 3003
+card_id = "card_cymbal_block"
+display_name = "铜钹格挡"
+description = "获得6点护盾；在小节第一拍打出时，下一张攻击牌第一段伤害+3"
+archetype_hint = "爆裂鼓手·强拍反击"
+card_type = 1
+effects = Array[Resource]([SubResource("Resource_bsaxq")])

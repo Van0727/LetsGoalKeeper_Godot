@@ -67,7 +67,9 @@ func resolve_card(
 					shot_rng
 				)
 			EFFECT_DEFINITION.EffectType.SHIELD:
-				var gained: int = recipient.gain_shield(ceili(effect.amount * card_effect_multiplier))
+				# 钢铁门神的固定加盾与下一张防御翻倍在整牌上下文锁定，再与通用卡牌倍率相乘。
+				var shield_value: float = (float(effect.amount) + float(action_context.get("shield_bonus", 0.0))) * float(action_context.get("shield_multiplier", 1.0))
+				var gained: int = recipient.gain_shield(ceili(shield_value * card_effect_multiplier))
 				events.append({
 					"type": "shield",
 					"amount": gained,
@@ -159,6 +161,8 @@ func _resolve_damage(
 		var damage_context := action_context.duplicate(true)
 		# 下一次攻击叠层与十牌倍率在整张牌级别锁定；每段分别加固定值，再统一向上取整。
 		var attack_bonus := float(action_context.get("attack_bonus", 0.0)) if recipient != source else 0.0
+		if recipient != source and hit_index == 0:
+			attack_bonus += float(action_context.get("first_hit_bonus", 0.0))
 		var attack_multiplier := float(action_context.get("value_multiplier", 1.0)) if recipient != source else 1.0
 		damage_context["amount"] = (scaled_amount * source.strength_multiplier * rhythm_multiplier + attack_bonus) * attack_multiplier * float(action_context.get("card_effect_multiplier", 1.0))
 		damage_context["hit"] = hit_index + 1

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_idxro"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_rvpiw"]
+
+[sub_resource type="Resource" id="Resource_qewok"]
+script = ExtResource("1_idxro")
+amount = 4
+hits = 2
+
+[resource]
+script = ExtResource("2_rvpiw")
+id = 1017
+card_id = "card_double_kick_combo"
+display_name = "双踩连击"
+description = "以0.25拍间隔攻击2次，每次造成4点伤害"
+archetype_hint = "爆裂鼓手·快速多段"
+shot_type = 4
+multi_hit_interval_beats = 0.25
+effects = Array[Resource]([SubResource("Resource_qewok")])

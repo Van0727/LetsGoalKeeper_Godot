@@ -1026,6 +1026,10 @@ func _apply_effect_feedback(event: Dictionary) -> void:
 		"shield":
 			display.set_shield(event.get("shield_after", target.shield))
 			display.show_shield_gain(event.amount)
+		"shield_spent":
+			# 主动卸甲不是受伤，但仍即时刷新护盾条并复用护盾损失表现。
+			display.set_shield(event.get("shield_after", target.shield))
+			display.show_shield_loss(event.amount)
 		"bgm_pitch":
 			# 音频节点由跨场景服务唯一持有；卡牌事件只描述升降或复原意图。
 			var bgm_service := get_node_or_null("/root/BgmService")

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_d2olu"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_egd5a"]
+
+[sub_resource type="Resource" id="Resource_7o1oj"]
+script = ExtResource("1_d2olu")
+effect_type = 11
+target = 0
+
+[resource]
+script = ExtResource("2_egd5a")
+id = 2018
+card_id = "card_pressure_buildup"
+display_name = "压力蓄积"
+description = "下一张防御牌获得的护盾翻倍"
+archetype_hint = "钢铁门神·护盾强化"
+card_type = 2
+effects = Array[Resource]([SubResource("Resource_7o1oj")])

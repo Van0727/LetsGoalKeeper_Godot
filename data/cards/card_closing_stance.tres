@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_31jap"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_4akxr"]
+
+[sub_resource type="Resource" id="Resource_nyxw3"]
+script = ExtResource("1_31jap")
+effect_type = 1
+target = 0
+amount = 5
+
+[resource]
+script = ExtResource("2_4akxr")
+id = 3002
+card_id = "card_closing_stance"
+display_name = "收拍架势"
+description = "获得5点护盾；在小节最后一拍打出时额外获得4点护盾"
+archetype_hint = "爆裂鼓手·末拍防御"
+card_type = 1
+effects = Array[Resource]([SubResource("Resource_nyxw3")])

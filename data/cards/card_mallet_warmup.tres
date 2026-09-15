@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_nw8m6"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_1uhcb"]
+
+[sub_resource type="Resource" id="Resource_32aom"]
+script = ExtResource("1_nw8m6")
+effect_type = 11
+target = 0
+
+[resource]
+script = ExtResource("2_1uhcb")
+id = 2016
+card_id = "card_mallet_warmup"
+display_name = "鼓槌预热"
+description = "下一张多段攻击每段伤害+2"
+archetype_hint = "爆裂鼓手·多段强化"
+card_type = 2
+effects = Array[Resource]([SubResource("Resource_32aom")])

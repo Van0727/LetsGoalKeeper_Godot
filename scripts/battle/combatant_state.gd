@@ -58,6 +58,13 @@ func gain_shield(raw_amount: int) -> int:
 	return gained
 
 
+# 主动消耗护盾时不触发受伤或反伤；返回实际消耗量，避免需求超过现有护盾时出现负值。
+func spend_shield(raw_amount: int) -> int:
+	var spent := mini(shield, maxi(raw_amount, 0))
+	shield -= spent
+	return spent
+
+
 # 清空护盾并返回被清除的数量，用于回合开始日志。
 func clear_shield() -> int:
 	var cleared := shield

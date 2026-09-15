@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_wh80j"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_hboli"]
+
+[sub_resource type="Resource" id="Resource_yyhaa"]
+script = ExtResource("1_wh80j")
+effect_type = 11
+target = 0
+
+[resource]
+script = ExtResource("2_hboli")
+id = 2017
+card_id = "card_tempo_acceleration"
+display_name = "节奏加速"
+description = "下一张攻击牌额外攻击1次，追加段使用原牌的基础伤害"
+archetype_hint = "爆裂鼓手·段数强化"
+card_type = 2
+effects = Array[Resource]([SubResource("Resource_yyhaa")])

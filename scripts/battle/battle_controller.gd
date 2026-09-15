@@ -48,6 +48,21 @@ const CARD_AGILE_SWITCH := 2012
 const CARD_CHAIN_FEINT := 2013
 const CARD_CARNIVAL_BEAT := 2014
 const CARD_MEXICAN_WAVE := 2015
+# 爆裂鼓手与钢铁门神卡牌继续使用数字 ID 常量，流派倾向文本只供策划阅读。
+const CARD_DOUBLE_KICK_COMBO := 1017
+const CARD_RAPID_FILL := 1018
+const CARD_SHIELD_BASH := 1019
+const CARD_GATE_BREAKER := 1020
+const CARD_MALLET_WARMUP := 2016
+const CARD_TEMPO_ACCELERATION := 2017
+const CARD_PRESSURE_BUILDUP := 2018
+const CARD_AFTERSHOCK_ARMOR := 2019
+const CARD_SHED_ARMOR := 2020
+const CARD_CLOSING_STANCE := 3002
+const CARD_CYMBAL_BLOCK := 3003
+const CARD_REINFORCED_POST := 3004
+const CARD_LAYERED_DEFENSE := 3005
+const CARD_PERFECT_BLOCK := 3006
 
 # 战斗阶段限制玩家只能在自己的行动阶段操作。
 enum Phase {
@@ -84,6 +99,12 @@ var pending_next_banana_bonus := 0
 var pending_turn_banana_bonus := 0
 var pending_turn_banana_extra_hits := 0
 var pending_turn_multihit_shield := false
+# 鼓手与门神的“下一张”状态允许跨回合等待合法目标；明确写有“本回合”的状态会在回合开始清除。
+var pending_multihit_attack_bonus := 0
+var pending_next_attack_extra_hits := 0
+var pending_first_hit_bonus := 0
+var pending_next_defense_shield_multiplier := 1.0
+var pending_turn_multihit_shield_amount := 0
 # 暴力流物品的充能与待消费倍率只存在于当前战斗；GM 取消对应物品时同步清理。
 var blindfold_charges := 0
 var pending_first_card_multiplier := 1.0
@@ -137,6 +158,11 @@ func setup(
 	pending_turn_banana_bonus = 0
 	pending_turn_banana_extra_hits = 0
 	pending_turn_multihit_shield = false
+	pending_multihit_attack_bonus = 0
+	pending_next_attack_extra_hits = 0
+	pending_first_hit_bonus = 0
+	pending_next_defense_shield_multiplier = 1.0
+	pending_turn_multihit_shield_amount = 0
 	blindfold_charges = 0
 	pending_first_card_multiplier = 1.0
 	pending_first_card_item_id = 0
@@ -267,6 +293,7 @@ func play_card(
 	resolved_context["pending_damage_multiplier"] = pending_next_damage_multiplier
 	resolved_context["converted_banana_per_hit"] = converted_banana
 	_prepare_samba_attack_context(card, resolved_context)
+	_prepare_drum_shield_context(card, resolved_context)
 	var events := _effect_resolver.resolve_card(
 		card,
 		player,
@@ -298,6 +325,7 @@ func play_card(
 	if not player.is_dead() and not enemy.is_dead() and float(action_context.get("slipper_damage", 0.0)) > 0.0:
 		_resolve_slipper_damage(ceili(float(action_context["slipper_damage"])), defer_enemy_shot_damage)
 	_apply_samba_skill_rule(card, skill_cards_played_this_turn)
+	_apply_drum_shield_card_rule(card, resolved_context)
 	if int(card.card_type) == 2:
 		skill_cards_played_this_turn += 1
 	combo_state.register_card(card.card_type)
@@ -393,12 +421,89 @@ func _card_enemy_damage_hits(card: Resource) -> int:
 func _resolve_samba_hit_shield(event: Dictionary) -> void:
 	if event.get("type") != "damage" or event.get("target") != enemy:
 		return
-	var amount := int(event.get("item_context", {}).get("samba_shield_per_hit", 0))
+	var hit_context: Dictionary = event.get("item_context", {})
+	var amount := int(hit_context.get("samba_shield_per_hit", 0)) + int(hit_context.get("shield_per_hit", 0))
 	if amount <= 0:
 		return
 	var gained := player.gain_shield(amount)
 	_log("效果：人浪助威获得 %d 护盾" % gained)
 	effect_resolved.emit({"type": "shield", "amount": gained, "target": player})
+
+
+# 鼓手和门神在结算前消费“下一张”状态，并把护盾读取快照写入整牌上下文。
+func _prepare_drum_shield_context(card: Resource, context: Dictionary) -> void:
+	var card_id := int(card.get("id"))
+	var card_type := int(card.card_type)
+	var base_hits := _card_enemy_damage_hits(card)
+	var extra_hits := int(context.get("extra_hits", 0))
+	if card_type == 0:
+		if pending_next_attack_extra_hits > 0:
+			extra_hits += pending_next_attack_extra_hits
+			context["extra_hit_amount"] = _first_enemy_damage_amount(card)
+			pending_next_attack_extra_hits = 0
+		context["extra_hits"] = extra_hits
+		var total_hits := int(context.get("base_hits_override", base_hits)) + extra_hits
+		if pending_multihit_attack_bonus > 0 and total_hits > 1:
+			context["attack_bonus"] = float(context.get("attack_bonus", 0.0)) + pending_multihit_attack_bonus
+			pending_multihit_attack_bonus = 0
+		if pending_first_hit_bonus > 0:
+			context["first_hit_bonus"] = pending_first_hit_bonus
+			pending_first_hit_bonus = 0
+		if pending_turn_multihit_shield_amount > 0 and total_hits > 1:
+			context["shield_per_hit"] = pending_turn_multihit_shield_amount
+			pending_turn_multihit_shield_amount = 0
+		match card_id:
+			CARD_SHIELD_BASH:
+				context["attack_bonus"] = float(context.get("attack_bonus", 0.0)) + floori(player.shield / 2.0)
+			CARD_GATE_BREAKER:
+				var spent := player.spend_shield(player.shield)
+				context["attack_bonus"] = float(context.get("attack_bonus", 0.0)) + spent * 2
+				context["shield_spent"] = spent
+				_log("效果：城门爆破消耗 %d 护盾" % spent)
+				effect_resolved.emit({"type": "shield_spent", "amount": spent, "target": player, "shield_after": player.shield})
+	elif card_type == 1:
+		if pending_next_defense_shield_multiplier > 1.0:
+			context["shield_multiplier"] = pending_next_defense_shield_multiplier
+			pending_next_defense_shield_multiplier = 1.0
+		match card_id:
+			CARD_CLOSING_STANCE:
+				if int(context.get("beat_in_bar", -1)) == 3:
+					context["shield_bonus"] = 4
+			CARD_LAYERED_DEFENSE:
+				if player.shield > 0:
+					context["shield_bonus"] = 3
+			CARD_PERFECT_BLOCK:
+				if int(context.get("rhythm_grade", -1)) == 0:
+					context["shield_bonus"] = 3
+
+
+# 技能和节拍防御在自身结算完成后建立后续状态；卸甲只移除护盾，不触发伤害事件。
+func _apply_drum_shield_card_rule(card: Resource, context: Dictionary) -> void:
+	match int(card.get("id")):
+		CARD_MALLET_WARMUP:
+			pending_multihit_attack_bonus += 2
+		CARD_TEMPO_ACCELERATION:
+			pending_next_attack_extra_hits += 1
+		CARD_PRESSURE_BUILDUP:
+			pending_next_defense_shield_multiplier *= 2.0
+		CARD_AFTERSHOCK_ARMOR:
+			pending_turn_multihit_shield_amount = 2
+		CARD_SHED_ARMOR:
+			var spent := player.spend_shield(6)
+			pending_multihit_attack_bonus += floori(spent / 2.0)
+			_log("效果：卸甲备战消耗 %d 护盾" % spent)
+			effect_resolved.emit({"type": "shield_spent", "amount": spent, "target": player, "shield_after": player.shield})
+		CARD_CYMBAL_BLOCK:
+			if int(context.get("beat_in_bar", -1)) == 0:
+				pending_first_hit_bonus += 3
+
+
+# 节奏加速追加段沿用原牌第一个对敌伤害步骤的基础值；无伤害攻击安全返回0。
+func _first_enemy_damage_amount(card: Resource) -> int:
+	for effect in card.effects:
+		if int(effect.effect_type) == 0 and int(effect.target) == 1:
+			return int(effect.amount)
+	return 0
 
 
 # 追加打击在同步模式即时生效；实战飞球模式排到原球命中后，避免提前击杀目标。
@@ -684,6 +789,7 @@ func _start_player_turn() -> void:
 	pending_turn_banana_bonus = 0
 	pending_turn_banana_extra_hits = 0
 	pending_turn_multihit_shield = false
+	pending_turn_multihit_shield_amount = 0
 	red_card_pending = false
 	item_runtime.start_turn()
 	blindfold_charges = 3 if item_runtime.has_item(ITEM_BLINDFOLD) else 0

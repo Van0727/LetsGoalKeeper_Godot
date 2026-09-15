@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_akt03"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_0dybe"]
+
+[sub_resource type="Resource" id="Resource_ubtt7"]
+script = ExtResource("1_akt03")
+amount = 6
+
+[resource]
+script = ExtResource("2_0dybe")
+id = 1020
+card_id = "card_gate_breaker"
+display_name = "城门爆破"
+description = "消耗全部护盾，造成6点伤害，并追加所消耗护盾值2倍的伤害"
+archetype_hint = "钢铁门神·终结爆发"
+cost = 2
+shot_type = 1
+rarity = 1
+effects = Array[Resource]([SubResource("Resource_ubtt7")])
