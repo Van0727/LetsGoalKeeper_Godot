@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://c2qhqslbj78es"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_straight_shot_art.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
 
 [sub_resource type="Resource" id="Resource_bce7s"]
 script = ExtResource("2_effect")
@@ -13,7 +12,5 @@ script = ExtResource("1_card")
 card_id = "card_straight_shot"
 display_name = "射门"
 description = "造成6点伤害"
-illustration = ExtResource("3_illustration")
 shot_type = 1
-attack_delay_beats = 0.5
 effects = Array[Resource]([SubResource("Resource_bce7s")])

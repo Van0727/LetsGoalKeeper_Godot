@@ -1,4 +1,4 @@
-# 奖励服务：按战斗级别生成确定性且不重复的卡牌、战利品候选，并解析稳定卡牌ID。
+# 奖励服务：按战斗级别生成确定性且不重复的卡牌、战利品候选，并从配表生成目录解析稳定ID。
 class_name RewardService
 extends RefCounted
 
@@ -13,48 +13,23 @@ const COMMON_CARD_IDS: Array[String] = [
 const BOSS_CARD_IDS: Array[String] = [
 	"card_energy_shot", "card_shot_group", "card_double_banana_shot",
 ]
-# 普通奖励目录也是 GM 完整清单的来源；新增奖励在这里登记后无需另写界面入口。
-const NORMAL_ITEMS: Array[Resource] = [
-	preload("res://data/items/item_golden_boot.tres"),
-	preload("res://data/items/item_lob_badge.tres"),
-	preload("res://data/items/item_banana_scarf.tres"),
-	preload("res://data/items/item_golden_left_foot.tres"),
-	preload("res://data/items/item_golden_right_foot.tres"),
-	preload("res://data/items/item_banana.tres"),
-	preload("res://data/items/item_gorilla_doll.tres"),
-	preload("res://data/items/item_free_kick_master_license.tres"),
-	preload("res://data/items/item_wishing_bracelet.tres"),
-	preload("res://data/items/item_parrot_feather.tres"),
-	preload("res://data/items/item_national_flip_flops.tres"),
-	preload("res://data/items/item_hercules_cup.tres"),
-	preload("res://data/items/item_lumberjack_axe.tres"),
-	preload("res://data/items/item_nude_license.tres"),
-	preload("res://data/items/item_chunghwa_cigarettes.tres"),
-	preload("res://data/items/item_rotating_drums.tres"),
-	preload("res://data/items/item_drum_isolation_screen.tres"),
-	preload("res://data/items/item_racing_drumsticks.tres"),
-	preload("res://data/items/item_rhythm_game_trophy.tres"),
-	preload("res://data/items/item_double_bass_pedal.tres"),
-	preload("res://data/items/item_in_ear_monitor.tres"),
-	preload("res://data/items/item_big_drum_mallet.tres"),
-	preload("res://data/items/item_spiked_drum_mallet.tres"),
-	preload("res://data/items/item_blindfold.tres"),
-	preload("res://data/items/item_blank_score.tres"),
-	preload("res://data/items/item_rest_score.tres"),
-	preload("res://data/items/item_tattoo_sticker.tres"),
-	preload("res://data/items/item_bar_dice.tres"),
-]
-const BOSS_ITEMS: Array[Resource] = [
-	preload("res://data/items/item_number_7.tres"),
-	preload("res://data/items/item_number_10.tres"),
-	preload("res://data/items/item_corner_flag_disabled.tres"),
-]
+const ITEM_CATALOG := preload("res://data/items/item_catalog.tres")
 
 
-# GM 清单读取普通与 Boss 的完整登记表，包含禁用占位物；不使用三选一抽样结果。
+# GM 清单读取配表生成的完整战利品目录，包含禁用占位物；不使用三选一抽样结果。
 func get_all_items() -> Array[Resource]:
-	var result: Array[Resource] = NORMAL_ITEMS.duplicate()
-	result.append_array(BOSS_ITEMS)
+	return ITEM_CATALOG.items.duplicate()
+
+
+# GM 卡牌清单与奖励池共用同一稳定 ID 目录，保证新增可获得卡牌后无需额外维护调试入口。
+func get_all_cards() -> Array[Resource]:
+	var result: Array[Resource] = []
+	var all_ids: Array[String] = COMMON_CARD_IDS.duplicate()
+	all_ids.append_array(BOSS_CARD_IDS)
+	for card_id in all_ids:
+		var card := get_card_by_id(card_id)
+		if card != null:
+			result.append(card)
 	return result
 
 
@@ -119,10 +94,10 @@ func generate_item_choices(
 		owned_item_ids: Array[String],
 		rng: RandomNumberGenerator
 ) -> Array[Resource]:
-	var source: Array[Resource] = BOSS_ITEMS if is_boss else NORMAL_ITEMS
 	var candidates: Array[Resource] = []
-	for item in source:
-		if item.enabled and item.item_id not in owned_item_ids:
+	var expected_rarity := 1 if is_boss else 0
+	for item in get_all_items():
+		if item.rarity == expected_rarity and item.enabled and item.item_id not in owned_item_ids:
 			candidates.append(item)
 	_shuffle(candidates, rng)
 	candidates.resize(mini(3, candidates.size()))

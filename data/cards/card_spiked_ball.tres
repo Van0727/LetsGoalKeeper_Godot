@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://buk2crsvvc3ix"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
 
 [sub_resource type="Resource" id="Resource_dxc0k"]
 script = ExtResource("2_effect")
 target = 0
-amount = 3
+amount = 1
 
 [sub_resource type="Resource" id="Resource_etmog"]
 script = ExtResource("2_effect")
@@ -16,7 +16,7 @@ amount = 6
 script = ExtResource("1_card")
 card_id = "card_spiked_ball"
 display_name = "尖刺球"
-description = "自身受到3点伤害，然后对敌人造成6点伤害"
+description = "自身受到1点伤害，然后对敌人造成6点伤害"
 shot_type = 2
 rarity = 1
 effects = Array[Resource]([SubResource("Resource_dxc0k"), SubResource("Resource_etmog")])

@@ -3,11 +3,10 @@
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
 
-[sub_resource type="Resource" id="Resource_pitch_down"]
+[sub_resource type="Resource" id="Resource_1n4c8"]
 script = ExtResource("2_effect")
 effect_type = 7
 target = 0
-amount = 0
 
 [resource]
 script = ExtResource("1_card")
@@ -15,4 +14,4 @@ card_id = "card_pitch_down"
 display_name = "降调"
 description = "BGM降低1个半音"
 card_type = 2
-effects = Array[Resource]([SubResource("Resource_pitch_down")])
+effects = Array[Resource]([SubResource("Resource_1n4c8")])

@@ -36,6 +36,7 @@ const PARTIAL_SHAKE_SECONDS := 0.2
 const PERFECT_SHAKE_AMPLITUDE := 18.0
 const PARTIAL_SHAKE_AMPLITUDE := 6.0
 const VICTORY_RESULT_DELAY_SECONDS := 1.0
+const TEST_ENEMY_MAX_HEALTH := 100
 
 @onready var controller: BattleController = %BattleController
 @onready var pause_overlay: CanvasLayer = $PauseOverlay
@@ -69,6 +70,9 @@ const VICTORY_RESULT_DELAY_SECONDS := 1.0
 @onready var gm_items_button: Button = %GMItemsButton
 @onready var gm_items_page: VBoxContainer = %GMItemsPage
 @onready var gm_items_list: VBoxContainer = %GMItemsList
+@onready var gm_cards_button: Button = %GMCardsButton
+@onready var gm_cards_page: VBoxContainer = %GMCardsPage
+@onready var gm_cards_list: VBoxContainer = %GMCardsList
 @onready var gm_hint: Label = $GMOverlay/Center/Panel/Content/Hint
 @onready var result_overlay: TextureRect = %ResultOverlay
 @onready var result_title: Label = %ResultTitle
@@ -196,6 +200,9 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 		if card != null:
 			starting_deck.append(card)
 	var selected_enemy := enemy_definition
+	# 测试玩法复制训练敌人定义后覆写生命，绝不修改磁盘资源；每次击杀都会重新创建这只 100 血敌人。
+	if run_state.is_test_battle:
+		selected_enemy = _create_test_enemy()
 	var current_room: Dictionary = run_state.get_current_room()
 	if selected_enemy == null and not current_room.is_empty():
 		# 正式地图流程：休息房不应进入战斗，普通/精英/Boss 房型与遭遇池 Tier 序号一致。
@@ -235,6 +242,14 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_refresh_all()
 	if not selected_enemy.passive_description.is_empty():
 		status_label.text = "%s被动：%s" % [selected_enemy.display_name, selected_enemy.passive_description]
+
+
+# 使用训练敌人的完整行动配置保证测试战斗仍覆盖真实敌方回合；duplicate 避免把 100 血写回共享资源。
+func _create_test_enemy() -> Resource:
+	var test_enemy := TURTLE.duplicate(true)
+	test_enemy.max_health = TEST_ENEMY_MAX_HEALTH
+	test_enemy.display_name = "测试怪物"
+	return test_enemy
 
 
 # 尝试打出指定手牌；可选节奏上下文让自动测试和非拖拽入口继续使用完整基础伤害。
@@ -549,6 +564,18 @@ func _on_gm_items_pressed() -> void:
 	_rebuild_gm_items_list()
 
 
+# GM 卡牌页与战利品页使用相同的即时勾选语义；新增卡牌会重建本场牌堆，确保可立刻抽到。
+func _on_gm_cards_pressed() -> void:
+	if not _gm_menu_open or _input_locked:
+		return
+	gm_hint.hide()
+	gm_skip_button.hide()
+	gm_items_button.hide()
+	gm_cards_button.hide()
+	gm_cards_page.show()
+	_rebuild_gm_cards_list()
+
+
 func _on_gm_items_back_pressed() -> void:
 	_show_gm_tools_page()
 
@@ -556,9 +583,11 @@ func _on_gm_items_back_pressed() -> void:
 # 返回工具主页只改变显示，不操作战斗数值或战利品持有状态。
 func _show_gm_tools_page() -> void:
 	gm_items_page.hide()
+	gm_cards_page.hide()
 	gm_hint.show()
 	gm_skip_button.show()
 	gm_items_button.show()
+	gm_cards_button.show()
 
 
 # 按完整奖励目录生成可滚动的复选框和配置说明；禁用占位物可查看但不可勾选。
@@ -603,6 +632,63 @@ func _on_gm_item_toggled(checked: bool, item: Resource, checkbox: CheckBox) -> v
 	# 只有解除蒙眼布上限才补回常规手牌；切换其他GM物品不能绕过狼牙鼓槌停抽。
 	if had_blindfold and deck_state.hand_limit == STARTING_HAND_SIZE:
 		deck_state.draw_cards(STARTING_HAND_SIZE)
+	_rebuild_hand()
+	_refresh_all()
+
+
+# GM 卡牌选择按稳定 ID 增删一张；重复卡牌是正式奖励允许的牌库形态，因此取消时只移除一张。
+func _rebuild_gm_cards_list() -> void:
+	for child in gm_cards_list.get_children():
+		gm_cards_list.remove_child(child)
+		child.queue_free()
+	for card in _reward_service.get_all_cards():
+		var entry := VBoxContainer.new()
+		entry.custom_minimum_size = Vector2(270.0, 0.0)
+		gm_cards_list.add_child(entry)
+		var checkbox := CheckBox.new()
+		checkbox.text = card.display_name
+		checkbox.set_pressed_no_signal(card.card_id in run_state.deck_card_ids)
+		checkbox.toggled.connect(_on_gm_card_toggled.bind(card, checkbox))
+		entry.add_child(checkbox)
+		var description := Label.new()
+		description.text = card.description
+		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		description.custom_minimum_size = Vector2(270.0, 0.0)
+		description.add_theme_font_size_override("font_size", 12)
+		entry.add_child(description)
+
+
+func _on_gm_card_toggled(checked: bool, card: Resource, checkbox: CheckBox) -> void:
+	if not _gm_menu_open or not gm_cards_page.visible or _input_locked:
+		checkbox.set_pressed_no_signal(card.card_id in run_state.deck_card_ids)
+		return
+	var changed: bool = run_state.add_card(card.card_id) if checked else _remove_gm_card(card.card_id)
+	if not changed:
+		checkbox.set_pressed_no_signal(card.card_id in run_state.deck_card_ids)
+		return
+	# 牌库重建只影响未打出的抽弃牌，不重置角色、敌人、回合或已持有战利品。
+	_rebuild_deck_after_gm_card_change()
+
+
+func _remove_gm_card(card_id: String) -> bool:
+	var index: int = run_state.deck_card_ids.find(card_id)
+	if index < 0:
+		return false
+	run_state.deck_card_ids.remove_at(index)
+	run_state.run_changed.emit()
+	return true
+
+
+func _rebuild_deck_after_gm_card_change() -> void:
+	var cards: Array[Resource] = []
+	for card_id in run_state.deck_card_ids:
+		var definition := _reward_service.get_card_by_id(card_id)
+		if definition != null:
+			cards.append(definition)
+	deck_state.setup(cards, controller.battle_seed)
+	deck_state.sync_defense_replacement(NUDE_LICENSE_ID in run_state.owned_item_ids, BARE_CHESTED)
+	deck_state.set_hand_limit(1 if "item_blindfold" in run_state.owned_item_ids else STARTING_HAND_SIZE)
+	deck_state.draw_cards(STARTING_HAND_SIZE)
 	_rebuild_hand()
 	_refresh_all()
 
@@ -979,6 +1065,11 @@ func _finalize_battle_result(victory: bool) -> void:
 		await get_tree().create_timer(VICTORY_RESULT_DELAY_SECONDS).timeout
 		# 调试入口或测试若在等待期启动了新战斗，旧协程不得覆盖新一场的状态和存档。
 		if delayed_generation != _battle_generation:
+			return
+		# 测试玩法的击杀不产生胜利、奖励、存档或路线推进；保留玩家当前生命并刷新下一只固定 100 血怪物。
+		if run_state.is_test_battle:
+			run_state.record_battle_health(controller.player.health)
+			start_new_battle()
 			return
 	_gm_menu_open = false
 	gm_overlay.hide()

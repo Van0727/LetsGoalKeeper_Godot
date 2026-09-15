@@ -62,6 +62,8 @@ var pending_reward_is_boss := false
 var resume_point := ResumePoint.MAP
 # 独立场景与开发测试需要默认牌库；占位局不允许主菜单“继续”，正式新局或读档会清除此标记。
 var is_placeholder_run := false
+# 主界面测试玩法只在当前进程有效：它不进入存档契约，也不会占用路线地图或章节进度。
+var is_test_battle := false
 # 单局路线地图：随 start_new_run 用本局 seed 确定性生成，只在本局内修改。
 var map_state: RefCounted = null
 
@@ -76,6 +78,7 @@ func _ready() -> void:
 # 新游戏彻底覆盖上一局数据，防止生命、牌库、战利品或地图残留。
 func start_new_run(seed_value: int) -> void:
 	is_placeholder_run = false
+	is_test_battle = false
 	seed = seed_value
 	chapter = 1
 	run_status = RunStatus.ACTIVE
@@ -88,6 +91,15 @@ func start_new_run(seed_value: int) -> void:
 	pending_reward_is_boss = false
 	resume_point = ResumePoint.MAP
 	_regenerate_map()
+	run_changed.emit()
+
+
+# 测试玩法沿用牌库与战利品运行数据，但不创建可继续的正式路线，也绝不由 SaveService 持久化。
+func start_test_battle(seed_value: int) -> void:
+	start_new_run(seed_value)
+	is_test_battle = true
+	map_state = null
+	resume_point = ResumePoint.BATTLE
 	run_changed.emit()
 
 

@@ -184,6 +184,31 @@ func _run() -> void:
 	battle_screen._on_gm_close_pressed()
 	_assert_true(not battle_screen.gm_overlay.visible, "关闭按钮隐藏GM面板")
 	_assert_true(not battle_screen.end_turn_button.disabled, "关闭GM面板后恢复战斗输入")
+	# GM 卡牌页读取与奖励相同的完整卡牌目录；勾选和取消都只改变指定稳定 ID 的一张牌。
+	battle_screen._on_gm_menu_pressed()
+	battle_screen._on_gm_cards_pressed()
+	_assert_true(battle_screen.gm_cards_page.visible, "卡牌页在GM面板内打开")
+	_assert_equal(battle_screen.gm_cards_list.get_child_count(), REWARD_SERVICE.new().get_all_cards().size(), "GM列出全部可获得卡牌")
+	var run_up := _find_gm_card_checkbox(battle_screen, "助跑")
+	_assert_true(run_up != null and not run_up.button_pressed, "未拥有的卡牌初始未勾选")
+	if run_up != null:
+		run_up.button_pressed = true
+		_assert_true("card_run_up" in battle_screen.run_state.deck_card_ids, "勾选立即加入本局牌库")
+		run_up.button_pressed = false
+		_assert_true("card_run_up" not in battle_screen.run_state.deck_card_ids, "取消立即移除该张GM卡牌")
+	battle_screen._on_gm_close_pressed()
+
+	# 测试玩法的胜利不进入奖励或存档，而是延迟后直接生成下一只固定 100 血怪物。
+	battle_screen.run_state.start_test_battle(7302)
+	battle_screen.start_new_battle()
+	battle_screen.controller.player.health = 67
+	_assert_true(battle_screen.controller.debug_force_victory(), "测试玩法可击杀当前怪物")
+	await create_timer(battle_screen.VICTORY_RESULT_DELAY_SECONDS + 0.1).timeout
+	_assert_equal(battle_screen.controller.enemy.max_health, 100, "测试玩法怪物固定100血")
+	_assert_equal(battle_screen.controller.enemy.health, 100, "测试玩法怪物死亡后重新刷出")
+	_assert_equal(battle_screen.controller.player.health, 67, "测试玩法刷新怪物时保留玩家当前生命")
+	_assert_true(not battle_screen.result_overlay.visible, "测试玩法不会展示通关或奖励结算")
+	battle_screen.run_state.start_new_run(7303)
 
 	# 面板内跳过按钮绕过乌龟反伤，直接复用正常胜利与奖励入口。
 	battle_screen.controller.player.health = 1
@@ -231,6 +256,15 @@ func _wait_for_resolution(battle_screen) -> void:
 # 从真实 GM 行节点查找复选框，避免测试依赖奖励池顺序或滚动位置。
 func _find_gm_item_checkbox(battle_screen, display_name: String) -> CheckBox:
 	for entry in battle_screen.gm_items_list.get_children():
+		for child in entry.get_children():
+			if child is CheckBox and child.text == display_name:
+				return child
+	return null
+
+
+# 从卡牌 GM 行中定位复选框，避免测试依赖卡牌目录顺序。
+func _find_gm_card_checkbox(battle_screen, display_name: String) -> CheckBox:
+	for entry in battle_screen.gm_cards_list.get_children():
 		for child in entry.get_children():
 			if child is CheckBox and child.text == display_name:
 				return child

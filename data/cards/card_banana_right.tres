@@ -1,16 +1,17 @@
-[gd_resource type="Resource" script_class="CardDefinition" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2"]
-[sub_resource type="Resource" id="direction"]
+
+[sub_resource type="Resource" id="Resource_srfw0"]
 script = ExtResource("2")
 effect_type = 10
 target = 0
-amount = 0
+
 [resource]
 script = ExtResource("1")
 card_id = "card_banana_right"
 display_name = "弹道偏右"
 description = "本场战斗所有香蕉球改为向右踢出，直到当前怪物死亡"
-cost = 1
 card_type = 2
-effects = Array[Resource]([SubResource("direction")])
+effects = Array[Resource]([SubResource("Resource_srfw0")])

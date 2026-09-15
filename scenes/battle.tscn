@@ -589,11 +589,44 @@ theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
 text = "战利品"
 
+[node name="GMCardsButton" type="Button" parent="GMOverlay/Center/Panel/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 46)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_button")
+text = "卡牌"
+
 [node name="GMItemsPage" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
+
+[node name="GMCardsPage" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GMCardsBackButton" type="Button" parent="GMOverlay/Center/Panel/Content/GMCardsPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "返回 GM 工具"
+
+[node name="GMCardsScroll" type="ScrollContainer" parent="GMOverlay/Center/Panel/Content/GMCardsPage"]
+custom_minimum_size = Vector2(290, 380)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="GMCardsList" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content/GMCardsPage/GMCardsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
 
 [node name="GMItemsBackButton" type="Button" parent="GMOverlay/Center/Panel/Content/GMItemsPage"]
 unique_name_in_owner = true
@@ -695,7 +728,9 @@ text = "返回主菜单"
 [connection signal="pressed" from="Footer/EndTurnButton" to="." method="_on_end_turn_pressed"]
 [connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMSkipButton" to="." method="_on_gm_skip_pressed"]
 [connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMItemsButton" to="." method="_on_gm_items_pressed"]
+[connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMCardsButton" to="." method="_on_gm_cards_pressed"]
 [connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMItemsPage/GMItemsBackButton" to="." method="_on_gm_items_back_pressed"]
+[connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMCardsPage/GMCardsBackButton" to="." method="_on_gm_items_back_pressed"]
 [connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMCloseButton" to="." method="_on_gm_close_pressed"]
 [connection signal="pressed" from="ResultOverlay/ResultCenter/ResultPanel/ResultContent/RestartButton" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="ResultOverlay/ResultCenter/ResultPanel/ResultContent/MenuButton" to="." method="_on_back_pressed"]

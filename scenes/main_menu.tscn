@@ -177,6 +177,19 @@ flat = true
 icon_alignment = 1
 expand_icon = true
 
+[node name="TestBattleButton" type="Button" parent="." unique_id=1671602161]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 0
+offset_left = 76.0
+offset_top = 460.0
+offset_right = 300.0
+offset_bottom = 498.0
+pivot_offset_ratio = Vector2(0.5, 0.5)
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 16
+text = "测试玩法（无限怪物）"
+
 [connection signal="pressed" from="CenterContainer/Menu/ExportDiagnosticsButton" to="." method="_on_export_diagnostics_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/DeckLogicButton" to="." method="_on_deck_logic_button_pressed"]
 [connection signal="pressed" from="CenterContainer/Menu/BattleLogicButton" to="." method="_on_battle_logic_button_pressed"]
@@ -184,3 +197,4 @@ expand_icon = true
 [connection signal="pressed" from="CenterContainer/Menu/CardDragButton" to="." method="_on_card_drag_button_pressed"]
 [connection signal="pressed" from="ContinueButton" to="." method="_on_continue_button_pressed"]
 [connection signal="pressed" from="StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="TestBattleButton" to="." method="_on_test_battle_button_pressed"]

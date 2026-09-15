@@ -21,6 +21,7 @@ const ENEMY_PIVOT_RATIO := Vector2(0.5, 0.6)
 
 @onready var start_button: Button = %StartButton
 @onready var continue_button: Button = %ContinueButton
+@onready var test_battle_button: Button = %TestBattleButton
 @onready var background: TextureRect = %Background
 @onready var game_logo: TextureRect = %GameLogo
 @onready var game_enemy: TextureRect = %GameEnemy
@@ -31,6 +32,7 @@ var _enemy_pulse_tween: Tween
 var _ball_pulse_tween: Tween
 var _start_button_pulse_tween: Tween
 var _continue_button_pulse_tween: Tween
+var _test_battle_button_pulse_tween: Tween
 
 
 # 主菜单每次进入都根据本局状态刷新继续按钮；状态文字和设置入口不再占用封面空间。
@@ -98,6 +100,11 @@ func _on_main_beat_reached(_beat_index: int) -> void:
 					_continue_button_pulse_tween,
 					BUTTON_PULSE_SCALE
 				)
+			_test_battle_button_pulse_tween = _restart_pulse(
+				test_battle_button,
+				_test_battle_button_pulse_tween,
+				BUTTON_PULSE_SCALE
+			)
 
 
 # 只中断本拍再次触发的对象；跳过的拍数不会破坏其他对象尚未结束的回落动画。
@@ -147,6 +154,19 @@ func _on_start_button_pressed() -> void:
 	_record_diagnostic("new_run", {"seed": run_state.seed})
 	_save_run()
 	get_tree().change_scene_to_file("res://scenes/map_screen.tscn")
+
+
+# 测试入口建立不保存的独立对局；战斗场景会据此固定 100 血敌人并在击杀后循环刷新。
+func _on_test_battle_button_pressed() -> void:
+	var run_state := get_node("/root/RunState")
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	run_state.start_test_battle(rng.randi())
+	_record_diagnostic("test_battle_started", {"seed": run_state.seed})
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		await bgm_service.prepare_battle_transition()
+	get_tree().change_scene_to_file("res://scenes/battle.tscn")
 
 
 # 继续按钮再次从磁盘恢复，确保入口不依赖当前进程中可能过期的临时状态。
