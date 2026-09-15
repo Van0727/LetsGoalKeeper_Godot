@@ -124,8 +124,11 @@ func _run() -> void:
 	var enemy_rect: Rect2 = battle_screen.enemy_display.get_global_rect()
 	var first_card_rect: Rect2 = battle_screen.hand_layer.get_child(0).get_global_rect()
 	var player_rect: Rect2 = battle_screen.player_display.get_global_rect()
+	var owned_item_rect: Rect2 = battle_screen.owned_item_icons.get_global_rect()
 	_assert_true(enemy_rect.end.y < first_card_rect.position.y, "敌方信息位于手牌上方")
 	_assert_true(first_card_rect.end.y < player_rect.position.y, "手牌不遮挡底部玩家生命栏")
+	_assert_true(player_rect.end.y <= owned_item_rect.position.y, "战利品图标区位于玩家生命栏下方")
+	_assert_true(not battle_screen.owned_item_icons.visible, "未获得战利品时隐藏底部图标区")
 	_assert_true(not battle_screen.drag_threshold_guide.visible, "未拖拽时不显示虚线")
 	battle_screen._on_card_drag_started(battle_screen.hand_layer.get_child(0))
 	_assert_true(battle_screen.drag_threshold_guide.visible, "开始拖拽后显示虚线")
@@ -167,10 +170,14 @@ func _run() -> void:
 		_assert_true(not golden_boot.button_pressed, "未持有奖励初始未勾选")
 		golden_boot.button_pressed = true
 		_assert_true(4011 in battle_screen.run_state.owned_item_ids, "勾选立即写入本局持有")
+		_assert_true(battle_screen.owned_item_icons.visible, "获得战利品后显示底部图标区")
+		_assert_equal(battle_screen.owned_item_icons.get_child_count(), 1, "底部只为已持有战利品创建一个图标")
 		_assert_equal(battle_screen.controller.damage_modifiers.all, 1, "旧式奖励即时增加战斗伤害")
 		left_foot.button_pressed = true
+		_assert_equal(battle_screen.owned_item_icons.get_child_count(), 2, "多个已持有战利品各显示一个图标")
 		_assert_equal(battle_screen.controller.item_runtime.items.size(), 2, "新式奖励即时接入战斗运行时")
 		golden_boot.button_pressed = false
+		_assert_equal(battle_screen.owned_item_icons.get_child_count(), 1, "取消战利品后同步移除对应图标")
 		_assert_equal(battle_screen.controller.damage_modifiers.all, 0, "取消旧式奖励即时撤销加成")
 		left_foot.button_pressed = false
 		_assert_true(4012 not in battle_screen.run_state.owned_item_ids, "取消新式奖励立即移出本局")

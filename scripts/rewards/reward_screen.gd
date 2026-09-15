@@ -3,6 +3,9 @@ extends Control
 
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
+const ITEM_DEFINITION := preload("res://scripts/items/item_definition.gd")
+const NORMAL_ITEM_PLACEHOLDER := preload("res://assets/ui/items/item_placeholder_normal.svg")
+const BOSS_ITEM_PLACEHOLDER := preload("res://assets/ui/items/item_placeholder_boss.svg")
 
 enum Phase { CARD, ITEM }
 
@@ -11,6 +14,10 @@ enum Phase { CARD, ITEM }
 @onready var run_label: Label = %RunLabel
 @onready var choice_buttons: Array[Button] = [%Choice0, %Choice1, %Choice2]
 @onready var card_views: Array[BattleCardView] = [%RewardCard0, %RewardCard1, %RewardCard2]
+@onready var item_contents: Array[VBoxContainer] = [%ItemContent0, %ItemContent1, %ItemContent2]
+@onready var item_icons: Array[TextureRect] = [%ItemIcon0, %ItemIcon1, %ItemIcon2]
+@onready var item_name_labels: Array[Label] = [%ItemName0, %ItemName1, %ItemName2]
+@onready var item_description_labels: Array[Label] = [%ItemDescription0, %ItemDescription1, %ItemDescription2]
 @onready var confirm_button: Button = %ConfirmButton
 
 var phase := Phase.CARD
@@ -75,7 +82,7 @@ func _show_item_choices() -> void:
 		confirm_button.disabled = false
 
 
-# 将候选映射到固定三个槽位；卡牌直接配置战斗卡面，遗物沿用原有左中右素材。
+# 将候选映射到固定三个槽位；卡牌复用战斗卡面，遗物使用纯色图片占位并单独排版名称与描述。
 func _refresh_buttons() -> void:
 	# 切换奖励阶段前清理尚未结束的选择动效，避免旧 Tween 回写新阶段卡面。
 	for tween_value in _choice_scale_tweens.values():
@@ -107,12 +114,18 @@ func _refresh_buttons() -> void:
 		if phase == Phase.CARD:
 			button.flat = true
 			button.text = ""
+			item_contents[index].hide()
 			card_views[index].show()
 			card_views[index].configure(definition, index)
 		else:
 			button.flat = false
-			button.text = "%s\n%s" % [definition.display_name, definition.description]
+			button.text = ""
 			card_views[index].hide()
+			item_contents[index].show()
+			# 当前没有正式插画时，普通与 Boss 遗物用不同纯色图占位，后续可直接替换为专属图片。
+			item_icons[index].texture = BOSS_ITEM_PLACEHOLDER if definition.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
+			item_name_labels[index].text = definition.display_name
+			item_description_labels[index].text = definition.description
 
 
 # 首次点击只切换预选项；围绕中心放大且提高绘制层级，避免被左右卡牌遮挡。

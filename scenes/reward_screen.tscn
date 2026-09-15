@@ -91,10 +91,13 @@ alignment = 1
 unique_name_in_owner = true
 custom_minimum_size = Vector2(104, 146)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("card_left")
 flat = true
+autowrap_mode = 2
+clip_text = true
 text = "奖励一"
 
 [node name="RewardCard0" parent="Margin/Layout/Choices/Choice0" instance=ExtResource("6_card_view")]
@@ -107,14 +110,56 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="ItemContent0" type="VBoxContainer" parent="Margin/Layout/Choices/Choice0"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 10.0
+offset_right = -8.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 5
+mouse_filter = 2
+
+[node name="ItemIcon0" type="TextureRect" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="ItemName0" type="Label" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="ItemDescription0" type="Label" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 2
+horizontal_alignment = 1
+mouse_filter = 2
+
 [node name="Choice1" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(104, 146)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("card_center")
 flat = true
+autowrap_mode = 2
+clip_text = true
 text = "奖励二"
 
 [node name="RewardCard1" parent="Margin/Layout/Choices/Choice1" instance=ExtResource("6_card_view")]
@@ -127,14 +172,56 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
+[node name="ItemContent1" type="VBoxContainer" parent="Margin/Layout/Choices/Choice1"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 10.0
+offset_right = -8.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 5
+mouse_filter = 2
+
+[node name="ItemIcon1" type="TextureRect" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="ItemName1" type="Label" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="ItemDescription1" type="Label" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 2
+horizontal_alignment = 1
+mouse_filter = 2
+
 [node name="Choice2" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(104, 146)
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("card_right")
 flat = true
+autowrap_mode = 2
+clip_text = true
 text = "奖励三"
 
 [node name="RewardCard2" parent="Margin/Layout/Choices/Choice2" instance=ExtResource("6_card_view")]
@@ -145,6 +232,45 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+
+[node name="ItemContent2" type="VBoxContainer" parent="Margin/Layout/Choices/Choice2"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 10.0
+offset_right = -8.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 5
+mouse_filter = 2
+
+[node name="ItemIcon2" type="TextureRect" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="ItemName2" type="Label" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 2
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="ItemDescription2" type="Label" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 2
+horizontal_alignment = 1
 mouse_filter = 2
 
 [node name="ConfirmButton" type="Button" parent="Margin/Layout"]

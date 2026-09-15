@@ -369,9 +369,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 6.0
-offset_top = 548.0
+offset_top = 538.0
 offset_right = -6.0
-offset_bottom = 568.0
+offset_bottom = 558.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.75, 0.84, 0.82, 1)
 theme_override_font_sizes/font_size = 10
@@ -472,15 +472,31 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 100.0
-offset_top = 574.0
+offset_top = 562.0
 offset_right = -100.0
-offset_bottom = 634.0
+offset_bottom = 602.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_player_status")
 
 [node name="PlayerDisplay" parent="PlayerStatus" instance=ExtResource("3_display")]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="OwnedItemIcons" type="HFlowContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 606.0
+offset_right = -8.0
+offset_bottom = 638.0
+grow_horizontal = 2
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+alignment = 1
+mouse_filter = 2
 
 [node name="BattleController" type="Node" parent="."]
 unique_name_in_owner = true

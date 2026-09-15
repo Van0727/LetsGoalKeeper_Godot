@@ -86,6 +86,16 @@ func _run() -> void:
 	_assert_equal(screen.phase, screen.Phase.ITEM, "卡牌后进入战利品步骤")
 	_assert_equal(screen.confirm_button.self_modulate.a, 1.0, "进入遗物步骤后重新显示确认按钮")
 	_assert_equal(screen.choices.size(), 3, "普通战显示三件战利品候选")
+	# 遗物描述必须在固定的三等分槽位内换行，不能因长文本挤宽整个奖励行。
+	for index in range(screen.choice_buttons.size()):
+		var button := screen.choice_buttons[index]
+		_assert_equal(button.autowrap_mode, TextServer.AUTOWRAP_WORD_SMART, "遗物按钮启用智能换行")
+		_assert_true(button.clip_text, "遗物按钮限制文本最小宽度")
+		_assert_equal(button.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "遗物按钮均分奖励行宽度")
+		_assert_true(screen.item_contents[index].visible, "遗物阶段显示图标与文字容器")
+		_assert_true(screen.item_icons[index].texture != null, "遗物阶段分配纯色占位图片")
+		_assert_equal(screen.item_name_labels[index].text, screen.choices[index].display_name, "遗物名称由独立标签显示")
+		_assert_equal(screen.item_description_labels[index].text, screen.choices[index].description, "遗物描述由独立标签自动换行")
 	_assert_equal(active_room.state, MAP_STATE.RoomState.ATTAINABLE, "只领取卡牌时房间尚未完成")
 	_assert_equal(connected_room.state, MAP_STATE.RoomState.LOCKED, "奖励未完成时下一层保持锁定")
 	screen._on_choice_pressed(0)

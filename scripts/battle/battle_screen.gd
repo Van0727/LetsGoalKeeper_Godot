@@ -11,6 +11,9 @@ const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
+const ITEM_DEFINITION := preload("res://scripts/items/item_definition.gd")
+const NORMAL_ITEM_PLACEHOLDER := preload("res://assets/ui/items/item_placeholder_normal.svg")
+const BOSS_ITEM_PLACEHOLDER := preload("res://assets/ui/items/item_placeholder_boss.svg")
 const CARD_VIEW_SCENE := preload("res://scenes/card_view.tscn")
 const BALL_FLIGHT_SCENE := preload("res://scenes/ball_flight.tscn")
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
@@ -45,6 +48,7 @@ const TEST_ENEMY_MAX_HEALTH := 100
 @onready var pause_overlay: CanvasLayer = $PauseOverlay
 @onready var background: TextureRect = $Background
 @onready var player_display: CharacterDisplay = %PlayerDisplay
+@onready var owned_item_icons: HFlowContainer = %OwnedItemIcons
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
 # 使用基础控件类型避免新增脚本的全局类缓存尚未刷新时阻塞战斗场景解析。
 @onready var drag_threshold_guide: Control = %DragThresholdGuide
@@ -89,6 +93,8 @@ var _enemy_sequence: Array[Resource] = [TURTLE, BEAR, TRAINING_BOSS]
 var _last_victory := false
 var _reward_service := REWARD_SERVICE.new()
 var run_state: Node
+# 已显示的持有ID用于避免每次生命刷新都重复创建图标；GM即时增删和下一战切换仍会触发重建。
+var _displayed_owned_item_ids: Array[int] = []
 # 卡牌结算期间核心仍同步计算；这里缓存逐段事件并按足球命中顺序更新可见状态。
 var _is_presenting_resolution := false
 var _gm_menu_open := false
@@ -758,7 +764,7 @@ func _rebuild_hand() -> void:
 	_update_input_state()
 
 
-# 同步双方生命、护盾、能量、回合、意图以及牌堆计数。
+# 同步双方生命、护盾、能量、回合、意图、牌堆计数与底部已获战利品图标。
 func _refresh_all() -> void:
 	player_display.set_health(controller.player.health)
 	player_display.set_shield(controller.player.shield)
@@ -768,7 +774,33 @@ func _refresh_all() -> void:
 	intent_label.text = "意图：%s" % controller.get_enemy_intent_text()
 	energy_label.text = "能量  %d / %d" % [controller.player.energy, controller.player.max_energy]
 	pile_label.text = "抽牌 %d　弃牌 %d" % [deck_state.draw_pile.size(), deck_state.discard_pile.size()]
+	_refresh_owned_item_icons()
 	_update_input_state()
+
+
+# 底部只显示战利品图片、不显示名称；图标根据品级使用现阶段的纯色占位，容器会按可用宽度自动换行。
+func _refresh_owned_item_icons() -> void:
+	var current_item_ids: Array[int] = []
+	if run_state != null:
+		for item_id in run_state.owned_item_ids:
+			current_item_ids.append(int(item_id))
+	if current_item_ids == _displayed_owned_item_ids:
+		return
+	for child in owned_item_icons.get_children():
+		owned_item_icons.remove_child(child)
+		child.queue_free()
+	_displayed_owned_item_ids = current_item_ids
+	if current_item_ids.is_empty():
+		owned_item_icons.hide()
+		return
+	for item in _reward_service.get_items_by_ids(current_item_ids):
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(16.0, 16.0)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.texture = BOSS_ITEM_PLACEHOLDER if item.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		owned_item_icons.add_child(icon)
+	owned_item_icons.visible = owned_item_icons.get_child_count() > 0
 
 
 # 费用不足的卡牌保持可见但禁止拖拽；结算、结束和 GM 面板统一锁住战斗操作。
