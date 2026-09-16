@@ -1,4 +1,5 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_mallet_warmup.png" id="3_illustration"]
 
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_nw8m6"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_1uhcb"]
@@ -12,6 +13,7 @@ target = 0
 script = ExtResource("2_1uhcb")
 id = 2016
 card_id = "card_mallet_warmup"
+illustration = ExtResource("3_illustration")
 display_name = "鼓槌预热"
 description = "下一张多段攻击每段伤害+2"
 archetype_hint = "爆裂鼓手·多段强化"

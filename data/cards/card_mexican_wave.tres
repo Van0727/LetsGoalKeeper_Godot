@@ -1,4 +1,5 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_mexican_wave.png" id="3_illustration"]
 
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_l3re7"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_k4mb2"]
@@ -12,6 +13,7 @@ target = 0
 script = ExtResource("2_k4mb2")
 id = 2015
 card_id = "card_mexican_wave"
+illustration = ExtResource("3_illustration")
 display_name = "人浪助威"
 description = "本回合下一张多段攻击每命中一次，获得1点护盾"
 archetype_hint = "桑巴精灵·多段防御"

@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://by2tkej4xkaxc"]
 
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Texture2D" uid="uid://bkrg7mblbb0td" path="res://assets/ui/cards/card_bloodthirsty_ball.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_jah0n"]
 script = ExtResource("2_effect")
@@ -20,5 +21,6 @@ card_id = "card_bloodthirsty_ball"
 display_name = "嗜血球"
 description = "造成6点伤害，然后恢复3点生命"
 archetype_hint = "通用·续航"
+illustration = ExtResource("3_illustration")
 shot_type = 1
 effects = Array[Resource]([SubResource("Resource_jah0n"), SubResource("Resource_5s3t7")])

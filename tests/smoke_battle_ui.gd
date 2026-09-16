@@ -3,6 +3,7 @@ extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
 const CARD_SCENE := preload("res://scenes/card_view.tscn")
+const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const STRAIGHT_SHOT := preload("res://data/cards/card_straight_shot.tres")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
@@ -42,7 +43,26 @@ func _run() -> void:
 		straight_shot_view.illustration_rect.texture == STRAIGHT_SHOT.illustration,
 		"射门牌在固定画框中使用专属圆角插画"
 	)
-	_assert_equal(straight_shot_view.illustration_rect.size, Vector2(88, 66), "插画槽保持4:3固定尺寸")
+	# 卡面允许设计人员在编辑器调整插画槽；验收边界而非锁死旧版像素尺寸。
+	_assert_true(
+		Rect2(Vector2.ZERO, straight_shot_view.size).encloses(straight_shot_view.illustration_rect.get_rect()),
+		"插画槽完整位于卡面边界内"
+	)
+	_assert_equal(straight_shot_view.size, Vector2(104, 176), "卡牌按参考图使用紧凑的信息区")
+	_assert_true(straight_shot_view.editor_preview_definition != null, "卡牌场景保留编辑器预览数据入口")
+	_assert_true(not straight_shot_view.editor_reference.visible, "运行时隐藏仅编辑器使用的参考图层")
+	_assert_true(straight_shot_view.category_badge.texture == straight_shot_view.ATTACK_BADGE, "攻击牌显示原图 ATTACK 徽章")
+	_assert_equal(straight_shot_view.description_label.text, STRAIGHT_SHOT.description, "卡牌底部显示配置说明")
+	_assert_equal(
+		straight_shot_view._get_card_type_badge(CARD_DEFINITION.CardType.DEFENSE),
+		straight_shot_view.DEFENSE_BADGE,
+		"防御牌使用独立类别图标"
+	)
+	_assert_equal(
+		straight_shot_view._get_card_type_badge(CARD_DEFINITION.CardType.ABILITY),
+		straight_shot_view.SKILL_BADGE,
+		"能力牌使用独立类别图标"
+	)
 	straight_shot_view.queue_free()
 	_assert_equal(battle_screen.controller.player.energy, 3, "玩家初始能量")
 	_assert_equal(battle_screen.rhythm_clock.bpm, 100.0, "战斗使用基础鼓点的100 BPM配置")

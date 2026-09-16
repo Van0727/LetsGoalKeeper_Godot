@@ -1,4 +1,5 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_shed_armor.png" id="3_illustration"]
 
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_oo8rp"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_sbgev"]
@@ -12,6 +13,7 @@ target = 0
 script = ExtResource("2_sbgev")
 id = 2020
 card_id = "card_shed_armor"
+illustration = ExtResource("3_illustration")
 display_name = "卸甲备战"
 description = "消耗最多6点护盾；每消耗2点，使下一张多段攻击每段伤害+1"
 archetype_hint = "钢铁门神·护盾转攻"

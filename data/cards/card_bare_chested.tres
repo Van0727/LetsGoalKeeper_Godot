@@ -1,16 +1,18 @@
-[gd_resource type="Resource" script_class="CardDefinition" load_steps=4 format=3]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://bxt5wpgm4vp8r"]
+
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2"]
+
 [sub_resource type="Resource" id="energy"]
 script = ExtResource("2")
 effect_type = 3
 target = 0
 amount = 2
+
 [resource]
 script = ExtResource("1")
 card_id = "card_bare_chested"
 display_name = "赤膊"
 description = "消耗1点能量，获得2点能量"
-cost = 1
 card_type = 1
 effects = Array[Resource]([SubResource("energy")])

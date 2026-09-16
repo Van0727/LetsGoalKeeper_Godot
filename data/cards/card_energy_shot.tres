@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://dgcgj61rtprp5"]
 
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Texture2D" uid="uid://cv2eq0y7kep6j" path="res://assets/ui/cards/card_energy_shot.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_8rhej"]
 script = ExtResource("2_effect")
@@ -15,6 +16,7 @@ card_id = "card_energy_shot"
 display_name = "能量射门"
 description = "造成6点伤害，每有1点剩余能量额外造成2点伤害"
 archetype_hint = "通用·能量保留"
+illustration = ExtResource("3_illustration")
 shot_type = 1
 rarity = 1
 effects = Array[Resource]([SubResource("Resource_8rhej")])

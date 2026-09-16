@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://bbb12i62flgra"]
 
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Texture2D" uid="uid://b01qqb82eww83" path="res://assets/ui/cards/card_barrage_shot.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_nmku2"]
 script = ExtResource("2_effect")
@@ -16,6 +17,7 @@ display_name = "连续射门"
 description = "以0.25拍间隔连续攻击4次，每次造成3点伤害"
 archetype_hint = "鼓手·快速多段"
 cost = 2
+illustration = ExtResource("3_illustration")
 shot_type = 4
 multi_hit_interval_beats = 0.25
 effects = Array[Resource]([SubResource("Resource_nmku2")])

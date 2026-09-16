@@ -1,4 +1,5 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_perfect_block.png" id="3_illustration"]
 
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_71skj"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_3ivie"]
@@ -13,6 +14,7 @@ amount = 5
 script = ExtResource("2_3ivie")
 id = 3006
 card_id = "card_perfect_block"
+illustration = ExtResource("3_illustration")
 display_name = "完美封堵"
 description = "获得5点护盾；Perfect出牌时额外获得3点护盾"
 archetype_hint = "钢铁门神·节奏叠盾"

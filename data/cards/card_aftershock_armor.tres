@@ -1,4 +1,5 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_aftershock_armor.png" id="3_illustration"]
 
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_msk2r"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_tv7es"]
@@ -12,6 +13,7 @@ target = 0
 script = ExtResource("2_tv7es")
 id = 2019
 card_id = "card_aftershock_armor"
+illustration = ExtResource("3_illustration")
 display_name = "余震装甲"
 description = "本回合下一张多段攻击每命中一次，获得2点护盾"
 archetype_hint = "钢铁门神·多段叠盾"

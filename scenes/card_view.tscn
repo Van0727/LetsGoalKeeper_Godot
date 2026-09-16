@@ -1,60 +1,66 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene format=3 uid="uid://ym88umqdwws7"]
 
-[ext_resource type="Script" path="res://scripts/battle/card_view.gd" id="1_card"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/card_background.png" id="2_card_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/icon_energy.png" id="3_cost_art"]
+[ext_resource type="Script" uid="uid://bys2h0h6836x6" path="res://scripts/battle/card_view.gd" id="1_card"]
+[ext_resource type="Texture2D" uid="uid://dcpnlwj2b05qn" path="res://assets/ui/cards/card_background_flat_v3.png" id="2_card_art"]
+[ext_resource type="Texture2D" uid="uid://dbyv1eumc4i6w" path="res://assets/ui/cards/card_cost_badge_v1.png" id="3_cost_art"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_gloves_v2.png" id="4_preview_art"]
+[ext_resource type="Texture2D" uid="uid://ci26t3lq31a67" path="res://art/UI/企业微信截图_17895613197183.png" id="5_i7fao"]
+[ext_resource type="Texture2D" uid="uid://dbn64fiieiyei" path="res://assets/ui/cards/card_type_attack.png" id="6_type_attack"]
 
 [sub_resource type="StyleBoxTexture" id="Style_card"]
 texture = ExtResource("2_card_art")
 
+[sub_resource type="FontVariation" id="Font_cost_bold"]
+variation_embolden = 1.2
+
 [sub_resource type="StyleBoxTexture" id="Style_cost"]
 texture = ExtResource("3_cost_art")
 
-[node name="CardView" type="PanelContainer"]
-custom_minimum_size = Vector2(104, 146)
-clip_contents = true
+[node name="CardView" type="PanelContainer" unique_id=977323431]
+offset_right = 104.0
+offset_bottom = 176.0
+tooltip_text = "造成6点伤害"
 mouse_default_cursor_shape = 6
 theme_override_styles/panel = SubResource("Style_card")
 script = ExtResource("1_card")
 
-[node name="Canvas" type="Control" parent="."]
+[node name="Canvas" type="Control" parent="." unique_id=451377823]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Illustration" type="TextureRect" parent="Canvas"]
+[node name="Illustration" type="TextureRect" parent="Canvas" unique_id=600867055]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 96.0
-offset_bottom = 74.0
+offset_left = 9.0
+offset_top = 16.0
+offset_right = 94.416664
+offset_bottom = 95.0
 mouse_filter = 2
+texture = ExtResource("4_preview_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="CostLabel" type="Label" parent="Canvas"]
+[node name="CostLabel" type="Label" parent="Canvas" unique_id=802461553]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 8.0
-offset_top = 6.0
-offset_right = 34.0
-offset_bottom = 32.0
-mouse_filter = 2
+offset_left = 4.0
+offset_top = 3.0
+offset_right = 39.0
+offset_bottom = 38.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_fonts/font = SubResource("Font_cost_bold")
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("Style_cost")
 text = "1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="NameLabel" type="Label" parent="Canvas"]
+[node name="NameLabel" type="Label" parent="Canvas" unique_id=1147702153]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 8.0
-offset_top = 76.0
-offset_right = 96.0
-offset_bottom = 91.0
-mouse_filter = 2
+offset_left = 7.0
+offset_top = 96.0
+offset_right = 95.0
+offset_bottom = 114.0
 theme_override_colors/font_color = Color(0.08, 0.12, 0.16, 1)
 theme_override_font_sizes/font_size = 11
 text = "射门"
@@ -62,45 +68,45 @@ horizontal_alignment = 1
 vertical_alignment = 1
 text_overrun_behavior = 3
 
-[node name="TypeLabel" type="Label" parent="Canvas"]
+[node name="CategoryBadge" type="TextureRect" parent="Canvas" unique_id=1531321195]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 14.0
-offset_top = 92.0
-offset_right = 54.0
-offset_bottom = 104.0
+offset_left = 27.0
+offset_top = 114.0
+offset_right = 77.0
+offset_bottom = 127.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.08, 0.2, 0.35, 1)
-theme_override_font_sizes/font_size = 8
-text = "攻击"
-horizontal_alignment = 1
-vertical_alignment = 1
+texture = ExtResource("6_type_attack")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="ShotLabel" type="Label" parent="Canvas"]
+[node name="ShotLabel" type="Label" parent="Canvas" unique_id=230792484]
 unique_name_in_owner = true
+visible = false
 layout_mode = 0
-offset_left = 54.0
-offset_top = 92.0
-offset_right = 94.0
-offset_bottom = 104.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.1, 0.25, 0.33, 1)
 theme_override_font_sizes/font_size = 8
 text = "直球"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DescriptionLabel" type="Label" parent="Canvas"]
+[node name="DescriptionLabel" type="Label" parent="Canvas" unique_id=1315894234]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 8.0
-offset_top = 105.0
-offset_right = 96.0
-offset_bottom = 141.0
-mouse_filter = 2
+offset_left = 9.0
+offset_top = 128.0
+offset_right = 97.0
+offset_bottom = 168.0
 theme_override_colors/font_color = Color(0.12, 0.16, 0.19, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_constants/line_spacing = 1
+theme_override_font_sizes/font_size = 9
 text = "造成6点伤害"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
+
+[node name="EditorReference" type="Sprite2D" parent="." unique_id=1486124172]
+unique_name_in_owner = true
+position = Vector2(168.5, 87.792496)
+scale = Vector2(0.48547715, 0.4854772)
+texture = ExtResource("5_i7fao")

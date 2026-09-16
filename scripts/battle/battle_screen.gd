@@ -32,7 +32,8 @@ const SUPER_DEFENSE := preload("res://data/skills/skill_super_defense.tres")
 const SUPER_ABILITY := preload("res://data/skills/skill_super_ability.tres")
 
 const STARTING_HAND_SIZE := 3
-const CARD_SIZE := Vector2(104, 146)
+# 参考设计图的三张手牌维持 104 宽横排；缩短卡身以避免底部信息区压迫战斗画面。
+const CARD_SIZE := Vector2(104, 176)
 const CARD_GAP := 6.0
 const REST_ROOM_TYPE := 3
 const ACTIVE_SKILL_FLIGHT_BEATS := 1.0

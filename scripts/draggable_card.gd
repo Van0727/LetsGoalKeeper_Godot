@@ -1,4 +1,5 @@
-# 可拖拽卡牌控件：统一处理鼠标和单指触摸，并支持矩形落点或横向阈值两种出牌判定。
+@tool
+# 可拖拽卡牌控件：运行时处理拖拽；作为编辑器预览父类时跳过输入初始化。
 class_name DraggableCard
 extends PanelContainer
 
@@ -22,12 +23,16 @@ var _interaction_enabled := true
 
 # 缓存场景中的出牌区，并在布局稳定后记录卡牌初始位置。
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
 	gui_input.connect(_on_gui_input)
 	call_deferred("_remember_home_position")
 
 
 # 触摸事件由全局输入处理，以便手指移出卡牌矩形后仍能继续拖拽和释放。
 func _input(event: InputEvent) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not _interaction_enabled:
 		return
 	if not _dragging:
