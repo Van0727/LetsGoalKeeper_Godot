@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bys2h0h6836x6" path="res://scripts/battle/card_view.gd" id="1_card"]
 [ext_resource type="Texture2D" uid="uid://dcpnlwj2b05qn" path="res://assets/ui/cards/card_background_flat_v3.png" id="2_card_art"]
 [ext_resource type="Texture2D" uid="uid://dbyv1eumc4i6w" path="res://assets/ui/cards/card_cost_badge_v1.png" id="3_cost_art"]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_gloves_v2.png" id="4_preview_art"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_gloves_v5.png" id="4_preview_art"]
 [ext_resource type="Texture2D" uid="uid://ci26t3lq31a67" path="res://art/UI/企业微信截图_17895613197183.png" id="5_i7fao"]
 [ext_resource type="Texture2D" uid="uid://dbn64fiieiyei" path="res://assets/ui/cards/card_type_attack.png" id="6_type_attack"]
 
