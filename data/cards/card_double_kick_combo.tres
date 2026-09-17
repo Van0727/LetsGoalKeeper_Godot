@@ -1,5 +1,7 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_double_kick_combo_rounded_v1.png" id="3_illustration"]
+
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_idxro"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_rvpiw"]
 
@@ -12,6 +14,7 @@ hits = 2
 script = ExtResource("2_rvpiw")
 id = 1017
 card_id = "card_double_kick_combo"
+illustration = ExtResource("3_illustration")
 display_name = "双踩连击"
 description = "以0.25拍间隔攻击2次，每次造成4点伤害"
 archetype_hint = "爆裂鼓手·快速多段"

@@ -4,8 +4,8 @@ class_name BattleCardView
 extends DraggableCard
 
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
-# 默认预览使用已确认的手套插画；工具脚本初始化时同步名称、类型与说明，避免覆盖为旧射门图。
-const EDITOR_PREVIEW_CARD := preload("res://data/cards/card_gloves.tres")
+# 默认预览使用新攻守兼备成品；同步卡牌定义，避免工具初始化覆盖为旧插画。
+const EDITOR_PREVIEW_CARD := preload("res://data/cards/card_attack_and_defend.tres")
 # 类型徽章直接裁自已确认参考图；保留原图英文和配色用于快速扫读。
 const ATTACK_BADGE := preload("res://assets/ui/cards/card_type_attack.png")
 const DEFENSE_BADGE := preload("res://assets/ui/cards/card_type_defense.png")

@@ -1,4 +1,5 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_banana_left_rounded_v1.png" id="3_illustration"]
 
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2"]
@@ -12,6 +13,7 @@ target = 0
 script = ExtResource("1")
 id = 2009
 card_id = "card_banana_left"
+illustration = ExtResource("3_illustration")
 display_name = "弹道偏左"
 description = "本场战斗所有香蕉球改为向左踢出，直到当前怪物死亡"
 archetype_hint = "桑巴精灵·方向控制"

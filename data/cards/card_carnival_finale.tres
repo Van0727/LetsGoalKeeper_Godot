@@ -1,5 +1,7 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_carnival_finale_rounded_v1.png" id="3_illustration"]
+
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_6fgre"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_lxp7d"]
 
@@ -11,6 +13,7 @@ amount = 4
 script = ExtResource("2_lxp7d")
 id = 1016
 card_id = "card_carnival_finale"
+illustration = ExtResource("3_illustration")
 display_name = "嘉年华终曲"
 description = "造成4点香蕉球伤害；本回合每打出1张技能牌便追加1颗，最多追加4颗"
 archetype_hint = "桑巴精灵·技能终结"

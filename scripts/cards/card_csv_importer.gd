@@ -273,12 +273,17 @@ func _parse_step_row(row: PackedStringArray, line_number: int, templates: Dictio
 func _save_and_verify_card(data: Dictionary, output_directory: String) -> String:
 	var resource_path := "%s/%s.tres" % [output_directory, data["source_file"]]
 	var stable_id: String = data["source_file"]
+	# 插画不是 CSV 数值字段；重新导出时保留已确认的美术引用，避免清空卡面。
+	var existing_illustration: Texture2D
 	if ResourceLoader.exists(resource_path):
 		var existing := load(resource_path)
+		if existing != null:
+			existing_illustration = existing.get("illustration")
 		var existing_id: Variant = existing.get("card_id") if existing != null else ""
 		if existing_id is String and not String(existing_id).is_empty():
 			stable_id = existing_id
 	var card := CARD_DEFINITION.new()
+	card.illustration = existing_illustration
 	card.id = data.id
 	card.card_id = stable_id
 	card.display_name = data.display_name
