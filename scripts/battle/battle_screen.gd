@@ -784,7 +784,8 @@ func _refresh_all() -> void:
 	enemy_display.set_shield(controller.enemy.shield)
 	turn_label.text = "第 %d 回合 · %s" % [controller.turn_number, controller.get_phase_text()]
 	intent_label.text = "意图：%s" % controller.get_enemy_intent_text()
-	energy_label.text = "能量  %d / %d" % [controller.player.energy, controller.player.max_energy]
+	# 费用面板由独立背景、闪电与动态数字组成；临时费用允许超过上限，保留实际数值。
+	energy_label.text = "%d/%d" % [controller.player.energy, controller.player.max_energy]
 	pile_label.text = "抽牌 %d　弃牌 %d" % [deck_state.draw_pile.size(), deck_state.discard_pile.size()]
 	_refresh_owned_item_icons()
 	_update_input_state()

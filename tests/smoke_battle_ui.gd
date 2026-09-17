@@ -34,6 +34,14 @@ func _run() -> void:
 
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")
+	_assert_true(
+		not battle_screen.get_node("Pitch").get_theme_stylebox("panel") is StyleBoxTexture,
+		"敌人区域不再使用遮挡球门的图片底图"
+	)
+	_assert_true(
+		not battle_screen.enemy_display.get_theme_stylebox("panel") is StyleBoxTexture,
+		"敌人信息保留头像和数值但不再使用图片面板"
+	)
 	# 单独实例化射门牌，验证圆角插画已经进入独立画框且不会依赖随机起手。
 	var straight_shot_view = CARD_SCENE.instantiate()
 	root.add_child(straight_shot_view)

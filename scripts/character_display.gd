@@ -2,8 +2,6 @@
 class_name CharacterDisplay
 extends PanelContainer
 
-const ENEMY_PANEL_TEXTURE := preload("res://assets/placeholders/enemy_area.png")
-
 enum BattleLayoutRole {
 	DEFAULT,
 	ENEMY,
@@ -31,10 +29,8 @@ func set_battle_layout_role(role: BattleLayoutRole) -> void:
 	match role:
 		BattleLayoutRole.ENEMY:
 			custom_minimum_size = Vector2(128, 178)
-			# 战斗紧凑布局继续复用图片面板，避免运行时重新绘制纯色圆角框。
-			var enemy_panel := StyleBoxTexture.new()
-			enemy_panel.texture = ENEMY_PANEL_TEXTURE
-			add_theme_stylebox_override("panel", enemy_panel)
+			# 敌人信息直接叠在场景背景上；显式空样式避免移除覆盖后回退到默认深色面板。
+			add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 			margin.add_theme_constant_override("margin_left", 4)
 			margin.add_theme_constant_override("margin_top", 2)
 			margin.add_theme_constant_override("margin_right", 4)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3]
+[gd_scene load_steps=34 format=3]
 
 [ext_resource type="Script" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
@@ -11,12 +11,10 @@
 [ext_resource type="AudioStream" path="res://sound/bgm/bg_basicDrum2_bpm100.mp3" id="9_music"]
 [ext_resource type="Script" path="res://scripts/battle/rhythm_waveform.gd" id="10_waveform"]
 [ext_resource type="Script" path="res://scripts/battle/qte_popup.gd" id="11_qte"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/background_full.png" id="12_background_art"]
+[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/battle_stage_background_v1.png" id="12_background_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/top_status.png" id="13_top_status_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/enemy_area.png" id="14_enemy_area_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_lane.png" id="15_rhythm_lane_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/resource_and_combo.png" id="16_resource_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/card_row.png" id="17_card_row_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/player_status.png" id="18_player_status_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/action_button.png" id="19_action_button_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/overlay_dark.png" id="20_overlay_art"]
@@ -24,9 +22,10 @@
 [ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_target_ring.png" id="22_target_ring_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_moving_ring.png" id="23_moving_ring_art"]
 [ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_flash.png" id="24_rhythm_flash_art"]
+[ext_resource type="Texture2D" path="res://assets/ui/energy_background_panel.png" id="25_energy_panel"]
+[ext_resource type="Texture2D" path="res://assets/ui/energy_lightning_icon.png" id="26_energy_icon"]
 
-[sub_resource type="StyleBoxTexture" id="Style_pitch"]
-texture = ExtResource("14_enemy_area_art")
+[sub_resource type="StyleBoxEmpty" id="Style_pitch_clear"]
 
 [sub_resource type="StyleBoxTexture" id="Style_player_status"]
 texture = ExtResource("18_player_status_art")
@@ -85,6 +84,8 @@ script = ExtResource("1_screen")
 [node name="PauseOverlay" parent="." instance=ExtResource("4_pause")]
 
 [node name="Background" type="TextureRect" parent="."]
+; 941×1672 舞台背景在 360×640 基准视口等比例铺满；窗口比例变化时居中裁切，避免舞台拉伸。
+texture_filter = 2
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -94,7 +95,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("12_background_art")
 expand_mode = 1
-stretch_mode = 0
+stretch_mode = 6
 
 [node name="TopStatusArt" type="TextureRect" parent="."]
 layout_mode = 1
@@ -158,13 +159,14 @@ horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="Pitch" type="PanelContainer" parent="."]
+; 显式空样式保留布局容器，防止默认主题底色压暗舞台背景。
+theme_override_styles/panel = SubResource("Style_pitch_clear")
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_top = 36.0
 offset_bottom = 238.0
 grow_horizontal = 2
-theme_override_styles/panel = SubResource("Style_pitch")
 
 [node name="Combatants" type="CenterContainer" parent="Pitch"]
 layout_mode = 2
@@ -285,21 +287,41 @@ theme_override_styles/normal = SubResource("Style_drag_prompt")
 text = "松开以出牌"
 horizontal_alignment = 1
 
-[node name="EnergyLabel" type="Label" parent="."]
+[node name="EnergyPanel" type="TextureRect" parent="."]
+offset_left = 4.0
+offset_top = 274.0
+offset_right = 88.0
+offset_bottom = 310.25
+mouse_filter = 2
+texture_filter = 2
+texture = ExtResource("25_energy_panel")
+expand_mode = 1
+
+[node name="LightningIcon" type="TextureRect" parent="EnergyPanel"]
+offset_left = 6.6
+offset_top = 5.1
+offset_right = 21.3
+offset_bottom = 29.9
+mouse_filter = 2
+texture_filter = 2
+texture = ExtResource("26_energy_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EnergyLabel" type="Label" parent="EnergyPanel"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_left = 0.0
 anchor_right = 0.0
-offset_left = 4.0
-offset_top = 274.0
-offset_right = 84.0
-offset_bottom = 318.0
+offset_left = 25.0
+offset_top = 3.0
+offset_right = 77.0
+offset_bottom = 29.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.88, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 14
-theme_override_styles/normal = SubResource("Style_energy")
-text = "能量 3 / 3"
+theme_override_font_sizes/font_size = 22
+text = "3/3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -406,20 +428,6 @@ offset_top = 394.0
 offset_right = -6.0
 offset_bottom = 570.0
 grow_horizontal = 2
-
-[node name="CardRowArt" type="TextureRect" parent="."]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 6.0
-offset_top = 394.0
-offset_right = -6.0
-offset_bottom = 570.0
-grow_horizontal = 2
-mouse_filter = 2
-texture = ExtResource("17_card_row_art")
-expand_mode = 1
-stretch_mode = 0
 
 [node name="ResourceArt" type="TextureRect" parent="."]
 layout_mode = 0

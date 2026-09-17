@@ -1,5 +1,5 @@
 @tool
-# 战斗卡牌视图：显示运行时卡牌，并在编辑器填入预览数据及开放参考图区域。
+# 战斗卡牌视图：显示卡面与柔和外发光，并在编辑器填入预览数据及开放参考图区域。
 class_name BattleCardView
 extends DraggableCard
 
@@ -13,6 +13,10 @@ const SKILL_BADGE := preload("res://assets/ui/cards/card_type_skill.png")
 
 var card_definition: Resource
 var hand_index := -1
+# 每张卡牌独享光晕样式，悬停和拖拽不会影响相邻卡牌。
+var _glow_style: StyleBoxFlat
+var _glow_hovered := false
+var _glow_dragging := false
 # 编辑器预览只服务卡面排版；战斗运行时始终由手牌数据调用 configure 覆盖。
 @export var editor_preview_definition: Resource = EDITOR_PREVIEW_CARD:
 	set(value):
@@ -31,9 +35,11 @@ var hand_index := -1
 
 # 在编辑器中自动填入一张真实卡牌，使设计人员能直接拖动节点并检查文本折行。
 func _ready() -> void:
-	# 参考图仅服务编辑器对照：编辑时解除根节点裁切，运行时隐藏并恢复卡面裁切。
+	# 根节点允许光晕向外延伸；仅卡面内容裁切，编辑器参考图继续允许超出画框。
 	var editing := Engine.is_editor_hint()
-	clip_contents = not editing
+	clip_contents = false
+	$Canvas.clip_contents = not editing
+	_create_outer_glow()
 	editor_reference.visible = editing
 	if editing:
 		if editor_preview_definition != null:
@@ -41,6 +47,32 @@ func _ready() -> void:
 	else:
 		# 子类重写 ready 后必须显式初始化父类，保证运行时拖拽事件和回弹位置有效。
 		super._ready()
+		mouse_entered.connect(func(): _glow_hovered = true; _update_outer_glow())
+		mouse_exited.connect(func(): _glow_hovered = false; _update_outer_glow())
+		drag_started.connect(func(_card): _glow_dragging = true; _update_outer_glow())
+		drag_finished.connect(func(_card, _valid): _glow_dragging = false; _update_outer_glow())
+
+
+# 光晕放在卡牌底板后方且不接收输入，保持原有命中范围和拖拽布局。
+func _create_outer_glow() -> void:
+	_glow_style = StyleBoxFlat.new()
+	_glow_style.draw_center = false
+	_glow_style.set_corner_radius_all(10)
+	_glow_style.shadow_offset = Vector2.ZERO
+	var glow := Panel.new()
+	glow.name = "OuterGlow"
+	glow.show_behind_parent = true
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	glow.add_theme_stylebox_override("panel", _glow_style)
+	add_child(glow)
+	_update_outer_glow()
+
+
+# 常态铺一层稍明显的青色光晕；悬停或拖拽进一步增强，不遮挡文字与插画。
+func _update_outer_glow() -> void:
+	var emphasized := _glow_hovered or _glow_dragging
+	_glow_style.shadow_size = 11 if emphasized else 8
+	_glow_style.shadow_color = Color(0.05, 0.85, 1.0, 0.56 if emphasized else 0.38)
 
 
 # 绑定手牌中的定义与稳定位置；运行时只读取 Resource，不回写配置。
