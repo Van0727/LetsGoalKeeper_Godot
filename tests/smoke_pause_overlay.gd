@@ -1,9 +1,17 @@
-# 阶段 9 暂停冒烟测试：验证冻结/恢复、返回键切换，以及菜单和退出的确认边界。
+# 暂停冒烟测试：验证冻结/恢复、确认边界，以及异步重复确认和节点离树后的回调。
 extends SceneTree
 
 const PAUSE_SCENE := preload("res://scenes/pause_overlay.tscn")
 
 var _failed := false
+
+# 可控切曲服务用于精确覆盖等待期间的重复点击与离树，不依赖实际音频时长。
+class DeferredBgm extends Node:
+	signal completed
+	var calls := 0
+	func transition_to_main_bgm() -> void:
+		calls += 1
+		await completed
 
 
 func _initialize() -> void:
@@ -42,6 +50,52 @@ func _run() -> void:
 	overlay.close_pause()
 	_assert_true(not paused, "继续游戏解除冻结")
 	overlay.free()
+
+	var real_bgm := root.get_node("BgmService")
+	# 替身期间暂停真实服务的场景监听，避免测试离树服务响应新场景信号。
+	var bgm_scene_callback := Callable(real_bgm, "_on_scene_changed")
+	scene_changed.disconnect(bgm_scene_callback)
+	root.remove_child(real_bgm)
+	var fake_bgm := DeferredBgm.new()
+	fake_bgm.name = "BgmService"
+	root.add_child(fake_bgm)
+	var waiting_overlay := PAUSE_SCENE.instantiate()
+	root.add_child(waiting_overlay)
+	waiting_overlay.open_pause()
+	waiting_overlay.request_confirmation(waiting_overlay.ConfirmAction.MAIN_MENU)
+	waiting_overlay._on_confirm_pressed()
+	waiting_overlay._on_confirm_pressed()
+	waiting_overlay.cancel_confirmation()
+	waiting_overlay.close_pause()
+	_assert_equal(fake_bgm.calls, 1, "重复确认只启动一次切曲")
+	_assert_true(paused, "切曲期间不能继续或取消暂停")
+	root.remove_child(waiting_overlay)
+	fake_bgm.completed.emit()
+	waiting_overlay.open_pause()
+	waiting_overlay.close_pause()
+	waiting_overlay._on_confirm_pressed()
+	waiting_overlay.set_external_modal_open(false)
+	_assert_true(paused, "离树回调不改写其他场景的暂停状态")
+	waiting_overlay.free()
+	paused = false
+
+	# 正常确认真实加载主菜单，验证切场景移除旧节点后仍能安全解除暂停。
+	var old_scene := Node.new()
+	root.add_child(old_scene)
+	current_scene = old_scene
+	var returning_overlay := PAUSE_SCENE.instantiate()
+	old_scene.add_child(returning_overlay)
+	returning_overlay.open_pause()
+	returning_overlay.request_confirmation(returning_overlay.ConfirmAction.MAIN_MENU)
+	returning_overlay._on_confirm_pressed()
+	fake_bgm.completed.emit()
+	await process_frame
+	await process_frame
+	_assert_true(not paused, "正常返回主菜单解除暂停")
+	_assert_true(current_scene != null and current_scene.scene_file_path == "res://scenes/main_menu.tscn", "正常返回真实主菜单")
+	fake_bgm.free()
+	root.add_child(real_bgm)
+	scene_changed.connect(bgm_scene_callback)
 
 	if _failed:
 		quit(1)

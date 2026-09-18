@@ -1,4 +1,4 @@
-# 地图生成器：按章节固定配置和注入随机数生成三层房间与连线，纯逻辑不依赖界面。
+# 地图生成器：按章节配置生成房间与稀疏连线，预先规划不相邻休息层，纯逻辑不依赖界面。
 class_name MapGenerator
 extends RefCounted
 
@@ -34,12 +34,13 @@ func generate(config: Resource, rng: RandomNumberGenerator) -> MapState:
 		return null
 	var state := MAP_STATE.new()
 	state.layer_count = config.layer_min_rooms.size()
+	var rest_plan := _plan_rest_layers(config, rng)
 
 	# 先按层确定房型，再登记全部房间，最后统一连线，保证同 seed 下结构完全可复现。
 	for layer in range(1, state.layer_count + 1):
 		var layer_index := layer - 1
 		var count := rng.randi_range(config.layer_min_rooms[layer_index], config.layer_max_rooms[layer_index])
-		var types := _plan_layer_types(config, layer, count, rng)
+		var types := _plan_layer_types(config, layer, count, rest_plan[layer_index], rng)
 		for index in range(count):
 			var room := {
 				"id": "%d-%d" % [layer, index],
@@ -80,7 +81,7 @@ func _has_incoming_connection(current_rooms: Array[Dictionary], target_id: Strin
 
 
 # 规划某一层的房型序列；休息房插在随机位置，其余战斗房按层权重掷精英。
-func _plan_layer_types(config: Resource, layer: int, count: int, rng: RandomNumberGenerator) -> Array:
+func _plan_layer_types(config: Resource, layer: int, count: int, rest_count: int, rng: RandomNumberGenerator) -> Array:
 	var layer_index := layer - 1
 	var types: Array = []
 	for _index in range(count):
@@ -88,13 +89,12 @@ func _plan_layer_types(config: Resource, layer: int, count: int, rng: RandomNumb
 
 	var is_last_layer: bool = layer == config.layer_min_rooms.size()
 	if is_last_layer:
-		# 最后一层固定全部为 Boss（首版配置只有1个）。
+		# 最后一层固定单个 Boss，数量由配置校验保证。
 		for slot in range(types.size()):
 			types[slot] = MAP_STATE.RoomType.BOSS
 		return types
 
-	# 固定休息房数量不得超过房间总数，配置错误时以明确日志提示并截断。
-	var rest_count := clampi(config.rest_count_by_layer[layer_index], 0, count)
+	# 休息计划已由配置校验和全图规划保证合法，位置只在本层内随机选择。
 	for _rest_index in range(rest_count):
 		var rest_slot := rng.randi_range(0, count - 1)
 		while types[rest_slot] != MAP_STATE.RoomType.NORMAL:
@@ -109,3 +109,33 @@ func _plan_layer_types(config: Resource, layer: int, count: int, rng: RandomNumb
 		if rng.randf() < elite_chance:
 			types[slot] = MAP_STATE.RoomType.ELITE
 	return types
+
+
+# 枚举所有合法休息层组合（包含无休息房），均匀选一个，避免贪心选择使第6层永远无法出现。
+# 在连线前禁止相邻层同时休息，因此任何分支路线都不会连续进入休息房。
+func _plan_rest_layers(config: Resource, rng: RandomNumberGenerator) -> Array[int]:
+	var result: Array[int] = config.rest_count_by_layer.duplicate()
+	if config.max_random_rest_rooms == 0:
+		return result
+	var candidates: Array[int] = config.eligible_rest_layers.duplicate()
+	candidates.sort()
+	var valid_masks: Array[int] = []
+	for mask in range(1 << candidates.size()):
+		var previous := -2
+		var count := 0
+		var valid := true
+		for i in range(candidates.size()):
+			if (mask & (1 << i)) == 0:
+				continue
+			count += 1
+			if candidates[i] == previous + 1 or count > config.max_random_rest_rooms:
+				valid = false
+				break
+			previous = candidates[i]
+		if valid:
+			valid_masks.append(mask)
+	var selected := valid_masks[rng.randi_range(0, valid_masks.size() - 1)]
+	for i in range(candidates.size()):
+		if selected & (1 << i):
+			result[candidates[i] - 1] = 1
+	return result

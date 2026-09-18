@@ -1,0 +1,34 @@
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: 尖刺球先造成3点自伤：期望 17，实际 19
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _assert_equal (res://tests/smoke_battle_core.gd:551)
+       [1] _test_remaining_migrated_cards (res://tests/smoke_battle_core.gd:482)
+       [2] _run (res://tests/smoke_battle_core.gd:49)
+ERROR: 尖刺球自伤致死后中断后续效果：期望 1，实际 2
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _assert_equal (res://tests/smoke_battle_core.gd:551)
+       [1] _test_remaining_migrated_cards (res://tests/smoke_battle_core.gd:488)
+       [2] _run (res://tests/smoke_battle_core.gd:49)
+ERROR: 尖刺球自伤致死时不再攻击敌人：期望 20，实际 14
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _assert_equal (res://tests/smoke_battle_core.gd:551)
+       [1] _test_remaining_migrated_cards (res://tests/smoke_battle_core.gd:489)
+       [2] _run (res://tests/smoke_battle_core.gd:49)
+ERROR: 射门伤害事件携带当前半拍飞行延迟：期望 0.5，实际 1.0
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _assert_equal (res://tests/smoke_battle_core.gd:551)
+       [1] _test_rhythm_judgement_and_damage (res://tests/smoke_battle_core.gd:230)
+       [2] _run (res://tests/smoke_battle_core.gd:52)
+ERROR: Miss不缩放卡牌自伤：期望 17，实际 19
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] _assert_equal (res://tests/smoke_battle_core.gd:551)
+       [1] _test_rhythm_judgement_and_damage (res://tests/smoke_battle_core.gd:255)
+       [2] _run (res://tests/smoke_battle_core.gd:52)

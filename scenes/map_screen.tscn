@@ -1,8 +1,10 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/map/map_screen.gd" id="1_screen"]
 [ext_resource type="Script" path="res://scripts/map/map_connections.gd" id="2_connections"]
 [ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="3_pause"]
+[ext_resource type="Texture2D" path="res://assets/ui/map/map_background_v2.png" id="4_background"]
+[ext_resource type="Texture2D" path="res://assets/ui/game_ball.png" id="5_ball"]
 
 [sub_resource type="StyleBoxFlat" id="Style_top"]
 bg_color = Color(0.05, 0.12, 0.15, 1)
@@ -41,6 +43,7 @@ corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
 [node name="MapScreen" type="Control"]
+texture_filter = 2
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -61,6 +64,15 @@ grow_vertical = 2
 color = Color(0.025, 0.07, 0.08, 1)
 mouse_filter = 2
 
+[node name="Stadium" type="TextureRect" parent="Background"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource("4_background")
+expand_mode = 1
+stretch_mode = 6
+mouse_filter = 2
+
 [node name="Header" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 10
@@ -73,7 +85,7 @@ grow_horizontal = 2
 theme_override_constants/separation = 8
 
 [node name="BackButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(76, 40)
+custom_minimum_size = Vector2(82, 40)
 layout_mode = 2
 text = "返回菜单"
 
@@ -81,52 +93,88 @@ text = "返回菜单"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.4, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 14
 text = "第 1 章 · 路线地图"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="HintLabel" type="Label" parent="Header"]
+visible = true
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.9, 0.7, 1)
 theme_override_font_sizes/font_size = 12
-text = "选择房间"
+text = ""
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="MapBody" type="PanelContainer" parent="."]
+[node name="ChapterDivider" type="TextureRect" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -9.0
+offset_top = 40.0
+offset_right = 9.0
+offset_bottom = 58.0
+texture = ExtResource("5_ball")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="LeftBeatLine" type="ColorRect" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -55.0
+offset_top = 49.0
+offset_right = -16.0
+offset_bottom = 50.0
+color = Color(0.15, 0.95, 1, 1)
+mouse_filter = 2
+
+[node name="RightBeatLine" type="ColorRect" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 16.0
+offset_top = 49.0
+offset_right = 55.0
+offset_bottom = 50.0
+color = Color(0.15, 0.95, 1, 1)
+mouse_filter = 2
+
+[node name="MapBody" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 8.0
-offset_top = 54.0
+anchor_bottom = 1.0
+offset_top = 110.0
 offset_right = -8.0
-offset_bottom = -92.0
+offset_bottom = -70.0
 grow_horizontal = 2
-theme_override_styles/panel = SubResource("Style_top")
 
 [node name="ConnectionsLayer" type="Control" parent="MapBody"]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("2_connections")
 
-[node name="Margin" type="MarginContainer" parent="MapBody"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 14
+[node name="Margin" type="Control" parent="MapBody"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
 
-[node name="RowsContainer" type="VBoxContainer" parent="MapBody/Margin"]
+[node name="RowsContainer" type="Control" parent="MapBody/Margin"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 10
-alignment = 1
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
 
 [node name="InfoLabel" type="Label" parent="."]
+visible = false
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 12

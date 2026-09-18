@@ -30,12 +30,12 @@ func _run() -> void:
 	quit()
 
 
-# 验证第 1 章地图配置合法，层结构为三层且范围与首版规则一致。
+# 验证正式配置固定七层，旧三层状态验收则使用显式兼容夹具。
 func _test_config_shape() -> void:
 	_assert_true(MAP_CONFIG.is_valid(), "第1章地图配置长度一致")
-	_assert_equal(MAP_CONFIG.layer_min_rooms, [2, 2, 1], "每层最少房间数")
-	_assert_equal(MAP_CONFIG.layer_max_rooms, [3, 3, 1], "每层最多房间数")
-	_assert_equal(MAP_CONFIG.rest_count_by_layer, [0, 1, 0], "第2层固定1个休息房")
+	_assert_equal(MAP_CONFIG.layer_min_rooms, [1,2,1,2,1,2,1], "固定七层且底部单个小怪")
+	_assert_equal(MAP_CONFIG.layer_max_rooms, MAP_CONFIG.layer_min_rooms, "房间数量没有浮动")
+	_assert_equal(MAP_CONFIG.max_random_rest_rooms, 2, "休息房上限为两个")
 
 
 # 相同 seed 与配置必须生成完全一致的地图结构和房型。
@@ -189,12 +189,19 @@ func _test_enemy_cache() -> void:
 	_assert_equal(state.get_enemy_id(room.id), "enemy_turtle", "敌人缓存往返一致")
 
 
-# 使用指定 seed 生成一张地图的公共入口。
+# 显式重现旧三层配置，保留旧状态转换与休息使用测试；新规则由七层测试全面验收。
 func _generate(seed_value: int) -> MapState:
 	var generator = MAP_GENERATOR.new()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
-	return generator.generate(MAP_CONFIG, rng)
+	var legacy: Resource = MAP_CONFIG.duplicate()
+	legacy.layer_min_rooms.assign([2,2,1])
+	legacy.layer_max_rooms.assign([3,3,1])
+	legacy.elite_chance_by_layer.assign([0.0,0.5,0.0])
+	legacy.rest_count_by_layer.assign([0,1,0])
+	legacy.max_random_rest_rooms = 0
+	legacy.eligible_rest_layers.clear()
+	return generator.generate(legacy, rng)
 
 
 # 通用相等断言。

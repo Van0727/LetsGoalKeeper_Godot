@@ -177,6 +177,9 @@ func _run() -> void:
 	battle_screen._on_end_turn_pressed()
 	await process_frame
 	_assert_equal(battle_screen.controller.turn_number, previous_turn + 1, "结束回合后推进回合")
+	# 数字与阶段拆开显示后，仍须跟随真实回合推进，不出现写死的总回合数。
+	_assert_equal(battle_screen.turn_label.text, str(previous_turn + 1), "回合底板同步新回合数字")
+	_assert_equal(battle_screen.phase_label.text, battle_screen.controller.get_phase_text(), "顶部阶段同步战斗状态")
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "新回合重新抽三张")
 	_assert_equal(battle_screen.controller.player.energy, 3, "新回合回满能量")
 

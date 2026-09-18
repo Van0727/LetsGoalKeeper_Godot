@@ -13,8 +13,11 @@ extends Resource
 @export var layer_max_rooms: Array[int] = []
 # 每层战斗房成为精英房的概率（0~1），休息房与 Boss 房不参与掷点。
 @export var elite_chance_by_layer: Array[float] = []
-# 每层固定插入的休息房数量（本局首版：第2层固定1个）。
+# 兼容旧地图配置的固定休息房数量；随机模式要求全部为零，避免两种来源叠加。
 @export var rest_count_by_layer: Array[int] = []
+# 新地图从允许层中随机选择0～上限个休息房，每层最多一个且相邻层不能同时出现。
+@export_range(0, 2, 1) var max_random_rest_rooms := 0
+@export var eligible_rest_layers: Array[int] = []
 
 
 # 校验层配置结构和逐层数值，防止空层、反向随机范围或多个 Boss 进入运行时。
@@ -52,4 +55,20 @@ func is_valid() -> bool:
 	if rest_count_by_layer[last_index] != 0:
 		push_error("第%d章Boss层不能配置休息房" % chapter)
 		return false
+	if max_random_rest_rooms < 0 or max_random_rest_rooms > 2:
+		push_error("随机休息房上限必须在0~2之间")
+		return false
+	if elite_chance_by_layer[0] != 0.0 or rest_count_by_layer[0] != 0:
+		push_error("地图第一层必须全部为普通小怪")
+		return false
+	var seen: Array[int] = []
+	for layer in eligible_rest_layers:
+		if layer < 3 or layer > 6 or layer >= sizes[0] or layer in seen:
+			push_error("随机休息房候选层必须在3~6、位于Boss前且无重复")
+			return false
+		seen.append(layer)
+	if max_random_rest_rooms > 0:
+		if eligible_rest_layers.is_empty() or rest_count_by_layer.any(func(value: int) -> bool: return value != 0):
+			push_error("随机休息房模式必须提供候选层，且不能配置固定休息房")
+			return false
 	return true

@@ -27,7 +27,7 @@ var music_volume := 0.8
 var sfx_volume := 0.8
 var language := "zh_CN"
 var window_mode := WindowMode.WINDOWED
-var metronome_style := MetronomeStyle.WAVEFORM
+var metronome_style := MetronomeStyle.CIRCLE
 var last_error := ""
 # 暂停菜单进入设置时暂存来源场景；该字段不写配置，应用重启后自然清空。
 var settings_return_scene := ""
@@ -66,7 +66,7 @@ func load_settings() -> bool:
 	sfx_volume = _normalize_volume(config.get_value("audio", "sfx_volume", sfx_volume))
 	language = _normalize_language(config.get_value("general", "language", language))
 	window_mode = _normalize_window_mode(config.get_value("display", "window_mode", window_mode))
-	# 旧版配置没有该字段时沿用重置后的波形默认值，避免升级后意外切回圆圈。
+	# 缺失或无效字段采用圆圈默认值；显式保存的波形偏好保持有效，不改变配置版本。
 	metronome_style = _normalize_metronome_style(
 		config.get_value("general", "metronome_style", metronome_style)
 	)
@@ -136,7 +136,7 @@ func _reset_defaults() -> void:
 	sfx_volume = 0.8
 	language = "zh_CN"
 	window_mode = WindowMode.WINDOWED
-	metronome_style = MetronomeStyle.WAVEFORM
+	metronome_style = MetronomeStyle.CIRCLE
 
 
 func _normalize_volume(value: Variant) -> float:
@@ -157,7 +157,7 @@ func _normalize_window_mode(value: Variant) -> int:
 
 func _normalize_metronome_style(value: Variant) -> int:
 	var style := int(value)
-	return style if style in [MetronomeStyle.CIRCLE, MetronomeStyle.WAVEFORM] else MetronomeStyle.WAVEFORM
+	return style if style in [MetronomeStyle.CIRCLE, MetronomeStyle.WAVEFORM] else MetronomeStyle.CIRCLE
 
 
 # Music 与 SFX 挂到 Master 下，当前及后续播放器可直接选择对应总线。

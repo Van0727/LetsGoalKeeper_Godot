@@ -89,14 +89,15 @@ alignment = 1
 
 [node name="Choice0" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(104, 146)
+custom_minimum_size = Vector2(104, 176)
+custom_maximum_size = Vector2(104, 176)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("card_left")
 flat = true
-autowrap_mode = 2
+autowrap_mode = 3
 clip_text = true
 text = "奖励一"
 
@@ -138,9 +139,10 @@ mouse_filter = 2
 [node name="ItemName0" type="Label" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_maximum_size = Vector2(88, 30)
+custom_minimum_size = Vector2(88, 32)
+custom_maximum_size = Vector2(88, 32)
 theme_override_font_sizes/font_size = 13
-autowrap_mode = 2
+autowrap_mode = 3
 max_lines_visible = 2
 clip_text = true
 horizontal_alignment = 1
@@ -149,10 +151,11 @@ mouse_filter = 2
 [node name="ItemDescription0" type="Label" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_maximum_size = Vector2(88, 38)
-theme_override_font_sizes/font_size = 10
-autowrap_mode = 2
-max_lines_visible = 3
+custom_minimum_size = Vector2(88, 72)
+custom_maximum_size = Vector2(88, 72)
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+max_lines_visible = 6
 clip_text = true
 horizontal_alignment = 1
 text_overrun_behavior = 3
@@ -160,14 +163,15 @@ mouse_filter = 2
 
 [node name="Choice1" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(104, 146)
+custom_minimum_size = Vector2(104, 176)
+custom_maximum_size = Vector2(104, 176)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("card_center")
 flat = true
-autowrap_mode = 2
+autowrap_mode = 3
 clip_text = true
 text = "奖励二"
 
@@ -209,9 +213,10 @@ mouse_filter = 2
 [node name="ItemName1" type="Label" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_maximum_size = Vector2(88, 30)
+custom_minimum_size = Vector2(88, 32)
+custom_maximum_size = Vector2(88, 32)
 theme_override_font_sizes/font_size = 13
-autowrap_mode = 2
+autowrap_mode = 3
 max_lines_visible = 2
 clip_text = true
 horizontal_alignment = 1
@@ -220,10 +225,11 @@ mouse_filter = 2
 [node name="ItemDescription1" type="Label" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_maximum_size = Vector2(88, 38)
-theme_override_font_sizes/font_size = 10
-autowrap_mode = 2
-max_lines_visible = 3
+custom_minimum_size = Vector2(88, 72)
+custom_maximum_size = Vector2(88, 72)
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+max_lines_visible = 6
 clip_text = true
 horizontal_alignment = 1
 text_overrun_behavior = 3
@@ -231,14 +237,15 @@ mouse_filter = 2
 
 [node name="Choice2" type="Button" parent="Margin/Layout/Choices"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(104, 146)
+custom_minimum_size = Vector2(104, 176)
+custom_maximum_size = Vector2(104, 176)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("card_right")
 flat = true
-autowrap_mode = 2
+autowrap_mode = 3
 clip_text = true
 text = "奖励三"
 
@@ -280,9 +287,10 @@ mouse_filter = 2
 [node name="ItemName2" type="Label" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_maximum_size = Vector2(88, 30)
+custom_minimum_size = Vector2(88, 32)
+custom_maximum_size = Vector2(88, 32)
 theme_override_font_sizes/font_size = 13
-autowrap_mode = 2
+autowrap_mode = 3
 max_lines_visible = 2
 clip_text = true
 horizontal_alignment = 1
@@ -291,15 +299,25 @@ mouse_filter = 2
 [node name="ItemDescription2" type="Label" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_maximum_size = Vector2(88, 38)
-theme_override_font_sizes/font_size = 10
-autowrap_mode = 2
-max_lines_visible = 3
+custom_minimum_size = Vector2(88, 72)
+custom_maximum_size = Vector2(88, 72)
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+max_lines_visible = 6
 clip_text = true
 horizontal_alignment = 1
 text_overrun_behavior = 3
 mouse_filter = 2
 
+[node name="RewardDetail" type="RichTextLabel" parent="Margin/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+theme_override_colors/default_color = Color(0.86, 0.91, 0.95, 1)
+theme_override_font_sizes/normal_font_size = 14
+bbcode_enabled = false
+scroll_active = true
+text = "点击奖励查看完整说明"
 [node name="ConfirmButton" type="Button" parent="Margin/Layout"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(156, 48)

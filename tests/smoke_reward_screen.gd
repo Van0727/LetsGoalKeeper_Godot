@@ -1,4 +1,4 @@
-# 奖励界面冒烟测试：验证战斗卡面复用、确认隐藏及飞出动画结束后才发放两类奖励。
+# 奖励界面冒烟测试：覆盖高清类型标签、MSDF 字体隔离、原卡尺寸及动画后发奖流程。
 extends SceneTree
 
 const REWARD_SCENE := preload("res://scenes/reward_screen.tscn")
@@ -27,6 +27,28 @@ func _run() -> void:
 	_assert_equal(screen.phase, screen.Phase.CARD, "奖励先进入卡牌步骤")
 	_assert_equal(screen.choices.size(), 3, "显示三张卡牌候选")
 	_assert_equal(screen.card_views[0].card_definition, screen.choices[0], "奖励卡牌复用战斗卡面并绑定候选定义")
+	await process_frame
+	for card_view in screen.card_views:
+		_assert_equal(card_view.size, Vector2(104, 176), "奖励卡面与原卡尺寸一致")
+		_assert_true(card_view.description_label.get_rect().end.y <= card_view.size.y, "卡牌说明位于卡面范围内")
+	# 三类标签及未知类别回退必须使用统一高清尺寸，槽位仍保留原来的 50×13。
+	var badge_view: BattleCardView = screen.card_views[0]
+	for category in [0, 1, 2, -1]:
+		var badge_texture: Texture2D = badge_view._get_card_type_badge(category)
+		_assert_equal(badge_texture.get_size(), Vector2(200, 52), "类型标签统一 200×52 导入尺寸")
+		if "--capture" in OS.get_cmdline_user_args():
+			_assert_equal(badge_texture.get_image().save_png("res://output/badge_%d.png" % category), OK, "保存标签回读预览")
+	_assert_equal(badge_view._get_card_type_badge(-1), badge_view.SKILL_BADGE, "未知类别安全回退技能标签")
+	_assert_equal(badge_view.category_badge.size, Vector2(50, 13), "类型标签显示槽保持不变")
+	_assert_equal(badge_view.category_badge.texture_filter, CanvasItem.TEXTURE_FILTER_LINEAR, "高清标签采用线性过滤")
+	await _capture("cards", screen)
+	_assert_equal(ThemeDB.fallback_font.get("oversampling"), 0.0, "奖励字体不修改全局默认字体")
+	var reward_font: Font = screen.card_views[0].description_label.get_theme_font("font")
+	_assert_equal(reward_font.get("multichannel_signed_distance_field"), true, "卡牌说明使用距离场字体")
+	var cost_font := screen.card_views[0].cost_label.get_theme_font("font") as FontVariation
+	_assert_true(is_equal_approx(cost_font.variation_embolden, 1.2), "费用字体保留原有加粗")
+	_assert_equal(cost_font.base_font.get("oversampling"), 2.0, "模拟加粗费用使用高采样栅格避免轮廓缺色")
+	_assert_equal(screen.item_description_labels[0].get_theme_font("font"), reward_font, "战利品与卡牌共享本页MSDF 字体")
 	var map_state = screen.run_state.map_state
 	var active_room: Dictionary = map_state.rooms_on_layer(1)[0]
 	var connected_room: Dictionary = map_state.room_by_id(active_room.connections[0])
@@ -44,6 +66,15 @@ func _run() -> void:
 	_assert_equal(screen.choice_buttons[0].pivot_offset_ratio, Vector2.ZERO, "左侧卡牌不叠加比例锚点")
 	await create_timer(screen.SELECT_SCALE_DURATION + 0.05).timeout
 	_assert_equal(screen.choice_buttons[0].scale, Vector2(1.5, 1.5), "预选卡牌缓动放大至1.5倍")
+	await _capture("selected_card", screen)
+	# 真实渲染模式逐类验收放大标签，结束后还原候选，避免视觉验收改变正式发奖内容。
+	if "--capture" in OS.get_cmdline_user_args():
+		var badge_preview: Resource = screen.choices[0].duplicate(true)
+		for category in [0, 1, 2]:
+			badge_preview.card_type = category
+			badge_view.configure(badge_preview, 0)
+			await _capture("selected_badge_%d" % category, screen)
+		badge_view.configure(screen.choices[0], 0)
 	_assert_equal(screen.phase, screen.Phase.CARD, "预选卡牌后停留在卡牌步骤")
 	screen._on_choice_pressed(2)
 	_assert_equal(
@@ -88,7 +119,7 @@ func _run() -> void:
 	_assert_equal(screen.choices.size(), 3, "普通战显示三件战利品候选")
 	# 遗物描述必须在固定的三等分槽位内换行，不能因长文本挤宽整个奖励行。
 	for index in range(screen.choice_buttons.size()):
-		var button := screen.choice_buttons[index]
+		var button: Button = screen.choice_buttons[index]
 		_assert_equal(button.autowrap_mode, TextServer.AUTOWRAP_WORD_SMART, "遗物按钮启用智能换行")
 		_assert_true(button.clip_text, "遗物按钮限制文本最小宽度")
 		_assert_equal(button.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "遗物按钮均分奖励行宽度")
@@ -98,12 +129,43 @@ func _run() -> void:
 		_assert_equal(screen.item_icons[index].expand_mode, TextureRect.EXPAND_IGNORE_SIZE, "遗物图标忽略原图尺寸")
 		_assert_equal(screen.item_icons[index].custom_minimum_size, Vector2(80, 48), "遗物图标使用固定小尺寸")
 		_assert_equal(screen.item_name_labels[index].max_lines_visible, 2, "遗物名称最多显示两行")
-		_assert_equal(screen.item_description_labels[index].max_lines_visible, 3, "遗物描述最多显示三行")
+		_assert_equal(screen.item_description_labels[index].max_lines_visible, 6, "遗物槽增加至六行摘要")
 		_assert_equal(screen.item_name_labels[index].text, screen.choices[index].display_name, "遗物名称由独立标签显示")
 		_assert_equal(screen.item_description_labels[index].text, screen.choices[index].description, "遗物描述由独立标签自动换行")
 	_assert_equal(active_room.state, MAP_STATE.RoomState.ATTAINABLE, "只领取卡牌时房间尚未完成")
 	_assert_equal(connected_room.state, MAP_STATE.RoomState.LOCKED, "奖励未完成时下一层保持锁定")
+	# 奖励池耗尽应保留继续入口并隐藏空槽，不展示上一阶段的说明。
+	for item in screen._service.get_all_items():
+		screen.run_state.owned_item_ids.append(item.id)
+	screen._show_item_choices()
+	_assert_true(screen.choices.is_empty(), "已拥有全部战利品时奖励池为空")
+	_assert_true(not screen.confirm_button.disabled, "池耗尽允许继续")
+	for button in screen.choice_buttons:
+		_assert_true(not button.visible, "池耗尽隐藏候选槽")
+	screen.run_state.owned_item_ids.clear()
+	screen._show_item_choices()
+	await process_frame
+	await process_frame
+	for label in screen.item_description_labels:
+		_assert_true(label.size.y >= 72, "战利品描述预留六行摘要高度")
+		_assert_true(label.get_rect().end.y <= label.get_parent().size.y, "战利品描述位于可见容器范围")
+	await _capture("items", screen)
+	# 使用独立副本验证长文本和空文本，避免修改共享正式物品资源。
+	var original_item: Resource = screen.choices[0]
+	var test_item: Resource = original_item.duplicate(true)
+	test_item.description = "完整说明边界测试：".repeat(40)
+	screen.choices[0] = test_item
 	screen._on_choice_pressed(0)
+	_assert_equal(screen.reward_detail.text, "%s\n%s" % [test_item.display_name, test_item.description], "详情保留全部长描述")
+	_assert_true(screen.reward_detail.scroll_active, "长说明可滚动阅读")
+	test_item.description = ""
+	screen._on_choice_pressed(0)
+	_assert_true(screen.reward_detail.text.ends_with("暂无效果说明"), "空说明有明确回退")
+	screen.choices[0] = original_item
+	screen._on_choice_pressed(0)
+	_assert_equal(screen.reward_detail.text, "%s\n%s" % [original_item.display_name, original_item.description], "切换选择刷新完整说明")
+	await create_timer(screen.SELECT_SCALE_DURATION + 0.05).timeout
+	await _capture("selected_item", screen)
 	_assert_equal(screen.run_state.owned_item_ids.size(), 0, "预选遗物时不立即加入本局")
 	await create_timer(screen.SELECT_SCALE_DURATION + 0.05).timeout
 	_assert_equal(screen.choice_buttons[0].scale, Vector2(1.5, 1.5), "预选遗物放大1.5倍")
@@ -127,6 +189,15 @@ func _run() -> void:
 		return
 	print("smoke_reward_screen: PASS")
 	quit()
+
+
+# 可选真实渲染验收：仅在显式传入 --capture 时保存场景截图，无头逻辑测试不读取空纹理。
+func _capture(stage: String, screen: Control) -> void:
+	if not "--capture" in OS.get_cmdline_user_args():
+		return
+	await RenderingServer.frame_post_draw
+	var image := screen.get_viewport().get_texture().get_image()
+	_assert_equal(image.save_png("res://output/reward_%s.png" % stage), OK, "奖励界面截图保存")
 
 
 # 通用相等断言。

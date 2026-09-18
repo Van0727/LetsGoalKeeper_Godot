@@ -13,6 +13,8 @@ enum JudgementGrade {
 
 @export var music: AudioStream
 @export_range(20.0, 300.0, 0.1) var bpm := 100.0
+# 首拍偏移对齐曲目实际起音，不是设备校准；基础鼓点经离线解码测得约 25ms，由战斗场景配置。
+# 判定、音符移动、缩放和光圈统一使用此值，禁止只平移 UI 导致视觉与判定不一致。
 @export_range(0.0, 60.0, 0.001) var first_beat_offset := 0.0
 @export_range(1, 16, 1) var beats_per_bar := 4
 # 节奏细分使用全音符分母表达：4 为四分音符、8 为八分音符，奖励品据此判断“1/8和更快”。

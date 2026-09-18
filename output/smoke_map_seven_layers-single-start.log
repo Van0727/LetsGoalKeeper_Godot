@@ -1,0 +1,53 @@
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: 随机休息房候选层必须在3~6、位于Boss前且无重复
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] is_valid (res://scripts/map/map_config.gd:67)
+       [1] generate (res://scripts/map/map_generator.gd:33)
+       [2] generate (res://tests/smoke_map_seven_layers.gd:20)
+       [3] _test_invalid_configs (res://tests/smoke_map_seven_layers.gd:91)
+       [4] _run (res://tests/smoke_map_seven_layers.gd:74)
+ERROR: 随机休息房候选层必须在3~6、位于Boss前且无重复
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] is_valid (res://scripts/map/map_config.gd:67)
+       [1] generate (res://scripts/map/map_generator.gd:33)
+       [2] generate (res://tests/smoke_map_seven_layers.gd:20)
+       [3] _test_invalid_configs (res://tests/smoke_map_seven_layers.gd:91)
+       [4] _run (res://tests/smoke_map_seven_layers.gd:74)
+ERROR: 随机休息房上限必须在0~2之间
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] is_valid (res://scripts/map/map_config.gd:59)
+       [1] generate (res://scripts/map/map_generator.gd:33)
+       [2] generate (res://tests/smoke_map_seven_layers.gd:20)
+       [3] _test_invalid_configs (res://tests/smoke_map_seven_layers.gd:91)
+       [4] _run (res://tests/smoke_map_seven_layers.gd:74)
+ERROR: 随机休息房模式必须提供候选层，且不能配置固定休息房
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] is_valid (res://scripts/map/map_config.gd:72)
+       [1] generate (res://scripts/map/map_generator.gd:33)
+       [2] generate (res://tests/smoke_map_seven_layers.gd:20)
+       [3] _test_invalid_configs (res://tests/smoke_map_seven_layers.gd:91)
+       [4] _run (res://tests/smoke_map_seven_layers.gd:74)
+ERROR: 地图第一层必须全部为普通小怪
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] is_valid (res://scripts/map/map_config.gd:62)
+       [1] generate (res://scripts/map/map_generator.gd:33)
+       [2] generate (res://tests/smoke_map_seven_layers.gd:20)
+       [3] _test_invalid_configs (res://tests/smoke_map_seven_layers.gd:91)
+       [4] _run (res://tests/smoke_map_seven_layers.gd:74)
+ERROR: 第1章地图配置的层数组长度不一致
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] is_valid (res://scripts/map/map_config.gd:27)
+       [1] generate (res://scripts/map/map_generator.gd:33)
+       [2] generate (res://tests/smoke_map_seven_layers.gd:20)
+       [3] _test_invalid_configs (res://tests/smoke_map_seven_layers.gd:91)
+       [4] _run (res://tests/smoke_map_seven_layers.gd:74)
+smoke_map_seven_layers: PASS (3 chapters x 256 seeds)

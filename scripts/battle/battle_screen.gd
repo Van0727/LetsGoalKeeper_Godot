@@ -51,6 +51,8 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var controller: BattleController = %BattleController
 @onready var pause_overlay: CanvasLayer = $PauseOverlay
 @onready var background: TextureRect = $Background
+# 六束舞台灯光作为背景子层，随背景缩放且不遮挡角色、卡牌或输入。
+@onready var stage_lights: Control = $Background/StageLights
 @onready var player_display: CharacterDisplay = %PlayerDisplay
 @onready var owned_item_icons: HFlowContainer = %OwnedItemIcons
 @onready var item_detail_popup: PanelContainer = %ItemDetailPopup
@@ -67,8 +69,10 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var rhythm_feedback: Control = %RhythmFeedback
 # 中央波形只响应拍点信号，避免拍内进度形成持续呼吸动画。
 @onready var rhythm_waveform: Control = %RhythmWaveform
+@onready var rhythm_accent_waveform: Control = %RhythmAccentWaveform
 @onready var shot_type_label: Label = %ShotTypeLabel
 @onready var turn_label: Label = %TurnLabel
+@onready var phase_label: Label = %PhaseLabel
 @onready var intent_label: Label = %IntentLabel
 @onready var energy_label: Label = %EnergyLabel
 @onready var status_label: Label = %StatusLabel
@@ -172,20 +176,27 @@ func _ready() -> void:
 	start_new_battle()
 
 
-# 节拍圆环每帧读取音频时钟，仅作为视觉提示；松手判定不会依赖这段 UI 更新。
+# 音符、装饰波形与舞台灯共用连续音频时钟；只更新表现，不影响松手判定或战斗状态。
 func _process(_delta: float) -> void:
 	if rhythm_clock != null and rhythm_feedback != null:
-		rhythm_feedback.set_beat_progress(rhythm_clock.get_beat_progress())
+		var music_time: float = rhythm_clock.get_music_time()
+		stage_lights.set_music_timing(music_time, rhythm_clock.get_beat_duration(), rhythm_clock.first_beat_offset)
+		rhythm_feedback.set_music_timing(music_time, rhythm_clock.get_beat_duration(), rhythm_clock.first_beat_offset, rhythm_clock.beats_per_bar)
+		# 装饰波形与扩散圈共用同一音频时间，保持暂停、循环和模式切换后的相位一致。
+		rhythm_accent_waveform.set_music_timing(music_time, rhythm_clock.get_beat_duration(), rhythm_clock.first_beat_offset)
 
 
-# 圆圈和波形复用中央区域且严格互斥；缺少设置服务的独立场景测试默认展示波形。
+# 圆圈节奏条和波形严格互斥；独立场景默认圆圈，已保存的合法波形偏好继续有效。
 func _apply_metronome_style() -> void:
 	var settings_service := get_node_or_null("/root/SettingsService")
-	var use_circle := false
+	var use_circle := true
 	if settings_service != null:
 		use_circle = int(settings_service.metronome_style) == int(settings_service.MetronomeStyle.CIRCLE)
 	rhythm_feedback.set_circle_enabled(use_circle)
 	rhythm_waveform.visible = not use_circle
+	rhythm_accent_waveform.visible = use_circle
+	# 波形保留原底图；圆圈模式只显示新节奏线，避免旧图片叠在新音符后面。
+	$RhythmLaneArt.visible = not use_circle
 
 
 # 战斗背景直接使用完整图片；保持白色调制可避免运行时染色破坏原始美术。
@@ -782,7 +793,9 @@ func _refresh_all() -> void:
 	player_display.set_shield(controller.player.shield)
 	enemy_display.set_health(controller.enemy.health)
 	enemy_display.set_shield(controller.enemy.shield)
-	turn_label.text = "第 %d 回合 · %s" % [controller.turn_number, controller.get_phase_text()]
+	# 当前玩法没有固定总回合数；独立底板只显示真实回合，行动阶段保留在顶部文字区。
+	turn_label.text = str(controller.turn_number)
+	phase_label.text = controller.get_phase_text()
 	intent_label.text = "意图：%s" % controller.get_enemy_intent_text()
 	# 费用面板由独立背景、闪电与动态数字组成；临时费用允许超过上限，保留实际数值。
 	energy_label.text = "%d/%d" % [controller.player.energy, controller.player.max_energy]

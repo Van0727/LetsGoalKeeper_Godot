@@ -1,4 +1,4 @@
-# 阶段 7 地图与休息房界面冒烟测试：验证完成后才推进路线，以及休息状态跨场景保持。
+# 地图与休息房界面测试：真实七层路线完成后才推进，随机休息层的使用状态跨场景保持。
 extends SceneTree
 
 const MAP_SCENE := preload("res://scenes/map_screen.tscn")
@@ -36,7 +36,7 @@ func _run() -> void:
 	_assert_equal(map_screen.connections_layer._room_buttons.size(), state.rooms.size(), "连线表现层取得全部房间按钮")
 
 	# 完整走一遍：开始房间不解锁，完成后只解锁真实连线，再完成 Boss。
-	var boss_id: String = state.rooms_on_layer(3)[0].id
+	var boss_id: String = state.rooms_on_layer(state.layer_count)[0].id
 	var layer1_first: Dictionary = state.rooms_on_layer(1)[0]
 	state.begin_room(layer1_first.id)
 	map_screen.refresh_ui()
@@ -51,8 +51,15 @@ func _run() -> void:
 	state.begin_room(layer2_first.id)
 	state.complete_current_room()
 	map_screen.refresh_ui()
-	_assert_true(not map_screen.room_buttons[boss_id].disabled, "进入第2层后Boss按钮可用")
-	state.begin_room(state.rooms_on_layer(3)[0].id)
+	# 七层地图必须完成全部前置层，不能沿用旧三层的第二层后直接进入Boss。
+	for layer in range(3, state.layer_count):
+		var next: Dictionary = state.get_attainable_rooms()[0]
+		_assert_equal(next.layer, layer, "按层推进七层地图")
+		state.begin_room(next.id)
+		state.complete_current_room()
+	map_screen.refresh_ui()
+	_assert_true(not map_screen.room_buttons[boss_id].disabled, "完成全部前置层后Boss按钮可用")
+	state.begin_room(boss_id)
 	_assert_true(not state.boss_visited(), "Boss开始但未完成时不显示完成层")
 	state.complete_current_room()
 	map_screen.refresh_ui()
@@ -60,21 +67,22 @@ func _run() -> void:
 	map_screen.free()
 
 	# 休息房治疗：使用状态写入地图，重建场景后仍不能重复领取。
-	run_state.start_new_run(778)
-	run_state.player_hp = 70
 	var rest_room: Dictionary = {}
-	for room in run_state.map_state.rooms_on_layer(2):
-		if room.type == MAP_STATE.RoomType.REST:
-			rest_room = room
+	# 合法地图允许零个休息房；搜索固定种子区间选择有休息房的测试场景。
+	for seed_value in range(778, 900):
+		run_state.start_new_run(seed_value)
+		for room in run_state.map_state.rooms:
+			if room.type == MAP_STATE.RoomType.REST:
+				rest_room = room
+				break
+		if not rest_room.is_empty():
 			break
-	var rest_source: Dictionary = {}
-	for room in run_state.map_state.rooms_on_layer(1):
-		if rest_room.id in room.connections:
-			rest_source = room
-			break
-	run_state.map_state.begin_room(rest_source.id)
-	run_state.map_state.complete_current_room()
-	run_state.map_state.begin_room(rest_room.id)
+	_assert_true(not rest_room.is_empty(), "固定种子范围内必须覆盖休息房")
+	if rest_room.is_empty():
+		quit(1)
+		return
+	run_state.player_hp = 70
+	_enter_rest_by_route(run_state.map_state, rest_room)
 	var rest_screen := REST_SCENE.instantiate()
 	root.add_child(rest_screen)
 	await process_frame
@@ -99,6 +107,21 @@ func _run() -> void:
 	print("smoke_map_screen: PASS")
 	quit()
 
+
+# 从目标休息房反向选择真实父节点，再按顺序完成前置层，避免跳层进入造成假阳性。
+func _enter_rest_by_route(state: RefCounted, rest: Dictionary) -> void:
+	var path: Array[Dictionary] = [rest]
+	var target_id: String = rest.id
+	for layer in range(rest.layer - 1, 0, -1):
+		for candidate in state.rooms_on_layer(layer):
+			if target_id in candidate.connections:
+				path.push_front(candidate)
+				target_id = candidate.id
+				break
+	for room in path:
+		state.begin_room(room.id)
+		if room.id != rest.id:
+			state.complete_current_room()
 
 # 统计当前启用（可进）的房间按钮数量。
 func _enabled_button_count(map_screen) -> int:

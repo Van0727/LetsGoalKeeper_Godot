@@ -6,10 +6,10 @@ extends DraggableCard
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 # 默认预览使用新攻守兼备成品；同步卡牌定义，避免工具初始化覆盖为旧插画。
 const EDITOR_PREVIEW_CARD := preload("res://data/cards/card_attack_and_defend.tres")
-# 类型徽章直接裁自已确认参考图；保留原图英文和配色用于快速扫读。
-const ATTACK_BADGE := preload("res://assets/ui/cards/card_type_attack.png")
-const DEFENSE_BADGE := preload("res://assets/ui/cards/card_type_defense.png")
-const SKILL_BADGE := preload("res://assets/ui/cards/card_type_skill.png")
+# 类型徽章以 200×52 矢量路径重建原英文与配色；显示槽不变，选中放大时不再放大低清截图。
+const ATTACK_BADGE := preload("res://assets/ui/cards/card_type_attack_hires.svg")
+const DEFENSE_BADGE := preload("res://assets/ui/cards/card_type_defense_hires.svg")
+const SKILL_BADGE := preload("res://assets/ui/cards/card_type_skill_hires.svg")
 
 var card_definition: Resource
 var hand_index := -1
@@ -57,7 +57,10 @@ func _ready() -> void:
 func _create_outer_glow() -> void:
 	_glow_style = StyleBoxFlat.new()
 	_glow_style.draw_center = false
-	_glow_style.set_corner_radius_all(10)
+	# 橙色底板为 292×456，圆角约 40 源像素；映射到 104×176 卡面约为 15 逻辑像素。
+	# 原来的 10 像素圆角偏小，会让光晕在四角露出方形轮廓。
+	_glow_style.set_corner_radius_all(15)
+	_glow_style.corner_detail = 12
 	_glow_style.shadow_offset = Vector2.ZERO
 	var glow := Panel.new()
 	glow.name = "OuterGlow"
@@ -68,11 +71,11 @@ func _create_outer_glow() -> void:
 	_update_outer_glow()
 
 
-# 常态铺一层稍明显的青色光晕；悬停或拖拽进一步增强，不遮挡文字与插画。
+# 使用参考图的暖橙金色光晕；保留当前常态强度，悬停或拖拽时增强。
 func _update_outer_glow() -> void:
 	var emphasized := _glow_hovered or _glow_dragging
-	_glow_style.shadow_size = 11 if emphasized else 8
-	_glow_style.shadow_color = Color(0.05, 0.85, 1.0, 0.56 if emphasized else 0.38)
+	_glow_style.shadow_size = 9 if emphasized else 8
+	_glow_style.shadow_color = Color(1.0, 0.48, 0.12, 0.56 if emphasized else 0.25)
 
 
 # 绑定手牌中的定义与稳定位置；运行时只读取 Resource，不回写配置。
@@ -97,7 +100,7 @@ func _apply_illustration(illustration: Texture2D) -> void:
 	illustration_rect.visible = illustration != null
 
 
-# 三类使用原图徽章；能力与未知类别安全回退到 SKILL，避免出现空白类别区。
+# 三类使用统一尺寸高清徽章；能力与未知类别安全回退到 SKILL，避免出现空白类别区。
 func _get_card_type_badge(card_type: int) -> Texture2D:
 	match card_type:
 		CARD_DEFINITION.CardType.ATTACK:

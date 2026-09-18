@@ -48,9 +48,9 @@ func _run() -> void:
 	quit()
 
 
-# 走完前两层并进入当前章 Boss；普通房只推进路线，不模拟其奖励数值。
+# 走完当前地图全部前置层再进入 Boss，兼容新七层和旧快照地图；前置房只推进路线。
 func _enter_current_boss(run_state: Node) -> void:
-	for layer in [1, 2]:
+	for layer in range(1, run_state.map_state.layer_count):
 		var room: Dictionary = run_state.map_state.get_attainable_rooms()[0]
 		_assert_equal(room.layer, layer, "按顺序进入第%d层" % layer)
 		run_state.map_state.begin_room(room.id)

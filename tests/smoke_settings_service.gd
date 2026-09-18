@@ -1,4 +1,4 @@
-# 设置功能冒烟测试：验证配置往返、损坏降级、数值边界、音频总线应用和设置界面绑定。
+# 设置功能冒烟测试：验证默认圆圈、已有波形偏好往返、损坏降级、音频总线及设置界面绑定。
 extends SceneTree
 
 const SETTINGS_SERVICE_SCRIPT := preload("res://autoload/settings_service.gd")
@@ -16,8 +16,9 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_cleanup()
+	_test_circle_defaults()
 	_test_round_trip_and_boundaries()
-	_test_legacy_config_defaults_to_waveform()
+	_test_legacy_config_defaults_to_circle()
 	_test_corrupt_config_fallback()
 	await _test_audio_bus_routing()
 	await _test_settings_screen()
@@ -49,6 +50,9 @@ func _test_round_trip_and_boundaries() -> void:
 	_assert_equal(restored.language, "en", "语言往返")
 	_assert_equal(restored.window_mode, restored.WindowMode.FULLSCREEN, "窗口模式往返")
 	_assert_equal(restored.metronome_style, restored.MetronomeStyle.CIRCLE, "节拍器样式往返")
+	source.set_metronome_style(source.MetronomeStyle.WAVEFORM)
+	_assert_true(source.save_settings() and restored.load_settings(), "波形偏好可保存并读回")
+	_assert_equal(restored.metronome_style, restored.MetronomeStyle.WAVEFORM, "已保存的波形偏好不被新默认值覆盖")
 	restored.settings_return_scene = "res://scenes/battle.tscn"
 	_assert_equal(
 		restored.take_settings_return_scene("res://scenes/main_menu.tscn"),
@@ -64,8 +68,19 @@ func _test_round_trip_and_boundaries() -> void:
 	restored.free()
 
 
-# 版本号相同但尚未包含节拍器字段的旧配置必须继续可读，并自动采用新的波形默认值。
-func _test_legacy_config_defaults_to_waveform() -> void:
+# 新配置和非法样式都默认圆圈，不写正式用户配置，也不更改稳定枚举。
+func _test_circle_defaults() -> void:
+	var service = SETTINGS_SERVICE_SCRIPT.new()
+	service.settings_path = _path
+	_assert_true(not service.load_settings(), "缺失设置文件采用默认配置")
+	_assert_equal(service.metronome_style, service.MetronomeStyle.CIRCLE, "新配置默认圆圈")
+	service.set_metronome_style(99)
+	_assert_equal(service.metronome_style, service.MetronomeStyle.CIRCLE, "非法样式回退圆圈")
+	service.free()
+
+
+# 版本号相同但尚未包含节拍器字段的旧配置必须继续可读，并自动采用新的圆圈默认值。
+func _test_legacy_config_defaults_to_circle() -> void:
 	var config := ConfigFile.new()
 	config.set_value("meta", "settings_version", 1)
 	config.set_value("general", "language", "en")
@@ -73,7 +88,7 @@ func _test_legacy_config_defaults_to_waveform() -> void:
 	var service = SETTINGS_SERVICE_SCRIPT.new()
 	service.settings_path = _path
 	_assert_true(service.load_settings(), "缺少节拍器字段的旧配置仍可读取")
-	_assert_equal(service.metronome_style, service.MetronomeStyle.WAVEFORM, "旧配置默认使用波形")
+	_assert_equal(service.metronome_style, service.MetronomeStyle.CIRCLE, "旧配置默认使用圆圈")
 	service.free()
 
 
@@ -89,7 +104,7 @@ func _test_corrupt_config_fallback() -> void:
 	_assert_true(not service.load_settings(), "损坏配置安全降级")
 	_assert_equal(service.master_volume, 1.0, "损坏配置恢复默认音量")
 	_assert_equal(service.language, "zh_CN", "损坏配置恢复默认语言")
-	_assert_equal(service.metronome_style, service.MetronomeStyle.WAVEFORM, "损坏配置恢复默认波形")
+	_assert_equal(service.metronome_style, service.MetronomeStyle.CIRCLE, "损坏配置恢复默认圆圈")
 	service.free()
 
 
@@ -125,7 +140,7 @@ func _test_settings_screen() -> void:
 	_assert_equal(screen.sfx_slider.value, 40.0, "界面显示音效音量")
 	_assert_equal(screen.language_option.item_count, 2, "界面提供两种语言")
 	_assert_equal(screen.window_option.item_count, 2, "界面提供窗口与全屏")
-	_assert_true(screen.waveform_metronome_check.button_pressed, "设置界面默认选择波形")
+	_assert_true(screen.waveform_metronome_check.button_pressed, "设置界面回显已保存的波形偏好")
 	_assert_true(not screen.circle_metronome_check.button_pressed, "圆圈与波形选项保持互斥")
 	screen.circle_metronome_check.button_pressed = true
 	screen._on_circle_metronome_pressed()

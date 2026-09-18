@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://ngfhttiei28r"]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_attack_and_defend_rounded_v1.png" id="3_illustration"]
 
 [ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
 [ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Texture2D" uid="uid://4tsu4ao2a6c1" path="res://assets/ui/cards/card_attack_and_defend_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_8omkn"]
 script = ExtResource("2_effect")
@@ -18,11 +18,11 @@ amount = 5
 script = ExtResource("1_card")
 id = 2001
 card_id = "card_attack_and_defend"
-illustration = ExtResource("3_illustration")
 display_name = "攻守兼备"
 description = "造成5点伤害，获得5点护盾"
 archetype_hint = "通用·攻防一体"
 cost = 2
+illustration = ExtResource("3_illustration")
 card_type = 2
 shot_type = 1
 effects = Array[Resource]([SubResource("Resource_8omkn"), SubResource("Resource_jo3so")])

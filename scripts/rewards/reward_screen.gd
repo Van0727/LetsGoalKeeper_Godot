@@ -1,4 +1,4 @@
-# 两步奖励界面：卡牌复用战斗卡面，卡牌与遗物均在确认后先上抬、再下坠离屏后发放。
+# 两步奖励界面：按原尺寸复用战斗卡面，以局部 MSDF 字体保持放大清晰；确认后离屏再发放。
 extends Control
 
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
@@ -19,6 +19,7 @@ enum Phase { CARD, ITEM }
 @onready var item_name_labels: Array[Label] = [%ItemName0, %ItemName1, %ItemName2]
 @onready var item_description_labels: Array[Label] = [%ItemDescription0, %ItemDescription1, %ItemDescription2]
 @onready var confirm_button: Button = %ConfirmButton
+@onready var reward_detail: RichTextLabel = %RewardDetail
 
 var phase := Phase.CARD
 var choices: Array[Resource] = []
@@ -29,6 +30,8 @@ var _is_scene_transitioning := false
 var _is_reward_animating := false
 var _selected_index := -1
 var _choice_scale_tweens: Dictionary = {}
+# 按原字体共享本页副本，避免每个标签重复建立字形缓存，也不改动全局或战斗字体。
+var _reward_font_copies: Dictionary = {}
 
 const SELECTED_SCALE := Vector2(1.5, 1.5)
 const NORMAL_SCALE := Vector2.ONE
@@ -38,6 +41,7 @@ const REWARD_RISE_DURATION := 0.16
 const REWARD_FALL_DURATION := 0.42
 const REWARD_FLY_DURATION := REWARD_RISE_DURATION + REWARD_FALL_DURATION
 const REWARD_RISE_DISTANCE := 72.0
+const REWARD_FONT_MSDF_SIZE := 96
 
 
 # 奖励随机数由本局seed和已胜场数派生，相同进度可复现同一组候选。
@@ -48,12 +52,49 @@ func _ready() -> void:
 		run_state = RUN_STATE_SCRIPT.new()
 		add_child(run_state)
 	_rng.seed = run_state.seed + run_state.battles_won * 1009 + 61
+	for button in choice_buttons:
+		_prepare_scaled_fonts(button)
 	for index in range(choice_buttons.size()):
 		choice_buttons[index].pressed.connect(_on_choice_pressed.bind(index))
 		# 战斗卡面仅作为奖励视觉复用；输入由外层按钮接管，禁止拖拽和出牌。
 		card_views[index].set_interaction_enabled(false)
 	confirm_button.pressed.connect(_on_confirm_pressed)
 	_show_card_choices()
+
+
+# 只处理会随奖励槽缩放的文字；领取副本继承字体覆盖，动画中也不会回到低分辨率字形。
+func _prepare_scaled_fonts(node: Node) -> void:
+	if node is Label:
+		var label := node as Label
+		label.add_theme_font_override("font", _copy_reward_font(label.get_theme_font("font")))
+	for child in node.get_children():
+		_prepare_scaled_fonts(child)
+
+
+# 复制现有字体及回退链；费用的模拟加粗可能产生重叠轮廓，单独保留高采样栅格渲染。
+func _copy_reward_font(source: Font) -> Font:
+	if _reward_font_copies.has(source):
+		return _reward_font_copies[source]
+	var copy := source.duplicate() as Font
+	_reward_font_copies[source] = copy
+	if copy is FontVariation:
+		var variation := copy as FontVariation
+		var base := variation.base_font if variation.base_font != null else ThemeDB.fallback_font
+		if not is_zero_approx(variation.variation_embolden) and (base is FontFile or base is SystemFont):
+			# MSDF 不支持重叠轮廓；避免费用数字出现内部缺色，同时不改变原来的粗细。
+			variation.base_font = base.duplicate() as Font
+			variation.base_font.set("oversampling", 2.0)
+		else:
+			variation.base_font = _copy_reward_font(base)
+	elif copy is FontFile or copy is SystemFont:
+		# 距离场覆盖选中放大及缓动超调；提高距离场精度以保留中文笔画，保持原字号和换行。
+		copy.set("multichannel_signed_distance_field", true)
+		copy.set("msdf_size", REWARD_FONT_MSDF_SIZE)
+	var fallbacks: Array[Font] = []
+	for fallback in source.fallbacks:
+		fallbacks.append(_copy_reward_font(fallback))
+	copy.fallbacks = fallbacks
+	return copy
 
 
 # 展示当前战斗级别对应的三张候选卡。
@@ -91,6 +132,9 @@ func _refresh_buttons() -> void:
 			scale_tween.kill()
 	_choice_scale_tweens.clear()
 	_selected_index = -1
+	# 每次切换候选清空旧详情；固定高度滚动区避免长描述推动奖励行及确认按钮。
+	reward_detail.text = "点击卡牌查看完整说明" if phase == Phase.CARD else "点击战利品查看完整说明"
+	reward_detail.scroll_to_line(0)
 	confirm_button.self_modulate = Color.WHITE
 	confirm_button.text = "确认获得"
 	confirm_button.disabled = true
@@ -135,6 +179,13 @@ func _on_choice_pressed(index: int) -> void:
 	if index < 0 or index >= choices.size():
 		return
 	_selected_index = index
+	# 不启用 BBCode，配表中的括号等文本按原文显示；空描述给出明确回退。
+	var definition := choices[index]
+	var description: String = definition.description
+	if description.strip_edges().is_empty():
+		description = "暂无效果说明"
+	reward_detail.text = "%s\n%s" % [definition.display_name, description]
+	reward_detail.scroll_to_line(0)
 	for button_index in range(choice_buttons.size()):
 		var button := choice_buttons[button_index]
 		var is_selected := button_index == _selected_index

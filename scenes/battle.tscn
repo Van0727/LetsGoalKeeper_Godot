@@ -1,53 +1,34 @@
-[gd_scene load_steps=34 format=3]
+[gd_scene format=3 uid="uid://kvdtoagyl8k2"]
 
-[ext_resource type="Script" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
-[ext_resource type="Script" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
+[ext_resource type="Script" uid="uid://0sqy2h3jprll" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
+[ext_resource type="Script" uid="uid://ivhrdkoixvyp" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
 [ext_resource type="PackedScene" path="res://scenes/character_display.tscn" id="3_display"]
 [ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="4_pause"]
-[ext_resource type="Script" path="res://scripts/battle/drag_threshold_guide.gd" id="5_guide"]
+[ext_resource type="Script" uid="uid://dstsf6onv5y00" path="res://scripts/battle/drag_threshold_guide.gd" id="5_guide"]
 [ext_resource type="PackedScene" path="res://scenes/ball_flight.tscn" id="6_ball"]
-[ext_resource type="Script" path="res://scripts/battle/rhythm_clock.gd" id="7_rhythm_clock"]
-[ext_resource type="Script" path="res://scripts/battle/rhythm_feedback.gd" id="8_rhythm_feedback"]
-[ext_resource type="AudioStream" path="res://sound/bgm/bg_basicDrum2_bpm100.mp3" id="9_music"]
-[ext_resource type="Script" path="res://scripts/battle/rhythm_waveform.gd" id="10_waveform"]
-[ext_resource type="Script" path="res://scripts/battle/qte_popup.gd" id="11_qte"]
-[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/battle_stage_background_v1.png" id="12_background_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/top_status.png" id="13_top_status_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_lane.png" id="15_rhythm_lane_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/resource_and_combo.png" id="16_resource_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/player_status.png" id="18_player_status_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/action_button.png" id="19_action_button_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/overlay_dark.png" id="20_overlay_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/drag_guide.png" id="21_drag_guide_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_target_ring.png" id="22_target_ring_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_moving_ring.png" id="23_moving_ring_art"]
-[ext_resource type="Texture2D" path="res://assets/placeholders/rhythm_flash.png" id="24_rhythm_flash_art"]
-[ext_resource type="Texture2D" path="res://assets/ui/energy_background_panel.png" id="25_energy_panel"]
-[ext_resource type="Texture2D" path="res://assets/ui/energy_lightning_icon.png" id="26_energy_icon"]
-
-[sub_resource type="StyleBoxEmpty" id="Style_pitch_clear"]
-
-[sub_resource type="StyleBoxTexture" id="Style_player_status"]
-texture = ExtResource("18_player_status_art")
-
-[sub_resource type="StyleBoxTexture" id="Style_energy"]
-texture = ExtResource("16_resource_art")
-
-[sub_resource type="StyleBoxTexture" id="Style_drag_prompt"]
-texture = ExtResource("13_top_status_art")
-
-[sub_resource type="StyleBoxTexture" id="Style_result"]
-texture = ExtResource("13_top_status_art")
-
-[sub_resource type="StyleBoxTexture" id="Style_gm_panel"]
-content_margin_left = 18.0
-content_margin_top = 14.0
-content_margin_right = 18.0
-content_margin_bottom = 14.0
-texture = ExtResource("13_top_status_art")
+[ext_resource type="Script" uid="uid://d2og83hjwtbaf" path="res://scripts/battle/rhythm_clock.gd" id="7_rhythm_clock"]
+[ext_resource type="Script" uid="uid://bja7wb0jlsy7b" path="res://scripts/battle/rhythm_feedback.gd" id="8_rhythm_feedback"]
+[ext_resource type="AudioStream" uid="uid://c7ve7fwgjlskr" path="res://sound/bgm/bg_basicDrum2_bpm100.mp3" id="9_music"]
+[ext_resource type="Script" path="res://scripts/battle/rhythm_accent_waveform.gd" id="28_accent_waveform"]
+[ext_resource type="Script" uid="uid://c0bv06ogioc3v" path="res://scripts/battle/rhythm_waveform.gd" id="10_waveform"]
+[ext_resource type="Script" uid="uid://dp2rjeesedydd" path="res://scripts/battle/qte_popup.gd" id="11_qte"]
+[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/battle_stage_background_v2.png" id="12_background_art"]
+[ext_resource type="Script" path="res://scripts/battle/stage_lights.gd" id="29_stage_lights"]
+[ext_resource type="Texture2D" uid="uid://cdd7onxysf5gb" path="res://assets/placeholders/top_status.png" id="13_top_status_art"]
+[ext_resource type="Texture2D" uid="uid://0pvr5eh4qvyt" path="res://assets/placeholders/rhythm_lane.png" id="15_rhythm_lane_art"]
+[ext_resource type="Texture2D" uid="uid://dsd3baeberqwu" path="res://assets/placeholders/resource_and_combo.png" id="16_resource_art"]
+[ext_resource type="Texture2D" uid="uid://b0752ypjdjx8n" path="res://assets/placeholders/player_status.png" id="18_player_status_art"]
+[ext_resource type="Texture2D" uid="uid://bwqr7t5tx00jq" path="res://assets/placeholders/action_button.png" id="19_action_button_art"]
+[ext_resource type="Texture2D" uid="uid://6uivojbpsb5v" path="res://assets/placeholders/overlay_dark.png" id="20_overlay_art"]
+[ext_resource type="Texture2D" uid="uid://beb7i0waldixb" path="res://assets/placeholders/drag_guide.png" id="21_drag_guide_art"]
+[ext_resource type="Texture2D" uid="uid://o7ps4gypkw7q" path="res://assets/ui/energy_background_panel.png" id="25_energy_panel"]
+[ext_resource type="Texture2D" uid="uid://bam38e2g4w8bv" path="res://assets/ui/energy_lightning_icon.png" id="26_energy_icon"]
+[ext_resource type="Texture2D" uid="uid://c64hcak6vtxr5" path="res://assets/ui/turn_panel_v1.png" id="27_turn_panel"]
 
 [sub_resource type="StyleBoxTexture" id="Style_button"]
 texture = ExtResource("19_action_button_art")
+
+[sub_resource type="StyleBoxEmpty" id="Style_pitch_clear"]
 
 [sub_resource type="StyleBoxFlat" id="Style_card_warning"]
 bg_color = Color(1, 1, 1, 1)
@@ -56,7 +37,20 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxTexture" id="Style_drag_prompt"]
+texture = ExtResource("13_top_status_art")
+
+[sub_resource type="StyleBoxTexture" id="Style_energy"]
+texture = ExtResource("16_resource_art")
+
+[sub_resource type="StyleBoxTexture" id="Style_player_status"]
+texture = ExtResource("18_player_status_art")
+
 [sub_resource type="StyleBoxFlat" id="Style_item_detail"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
 bg_color = Color(0.04, 0.09, 0.15, 0.96)
 border_width_left = 2
 border_width_top = 2
@@ -67,12 +61,18 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
-content_margin_left = 10.0
-content_margin_top = 8.0
-content_margin_right = 10.0
-content_margin_bottom = 8.0
 
-[node name="Battle" type="Control"]
+[sub_resource type="StyleBoxTexture" id="Style_gm_panel"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+texture = ExtResource("13_top_status_art")
+
+[sub_resource type="StyleBoxTexture" id="Style_result"]
+texture = ExtResource("13_top_status_art")
+
+[node name="Battle" type="Control" unique_id=14672112]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -81,10 +81,9 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_screen")
 
-[node name="PauseOverlay" parent="." instance=ExtResource("4_pause")]
+[node name="PauseOverlay" parent="." unique_id=631888559 instance=ExtResource("4_pause")]
 
-[node name="Background" type="TextureRect" parent="."]
-; 941×1672 舞台背景在 360×640 基准视口等比例铺满；窗口比例变化时居中裁切，避免舞台拉伸。
+[node name="Background" type="TextureRect" parent="." unique_id=1341427318]
 texture_filter = 2
 layout_mode = 1
 anchors_preset = 15
@@ -97,7 +96,8 @@ texture = ExtResource("12_background_art")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="TopStatusArt" type="TextureRect" parent="."]
+[node name="TopStatusArt" type="TextureRect" parent="." unique_id=2065843277]
+visible = false
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -109,46 +109,91 @@ grow_horizontal = 2
 mouse_filter = 2
 texture = ExtResource("13_top_status_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="TurnPanel" type="TextureRect" parent="." unique_id=64179320]
+texture_filter = 2
+layout_mode = 0
+offset_left = 13.0
+offset_top = 13.0
+offset_right = 86.0
+offset_bottom = 65.0
+mouse_filter = 2
+texture = ExtResource("27_turn_panel")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="TurnPanel" unique_id=1481125076]
+layout_mode = 0
+offset_left = 4.0
+offset_right = 67.0
+offset_bottom = 22.0
+theme_override_colors/font_color = Color(0.96, 0.75, 0.58, 1)
+theme_override_font_sizes/font_size = 15
+text = "TURN"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TurnLabel" type="Label" parent="TurnPanel" unique_id=132375936]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 4.0
+offset_top = 14.0
+offset_right = 69.0
+offset_bottom = 54.0
+theme_override_colors/font_color = Color(1, 0.93, 0.79, 1)
+theme_override_font_sizes/font_size = 29
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StageLights" type="ColorRect" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+script = ExtResource("29_stage_lights")
+
+[node name="Header" type="HBoxContainer" parent="." unique_id=27598144]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 6.0
+offset_left = 94.0
 offset_top = 2.0
 offset_right = -6.0
 offset_bottom = 34.0
 grow_horizontal = 2
 
-[node name="BackButton" type="Button" parent="Header"]
+[node name="BackButton" type="Button" parent="Header" unique_id=68388812]
 visible = false
 custom_minimum_size = Vector2(44, 30)
 layout_mode = 2
 text = "返回"
 
-[node name="TurnLabel" type="Label" parent="Header"]
+[node name="PhaseLabel" type="Label" parent="Header" unique_id=483070422]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 10
 text = "PlayerTurn"
-horizontal_alignment = 0
 vertical_alignment = 1
 
-[node name="GMMenuButton" type="Button" parent="Header"]
+[node name="GMMenuButton" type="Button" parent="Header" unique_id=947103425]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(42, 30)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
 theme_override_font_sizes/font_size = 12
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "GM"
 
-[node name="IntentLabel" type="Label" parent="Header"]
+[node name="IntentLabel" type="Label" parent="Header" unique_id=1304130037]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(74, 0)
 layout_mode = 2
@@ -158,28 +203,26 @@ text = "敌人意图：8"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="Pitch" type="PanelContainer" parent="."]
-; 显式空样式保留布局容器，防止默认主题底色压暗舞台背景。
-theme_override_styles/panel = SubResource("Style_pitch_clear")
+[node name="Pitch" type="PanelContainer" parent="." unique_id=1526841573]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_top = 36.0
 offset_bottom = 238.0
 grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_pitch_clear")
 
-[node name="Combatants" type="CenterContainer" parent="Pitch"]
+[node name="Combatants" type="CenterContainer" parent="Pitch" unique_id=1536811906]
 layout_mode = 2
 
-[node name="EnemyDisplay" parent="Pitch/Combatants" instance=ExtResource("3_display")]
+[node name="EnemyDisplay" parent="Pitch/Combatants" unique_id=731636213 instance=ExtResource("3_display")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="RhythmWaveform" type="Control" parent="."]
+[node name="RhythmWaveform" type="Control" parent="." unique_id=1632314955]
 unique_name_in_owner = true
 z_index = 1
 layout_mode = 1
-anchors_preset = 10
 anchor_left = 0.08
 anchor_right = 0.92
 offset_top = 232.0
@@ -188,9 +231,19 @@ grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("10_waveform")
 
-[node name="RhythmLaneArt" type="TextureRect" parent="."]
+[node name="RhythmAccentWaveform" type="Control" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
+anchor_left = 0.2
+anchor_right = 0.8
+offset_top = 368.0
+offset_bottom = 392.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("28_accent_waveform")
+[node name="RhythmLaneArt" type="TextureRect" parent="." unique_id=564343026]
+layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.08
 anchor_right = 0.92
 offset_top = 232.0
@@ -199,11 +252,10 @@ grow_horizontal = 2
 mouse_filter = 2
 texture = ExtResource("15_rhythm_lane_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="ShotFeedback" type="HBoxContainer" parent="."]
+[node name="ShotFeedback" type="HBoxContainer" parent="." unique_id=523925528]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = -1
 anchor_left = 0.35
 anchor_right = 0.65
 offset_top = 248.0
@@ -211,7 +263,7 @@ offset_bottom = 274.0
 grow_horizontal = 2
 alignment = 1
 
-[node name="ShotTypeLabel" type="Label" parent="ShotFeedback"]
+[node name="ShotTypeLabel" type="Label" parent="ShotFeedback" unique_id=1749729513]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -219,15 +271,14 @@ theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
 theme_override_font_sizes/font_size = 14
 text = "直球"
 
-[node name="BallFlight" parent="." instance=ExtResource("6_ball")]
-unique_name_in_owner = true
+[node name="BallFlight" parent="." unique_id=1103332091 instance=ExtResource("6_ball")]
 
-[node name="CardWarningOverlay" type="PanelContainer" parent="."]
+[node name="CardWarningOverlay" type="PanelContainer" parent="." unique_id=209892383]
 unique_name_in_owner = true
 visible = false
 z_index = 45
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = -1
 anchor_left = 0.18
 anchor_right = 0.82
 offset_top = 178.0
@@ -236,7 +287,7 @@ grow_horizontal = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("Style_card_warning")
 
-[node name="CardWarningLabel" type="Label" parent="CardWarningOverlay"]
+[node name="CardWarningLabel" type="Label" parent="CardWarningOverlay" unique_id=278563606]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -248,7 +299,7 @@ text = "黄牌警告！"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DragThresholdGuide" type="Control" parent="."]
+[node name="DragThresholdGuide" type="Control" parent="." unique_id=319922273]
 unique_name_in_owner = true
 z_index = 20
 layout_mode = 1
@@ -262,7 +313,7 @@ grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("5_guide")
 
-[node name="GuideTexture" type="TextureRect" parent="DragThresholdGuide"]
+[node name="GuideTexture" type="TextureRect" parent="DragThresholdGuide" unique_id=255602008]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -272,13 +323,12 @@ grow_horizontal = 2
 mouse_filter = 2
 texture = ExtResource("21_drag_guide_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="PromptLabel" type="Label" parent="DragThresholdGuide"]
+[node name="PromptLabel" type="Label" parent="DragThresholdGuide" unique_id=244202692]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 88.0
-offset_top = -34.0
+offset_top = -10.0
 offset_right = 248.0
 offset_bottom = -8.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -287,33 +337,32 @@ theme_override_styles/normal = SubResource("Style_drag_prompt")
 text = "松开以出牌"
 horizontal_alignment = 1
 
-[node name="EnergyPanel" type="TextureRect" parent="."]
+[node name="EnergyPanel" type="TextureRect" parent="." unique_id=2107471581]
+texture_filter = 2
+layout_mode = 0
 offset_left = 4.0
 offset_top = 274.0
 offset_right = 88.0
 offset_bottom = 310.25
 mouse_filter = 2
-texture_filter = 2
 texture = ExtResource("25_energy_panel")
 expand_mode = 1
 
-[node name="LightningIcon" type="TextureRect" parent="EnergyPanel"]
+[node name="LightningIcon" type="TextureRect" parent="EnergyPanel" unique_id=609372865]
+texture_filter = 2
+layout_mode = 0
 offset_left = 6.6
 offset_top = 5.1
 offset_right = 21.3
 offset_bottom = 29.9
 mouse_filter = 2
-texture_filter = 2
 texture = ExtResource("26_energy_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="EnergyLabel" type="Label" parent="EnergyPanel"]
+[node name="EnergyLabel" type="Label" parent="EnergyPanel" unique_id=761422072]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
-anchor_left = 0.0
-anchor_right = 0.0
 offset_left = 25.0
 offset_top = 3.0
 offset_right = 77.0
@@ -325,43 +374,18 @@ text = "3/3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RhythmFeedback" type="Control" parent="."]
+[node name="RhythmFeedback" type="Control" parent="." unique_id=543710410]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
-anchor_left = 0.08
-anchor_right = 0.92
+anchor_left = 0.04
+anchor_right = 0.96
 offset_top = 232.0
 offset_bottom = 324.0
 grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("8_rhythm_feedback")
 
-[node name="TargetRing" type="TextureRect" parent="RhythmFeedback"]
-unique_name_in_owner = true
-layout_mode = 0
-mouse_filter = 2
-texture = ExtResource("22_target_ring_art")
-expand_mode = 1
-stretch_mode = 0
-
-[node name="MovingRing" type="TextureRect" parent="RhythmFeedback"]
-unique_name_in_owner = true
-layout_mode = 0
-mouse_filter = 2
-texture = ExtResource("23_moving_ring_art")
-expand_mode = 1
-stretch_mode = 0
-
-[node name="BeatFlash" type="TextureRect" parent="RhythmFeedback"]
-unique_name_in_owner = true
-layout_mode = 0
-mouse_filter = 2
-texture = ExtResource("24_rhythm_flash_art")
-expand_mode = 1
-stretch_mode = 0
-
-[node name="BeatLabel" type="Label" parent="RhythmFeedback"]
+[node name="BeatLabel" type="Label" parent="RhythmFeedback" unique_id=1784966755]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 8
@@ -370,9 +394,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -44.0
-offset_top = -10.0
+offset_top = -34.0
 offset_right = 44.0
-offset_bottom = 10.0
+offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.55, 0.84, 1, 1)
@@ -381,7 +405,7 @@ text = "BEAT  1/4"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="JudgementLabel" type="Label" parent="RhythmFeedback"]
+[node name="JudgementLabel" type="Label" parent="RhythmFeedback" unique_id=832664186]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 8
@@ -401,7 +425,7 @@ theme_override_font_sizes/font_size = 14
 text = "Perfect · 准拍"
 horizontal_alignment = 1
 
-[node name="StatusLabel" type="Label" parent="."]
+[node name="StatusLabel" type="Label" parent="." unique_id=241234075]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
@@ -417,7 +441,7 @@ text = "拖动卡牌到绿色区域出牌"
 horizontal_alignment = 1
 text_overrun_behavior = 3
 
-[node name="HandLayer" type="Control" parent="."]
+[node name="HandLayer" type="Control" parent="." unique_id=1471273463]
 unique_name_in_owner = true
 z_index = 1
 layout_mode = 1
@@ -429,38 +453,35 @@ offset_right = -6.0
 offset_bottom = 570.0
 grow_horizontal = 2
 
-[node name="ResourceArt" type="TextureRect" parent="."]
+[node name="ResourceArt" type="TextureRect" parent="." unique_id=16077506]
 layout_mode = 0
 offset_left = 4.0
 offset_top = 326.0
 offset_right = 356.0
-offset_bottom = 380.0
+offset_bottom = 366.0
 mouse_filter = 2
 texture = ExtResource("16_resource_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="ActionButtonArt" type="TextureRect" parent="."]
+[node name="ActionButtonArt" type="TextureRect" parent="." unique_id=1604116142]
 layout_mode = 0
 offset_left = 262.0
 offset_top = 326.0
 offset_right = 356.0
-offset_bottom = 380.0
+offset_bottom = 366.0
 mouse_filter = 2
 texture = ExtResource("19_action_button_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="Footer" type="HBoxContainer" parent="."]
+[node name="Footer" type="HBoxContainer" parent="." unique_id=1064590585]
 layout_mode = 1
-anchors_preset = 0
 offset_left = 4.0
 offset_top = 326.0
 offset_right = 356.0
-offset_bottom = 380.0
+offset_bottom = 366.0
 theme_override_constants/separation = 6
 
-[node name="PileLabel" type="Label" parent="Footer"]
+[node name="PileLabel" type="Label" parent="Footer" unique_id=1600533671]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -471,27 +492,27 @@ text = "抽 5 / 弃 0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SkillButton" type="Button" parent="Footer"]
+[node name="SkillButton" type="Button" parent="Footer" unique_id=421352477]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(112, 54)
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "连击 0/3"
 
-[node name="EndTurnButton" type="Button" parent="Footer"]
+[node name="EndTurnButton" type="Button" parent="Footer" unique_id=1787202799]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(94, 54)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "结束回合"
 
-[node name="PlayerStatus" type="PanelContainer" parent="."]
+[node name="PlayerStatus" type="PanelContainer" parent="." unique_id=283201227]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -502,11 +523,11 @@ offset_bottom = 614.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_player_status")
 
-[node name="PlayerDisplay" parent="PlayerStatus" instance=ExtResource("3_display")]
+[node name="PlayerDisplay" parent="PlayerStatus" unique_id=1897411797 instance=ExtResource("3_display")]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="OwnedItemIcons" type="HFlowContainer" parent="."]
+[node name="OwnedItemIcons" type="HFlowContainer" parent="." unique_id=1714026409]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -517,12 +538,12 @@ offset_top = 618.0
 offset_right = -8.0
 offset_bottom = 640.0
 grow_horizontal = 2
+mouse_filter = 2
 theme_override_constants/h_separation = 2
 theme_override_constants/v_separation = 2
 alignment = 1
-mouse_filter = 2
 
-[node name="ItemDetailPopup" type="PanelContainer" parent="."]
+[node name="ItemDetailPopup" type="PanelContainer" parent="." unique_id=935510143]
 unique_name_in_owner = true
 visible = false
 z_index = 40
@@ -537,56 +558,50 @@ grow_horizontal = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("Style_item_detail")
 
-[node name="Content" type="HBoxContainer" parent="ItemDetailPopup"]
+[node name="Content" type="HBoxContainer" parent="ItemDetailPopup" unique_id=1775476529]
 layout_mode = 2
-theme_override_constants/separation = 10
 mouse_filter = 2
+theme_override_constants/separation = 10
 
-[node name="Icon" type="TextureRect" parent="ItemDetailPopup/Content"]
+[node name="Icon" type="TextureRect" parent="ItemDetailPopup/Content" unique_id=1692651895]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-expand_mode = 1
 mouse_filter = 2
+expand_mode = 1
 
-[node name="Text" type="VBoxContainer" parent="ItemDetailPopup/Content"]
+[node name="Text" type="VBoxContainer" parent="ItemDetailPopup/Content" unique_id=996788211]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 3
 mouse_filter = 2
+theme_override_constants/separation = 3
 
-[node name="Name" type="Label" parent="ItemDetailPopup/Content/Text"]
+[node name="Name" type="Label" parent="ItemDetailPopup/Content/Text" unique_id=378076358]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 2
-mouse_filter = 2
 
-[node name="Description" type="Label" parent="ItemDetailPopup/Content/Text"]
+[node name="Description" type="Label" parent="ItemDetailPopup/Content/Text" unique_id=524116607]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/font_color = Color(0.84, 0.91, 0.96, 1)
 theme_override_font_sizes/font_size = 13
 autowrap_mode = 2
-mouse_filter = 2
 
-[node name="BattleController" type="Node" parent="."]
+[node name="BattleController" type="Node" parent="." unique_id=1660053017]
 unique_name_in_owner = true
 script = ExtResource("2_controller")
 
-[node name="RhythmClock" type="Node" parent="."]
+[node name="RhythmClock" type="Node" parent="." unique_id=737342471]
 unique_name_in_owner = true
 script = ExtResource("7_rhythm_clock")
 music = ExtResource("9_music")
-bpm = 100.0
-first_beat_offset = 0.0
-beats_per_bar = 4
-perfect_window_ms = 60.0
-good_window_ms = 140.0
+first_beat_offset = 0.025
 
-[node name="QTEPopup" type="Control" parent="."]
+[node name="QTEPopup" type="Control" parent="." unique_id=1654347193]
 unique_name_in_owner = true
 visible = false
 z_index = 55
@@ -596,10 +611,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 script = ExtResource("11_qte")
 
-[node name="Shade" type="TextureRect" parent="QTEPopup"]
+[node name="Shade" type="TextureRect" parent="QTEPopup" unique_id=947515408]
 show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15
@@ -610,9 +624,8 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("20_overlay_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="GMOverlay" type="TextureRect" parent="."]
+[node name="GMOverlay" type="TextureRect" parent="." unique_id=1381583599]
 unique_name_in_owner = true
 visible = false
 z_index = 50
@@ -624,9 +637,8 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("20_overlay_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="Center" type="CenterContainer" parent="GMOverlay"]
+[node name="Center" type="CenterContainer" parent="GMOverlay" unique_id=2064782599]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -634,118 +646,118 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="GMOverlay/Center"]
+[node name="Panel" type="PanelContainer" parent="GMOverlay/Center" unique_id=945013192]
 custom_minimum_size = Vector2(280, 200)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_gm_panel")
 
-[node name="Content" type="VBoxContainer" parent="GMOverlay/Center/Panel"]
+[node name="Content" type="VBoxContainer" parent="GMOverlay/Center/Panel" unique_id=136626088]
 layout_mode = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="Title" type="Label" parent="GMOverlay/Center/Panel/Content"]
+[node name="Title" type="Label" parent="GMOverlay/Center/Panel/Content" unique_id=1834909008]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
 theme_override_font_sizes/font_size = 24
 text = "GM 工具"
 horizontal_alignment = 1
 
-[node name="Hint" type="Label" parent="GMOverlay/Center/Panel/Content"]
+[node name="Hint" type="Label" parent="GMOverlay/Center/Panel/Content" unique_id=220092976]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.82, 0.86, 1)
 theme_override_font_sizes/font_size = 12
 text = "调试功能不会触发普通卡牌效果"
 horizontal_alignment = 1
 
-[node name="GMSkipButton" type="Button" parent="GMOverlay/Center/Panel/Content"]
+[node name="GMSkipButton" type="Button" parent="GMOverlay/Center/Panel/Content" unique_id=1794267440]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.48, 1)
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "跳过当前战斗"
 
-[node name="GMItemsButton" type="Button" parent="GMOverlay/Center/Panel/Content"]
+[node name="GMItemsButton" type="Button" parent="GMOverlay/Center/Panel/Content" unique_id=373447131]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "战利品"
 
-[node name="GMCardsButton" type="Button" parent="GMOverlay/Center/Panel/Content"]
+[node name="GMCardsButton" type="Button" parent="GMOverlay/Center/Panel/Content" unique_id=347917394]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "卡牌"
 
-[node name="GMItemsPage" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content"]
+[node name="GMItemsPage" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content" unique_id=1029534977]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="GMCardsPage" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content"]
+[node name="GMItemsBackButton" type="Button" parent="GMOverlay/Center/Panel/Content/GMItemsPage" unique_id=1803295285]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "返回 GM 工具"
+
+[node name="GMItemsScroll" type="ScrollContainer" parent="GMOverlay/Center/Panel/Content/GMItemsPage" unique_id=27513980]
+custom_minimum_size = Vector2(290, 380)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="GMItemsList" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content/GMItemsPage/GMItemsScroll" unique_id=831596107]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="GMCardsPage" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content" unique_id=330860251]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="GMCardsBackButton" type="Button" parent="GMOverlay/Center/Panel/Content/GMCardsPage"]
+[node name="GMCardsBackButton" type="Button" parent="GMOverlay/Center/Panel/Content/GMCardsPage" unique_id=1052638666]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "返回 GM 工具"
 
-[node name="GMCardsScroll" type="ScrollContainer" parent="GMOverlay/Center/Panel/Content/GMCardsPage"]
+[node name="GMCardsScroll" type="ScrollContainer" parent="GMOverlay/Center/Panel/Content/GMCardsPage" unique_id=37169498]
 custom_minimum_size = Vector2(290, 380)
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="GMCardsList" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content/GMCardsPage/GMCardsScroll"]
+[node name="GMCardsList" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content/GMCardsPage/GMCardsScroll" unique_id=588749391]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="GMItemsBackButton" type="Button" parent="GMOverlay/Center/Panel/Content/GMItemsPage"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 36)
-layout_mode = 2
-text = "返回 GM 工具"
-
-[node name="GMItemsScroll" type="ScrollContainer" parent="GMOverlay/Center/Panel/Content/GMItemsPage"]
-custom_minimum_size = Vector2(290, 380)
-layout_mode = 2
-horizontal_scroll_mode = 0
-
-[node name="GMItemsList" type="VBoxContainer" parent="GMOverlay/Center/Panel/Content/GMItemsPage/GMItemsScroll"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 10
-
-[node name="GMCloseButton" type="Button" parent="GMOverlay/Center/Panel/Content"]
+[node name="GMCloseButton" type="Button" parent="GMOverlay/Center/Panel/Content" unique_id=819571847]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "关闭"
 
-[node name="ResultOverlay" type="TextureRect" parent="."]
+[node name="ResultOverlay" type="TextureRect" parent="." unique_id=480588909]
 unique_name_in_owner = true
 visible = false
 z_index = 60
@@ -757,9 +769,8 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("20_overlay_art")
 expand_mode = 1
-stretch_mode = 0
 
-[node name="ResultCenter" type="CenterContainer" parent="ResultOverlay"]
+[node name="ResultCenter" type="CenterContainer" parent="ResultOverlay" unique_id=1072478461]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -767,17 +778,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="ResultPanel" type="PanelContainer" parent="ResultOverlay/ResultCenter"]
+[node name="ResultPanel" type="PanelContainer" parent="ResultOverlay/ResultCenter" unique_id=168857218]
 custom_minimum_size = Vector2(300, 230)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_result")
 
-[node name="ResultContent" type="VBoxContainer" parent="ResultOverlay/ResultCenter/ResultPanel"]
+[node name="ResultContent" type="VBoxContainer" parent="ResultOverlay/ResultCenter/ResultPanel" unique_id=1149530290]
 layout_mode = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="ResultTitle" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+[node name="ResultTitle" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=1009519450]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
@@ -785,7 +796,7 @@ theme_override_font_sizes/font_size = 28
 text = "战斗胜利"
 horizontal_alignment = 1
 
-[node name="ResultDetail" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+[node name="ResultDetail" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=387209701]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.9, 0.92, 1)
@@ -793,23 +804,23 @@ theme_override_font_sizes/font_size = 15
 text = "守住球门，完成本场测试！"
 horizontal_alignment = 1
 
-[node name="RestartButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+[node name="RestartButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=1955356802]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "挑战下一个敌人"
 
-[node name="MenuButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+[node name="MenuButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=577035393]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button")
+theme_override_styles/hover = SubResource("Style_button")
 text = "返回主菜单"
 
 [connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]

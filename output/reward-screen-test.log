@@ -1,0 +1,8 @@
+Godot Engine v4.7.1.stable.official.a13da4feb - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+item layout: [P: (0.0, 53.0), S: (88.0, 1.0)] parent: (88.0, 156.0)
+item layout: [P: (0.0, 53.0), S: (88.0, 1.0)] parent: (88.0, 156.0)
+item layout: [P: (0.0, 53.0), S: (88.0, 1.0)] parent: (88.0, 156.0)
+smoke_reward_screen: PASS
