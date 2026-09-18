@@ -1,0 +1,73 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_tx6un"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_86u7d"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_hkjrc"]
+
+[sub_resource type="Resource" id="Resource_y301o"]
+script = ExtResource("1_tx6un")
+amount = 12
+
+[sub_resource type="Resource" id="Resource_iugqo"]
+script = ExtResource("2_86u7d")
+id = 14
+description = "造成12点伤害"
+effects = Array[Resource]([SubResource("Resource_y301o")])
+display_name = "重炮射门"
+
+[sub_resource type="Resource" id="Resource_s57ik"]
+script = ExtResource("1_tx6un")
+effect_type = 1
+target = 1
+amount = 16
+
+[sub_resource type="Resource" id="Resource_ysenu"]
+script = ExtResource("1_tx6un")
+effect_type = 7
+target = 1
+amount = 6
+
+[sub_resource type="Resource" id="Resource_jrq4e"]
+script = ExtResource("2_86u7d")
+id = 15
+category = 1
+description = "获得16点护盾并格挡下一次伤害6点"
+effects = Array[Resource]([SubResource("Resource_s57ik"), SubResource("Resource_ysenu")])
+display_name = "铁壁守门"
+
+[sub_resource type="Resource" id="Resource_4pm6g"]
+script = ExtResource("1_tx6un")
+effect_type = 9
+target = 1
+break_rule = 2
+threshold = 18
+
+[sub_resource type="Resource" id="Resource_kvyt2"]
+script = ExtResource("2_86u7d")
+id = 16
+category = 2
+description = "蓄力下一次重炮；受到18点有效伤害可打断"
+effects = Array[Resource]([SubResource("Resource_4pm6g")])
+display_name = "象鼻助跑"
+
+[sub_resource type="Resource" id="Resource_wil33"]
+script = ExtResource("1_tx6un")
+amount = 22
+
+[sub_resource type="Resource" id="Resource_3pxfn"]
+script = ExtResource("2_86u7d")
+id = 17
+description = "造成22点伤害"
+effects = Array[Resource]([SubResource("Resource_wil33")])
+interrupted_action_id = 18
+display_name = "全场重炮"
+
+[resource]
+script = ExtResource("3_hkjrc")
+enemy_id = "enemy_street_elephant_boss"
+id = 6021
+action_ids = Array[int]([14, 15, 16, 17])
+display_name = "大象门神"
+tier = 2
+max_health = 120
+actions = Array[Resource]([SubResource("Resource_iugqo"), SubResource("Resource_jrq4e"), SubResource("Resource_kvyt2"), SubResource("Resource_3pxfn")])

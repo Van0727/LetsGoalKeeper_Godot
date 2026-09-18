@@ -241,7 +241,7 @@ func _resolve_damage(
 				item_runtime.trigger(ITEM_EFFECT.Trigger.AFTER_DAMAGE, after_context)
 			)
 		events.append(damage_event)
-		if not defer_damage and recipient.is_dead():
+		if not defer_damage and (recipient.is_dead() or source.is_dead()):
 			break
 
 

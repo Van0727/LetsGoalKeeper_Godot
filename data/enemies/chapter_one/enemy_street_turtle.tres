@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_7rbvb"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_qx50o"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_xpolf"]
+
+[sub_resource type="Resource" id="Resource_txnr1"]
+script = ExtResource("1_7rbvb")
+effect_type = 1
+target = 1
+amount = 8
+
+[sub_resource type="Resource" id="Resource_5a4ay"]
+script = ExtResource("1_7rbvb")
+effect_type = 7
+target = 1
+amount = 4
+
+[sub_resource type="Resource" id="Resource_thsoa"]
+script = ExtResource("2_qx50o")
+id = 5
+category = 1
+description = "获得8点护盾并格挡下一次伤害4点"
+effects = Array[Resource]([SubResource("Resource_txnr1"), SubResource("Resource_5a4ay")])
+display_name = "缩壳"
+
+[sub_resource type="Resource" id="Resource_gl8wc"]
+script = ExtResource("1_7rbvb")
+amount = 6
+
+[sub_resource type="Resource" id="Resource_ssgh1"]
+script = ExtResource("2_qx50o")
+id = 4
+description = "造成6点伤害"
+effects = Array[Resource]([SubResource("Resource_gl8wc")])
+display_name = "慢速射门"
+
+[resource]
+script = ExtResource("3_xpolf")
+enemy_id = "enemy_street_turtle"
+id = 6002
+action_ids = Array[int]([5, 4])
+display_name = "乌龟"
+max_health = 36
+actions = Array[Resource]([SubResource("Resource_thsoa"), SubResource("Resource_ssgh1")])

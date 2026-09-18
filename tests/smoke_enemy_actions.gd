@@ -1,4 +1,4 @@
-# 阶段 4 敌人冒烟测试：验证数据行动、最终意图、特殊被动、吸血组合和 Boss 随机确定性。
+# 旧版敌人兼容冒烟测试：验证旧行动、被动和确定性，并验证新版第一章遭遇池的级别覆盖。
 extends SceneTree
 
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
@@ -109,13 +109,13 @@ func _test_weighted_boss_is_deterministic() -> void:
 	second.free()
 
 
-# 第一章正式遭遇池按玩法规格提供企鹅、熊和大象三种级别。
+# 第一章已改为三种小怪、两种精英和大象Boss；旧资源机制由上面的兼容测试继续覆盖。
 func _test_chapter_one_encounter_pool() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 106
-	_assert_equal(CHAPTER_ONE.pick_enemy(PENGUIN.Tier.NORMAL, rng).enemy_id, PENGUIN.enemy_id, "普通池选择企鹅")
-	_assert_equal(CHAPTER_ONE.pick_enemy(BEAR.Tier.ELITE, rng).enemy_id, BEAR.enemy_id, "精英池选择熊")
-	_assert_equal(CHAPTER_ONE.pick_enemy(TRAINING_BOSS.Tier.BOSS, rng).enemy_id, "enemy_elephant_boss", "Boss池选择大象")
+	_assert_true(CHAPTER_ONE.pick_enemy(PENGUIN.Tier.NORMAL, rng).id in [6001, 6002, 6003], "普通池选择第一章小怪")
+	_assert_true(CHAPTER_ONE.pick_enemy(BEAR.Tier.ELITE, rng).id in [6011, 6012], "精英池选择第一章精英")
+	_assert_equal(CHAPTER_ONE.pick_enemy(TRAINING_BOSS.Tier.BOSS, rng).id, 6021, "Boss池选择新版大象")
 
 
 # 通用相等断言。

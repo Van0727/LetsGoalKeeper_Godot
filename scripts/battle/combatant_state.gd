@@ -2,6 +2,9 @@
 class_name CombatantState
 extends RefCounted
 
+# 在每段真实伤害后立即通知战斗核心，保证同步多段、延迟飞球和主动技使用相同机制。
+signal damage_taken(result: Dictionary)
+
 enum StrengthStatus {
 	NONE,
 	STRENGTH,
@@ -18,6 +21,10 @@ var energy: int
 var strength_multiplier := 1.0
 var strength_status := StrengthStatus.NONE
 var strength_turns := 0
+# 流血与格挡均为单场临时状态；流血不叠加伤害，格挡只消费一次正数攻击。
+var bleed_amount := 0
+var bleed_turns := 0
+var single_block := 0
 
 
 # 创建角色并把生命、能量初始化为各自上限。
@@ -29,19 +36,52 @@ func _init(combatant_name := "角色", maximum_health := 1, maximum_energy := 0)
 	energy = max_energy
 
 
-# 先用护盾吸收伤害，再扣生命；返回明细供日志和表现层使用。
+# 先消费单次格挡，再由护盾吸收、最后扣生命；每段真实受伤后通知核心并返回结算明细。
 func take_damage(raw_damage: int) -> Dictionary:
 	var damage := maxi(raw_damage, 0)
+	var blocked := 0
+	if damage > 0 and single_block > 0:
+		blocked = mini(damage, single_block)
+		damage -= blocked
+		single_block = 0
 	var absorbed := mini(shield, damage)
 	shield -= absorbed
 	var health_damage := mini(health, damage - absorbed)
 	health -= health_damage
-	return {
+	var result := {
 		"incoming": damage,
+		"blocked": blocked,
 		"absorbed": absorbed,
 		"health_damage": health_damage,
 		"died": is_dead(),
 	}
+	damage_taken.emit(result)
+	return result
+
+
+# 重复流血分别保留较高伤害与较长时间；无效参数不能覆盖合法状态。
+func apply_bleed(amount: int, turns: int) -> void:
+	if amount <= 0 or turns <= 0:
+		return
+	bleed_amount = maxi(bleed_amount, amount)
+	bleed_turns = maxi(bleed_turns, turns)
+
+
+# 自身回合结束时结算一次流血，护盾可以吸收；流血不消耗单次攻击格挡。
+func tick_bleed() -> Dictionary:
+	if bleed_turns <= 0 or is_dead():
+		return {}
+	var saved_block := single_block
+	single_block = 0
+	var amount := bleed_amount
+	var result := take_damage(amount)
+	single_block = saved_block
+	bleed_turns -= 1
+	if bleed_turns == 0:
+		bleed_amount = 0
+	return {"type": "damage", "amount": amount, "absorbed": result.absorbed,
+		"health_damage": result.health_damage, "damage_tag": "bleed", "target": self,
+		"health_after": health, "shield_after": shield}
 
 
 # 恢复生命但不超过上限，并返回实际恢复量。

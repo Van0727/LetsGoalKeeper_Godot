@@ -1,4 +1,4 @@
-# 战斗核心冒烟测试：覆盖基础数值、回合、卡牌效果、随机分支和胜负边界。
+# 战斗核心冒烟测试：覆盖基础数值、回合、效果顺序和死亡边界；卡牌契约采用当前1点自伤与1拍延迟。
 extends SceneTree
 
 const COMBATANT_STATE := preload("res://scripts/battle/combatant_state.gd")
@@ -227,7 +227,7 @@ func _test_rhythm_judgement_and_damage() -> void:
 	)
 	_assert_equal(target.health, 17, "Miss使6点对敌伤害减半")
 	_assert_equal(shot_events[0].rhythm_multiplier, 0.5, "伤害事件记录节奏倍率")
-	_assert_equal(shot_events[0].attack_delay_beats, 0.5, "射门伤害事件携带当前半拍飞行延迟")
+	_assert_equal(shot_events[0].attack_delay_beats, 1.0, "射门伤害事件携带当前1拍飞行延迟")
 	_assert_equal(shot_events[0].multi_hit_interval_beats, 0.5, "伤害事件携带半拍多段间隔")
 
 	# 真实飞球模式在命中前不得改变生命；提交命中事件后才扣血并更新事件快照。
@@ -252,7 +252,7 @@ func _test_rhythm_judgement_and_damage() -> void:
 	var self_damage_source = COMBATANT_STATE.new("自伤测试球员", 20, 3)
 	var self_damage_target = COMBATANT_STATE.new("自伤测试目标", 20)
 	resolver.resolve_card(SPIKED_BALL, self_damage_source, self_damage_target, null, {}, miss_result)
-	_assert_equal(self_damage_source.health, 17, "Miss不缩放卡牌自伤")
+	_assert_equal(self_damage_source.health, 19, "Miss不缩放卡牌1点自伤")
 	_assert_equal(self_damage_target.health, 17, "Miss缩放同张卡牌的对敌伤害")
 
 	var healing_source = COMBATANT_STATE.new("治疗测试球员", 20, 3)
@@ -479,10 +479,11 @@ func _test_remaining_migrated_cards() -> void:
 	var spike_target = COMBATANT_STATE.new("尖刺球目标", 20)
 	var spike_events: Array[Dictionary] = resolver.resolve_card(SPIKED_BALL, spike_source, spike_target)
 	_assert_equal(spike_events[0].target, spike_source, "尖刺球第一效果目标是自己")
-	_assert_equal(spike_source.health, 17, "尖刺球先造成3点自伤")
+	_assert_equal(spike_source.health, 19, "尖刺球先造成1点自伤")
 	_assert_equal(spike_target.health, 14, "尖刺球再对敌人造成6点伤害")
 
-	var fatal_source = COMBATANT_STATE.new("濒死尖刺球球员", 3, 3)
+	# 生命恰好等于当前自伤1点，验证先自伤致死就停止对敌攻击。
+	var fatal_source = COMBATANT_STATE.new("濒死尖刺球球员", 1, 3)
 	var safe_target = COMBATANT_STATE.new("未受伤目标", 20)
 	var fatal_events: Array[Dictionary] = resolver.resolve_card(SPIKED_BALL, fatal_source, safe_target)
 	_assert_equal(fatal_events.size(), 1, "尖刺球自伤致死后中断后续效果")

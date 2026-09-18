@@ -1,4 +1,5 @@
-# 章节遭遇池：按房间级别筛选已启用敌人，并用注入随机数执行确定性选择。
+@tool
+# 章节遭遇池：供导入器生成，按房间级别筛选已启用敌人，并用注入随机数执行确定性选择。
 class_name EncounterPool
 extends Resource
 

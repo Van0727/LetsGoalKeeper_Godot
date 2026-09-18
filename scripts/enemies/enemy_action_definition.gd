@@ -1,4 +1,5 @@
-# 敌人行动固定定义：描述单次攻击、防御、治疗、虚弱或吸血行为及其意图文字。
+@tool
+# 敌人行为固定定义：新版按攻击、防御、技能分类及结构化步骤结算，旧资源保留原行动字段。
 class_name EnemyActionDefinition
 extends Resource
 
@@ -11,6 +12,14 @@ enum ActionType {
 }
 
 @export var action_id := ""
+# 新版行为按三类归属，效果数组按顺序执行；空效果数组兼容旧版资源。
+enum Category { ATTACK, DEFENSE, SKILL }
+@export var id := 0
+@export var category := Category.ATTACK
+@export_multiline var description := ""
+@export var effects: Array[Resource] = []
+# 蓄力失败只替换当前行为，不改变固定列表的推进位置。
+@export var interrupted_action_id := 0
 @export var display_name := "行动"
 @export var action_type := ActionType.ATTACK
 @export_range(0, 999, 1) var amount := 0
@@ -23,6 +32,8 @@ enum ActionType {
 
 # 返回带最终数值的意图文字，避免界面重复推导行动规则。
 func get_intent_text(resolved_amount: int) -> String:
+	if not effects.is_empty():
+		return "%s·%s：%s" % [["攻击", "防御", "技能"][category], display_name, description]
 	match action_type:
 		ActionType.ATTACK:
 			return "%s %d" % [display_name, resolved_amount]

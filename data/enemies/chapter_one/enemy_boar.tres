@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_fq8ff"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_rr0mi"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_gh6mi"]
+
+[sub_resource type="Resource" id="Resource_m3jjn"]
+script = ExtResource("1_fq8ff")
+amount = 9
+
+[sub_resource type="Resource" id="Resource_hr4sf"]
+script = ExtResource("2_rr0mi")
+id = 8
+description = "造成9点伤害"
+effects = Array[Resource]([SubResource("Resource_m3jjn")])
+display_name = "冲撞"
+
+[sub_resource type="Resource" id="Resource_g3j37"]
+script = ExtResource("1_fq8ff")
+effect_type = 9
+target = 1
+break_rule = 1
+threshold = 3
+
+[sub_resource type="Resource" id="Resource_hda65"]
+script = ExtResource("2_rr0mi")
+id = 9
+category = 2
+description = "蓄力下一次重炮；受到3次有效命中可打断"
+effects = Array[Resource]([SubResource("Resource_g3j37")])
+display_name = "助跑"
+
+[sub_resource type="Resource" id="Resource_xoktt"]
+script = ExtResource("1_fq8ff")
+amount = 18
+
+[sub_resource type="Resource" id="Resource_71abi"]
+script = ExtResource("2_rr0mi")
+id = 10
+description = "造成18点伤害"
+effects = Array[Resource]([SubResource("Resource_xoktt")])
+interrupted_action_id = 11
+display_name = "重炮"
+
+[resource]
+script = ExtResource("3_gh6mi")
+enemy_id = "enemy_boar"
+id = 6011
+action_ids = Array[int]([8, 9, 10])
+display_name = "野猪前锋"
+tier = 1
+max_health = 65
+actions = Array[Resource]([SubResource("Resource_hr4sf"), SubResource("Resource_hda65"), SubResource("Resource_71abi")])

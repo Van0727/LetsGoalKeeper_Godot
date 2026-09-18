@@ -20,6 +20,7 @@ const BATTLE_ACTION_CONTEXT := preload("res://scripts/battle/battle_action_conte
 const ITEM_EFFECT := preload("res://scripts/items/item_effect_definition.gd")
 const ENEMY_DEFINITION := preload("res://scripts/enemies/enemy_definition.gd")
 const ENEMY_ACTION_DEFINITION := preload("res://scripts/enemies/enemy_action_definition.gd")
+const ENEMY_ACTION_EFFECT := preload("res://scripts/enemies/enemy_action_effect.gd")
 const PLAYER_MAX_HEALTH := 100
 const PLAYER_MAX_ENERGY := 3
 const ENEMY_MAX_HEALTH := 30
@@ -122,9 +123,17 @@ var _shot_rng := RandomNumberGenerator.new()
 var _effect_resolver = EFFECT_RESOLVER.new()
 var _skill_resolver = SKILL_RESOLVER.new()
 var _enemy_action_index := 0
+# 新版架势与蓄力不写回资源；打断条件只统计真实扣盾/扣血，排除格挡和溢出伤害。
+var enemy_thorns_amount := 0
+var enemy_thorns_remaining := 0
+var enemy_charge_rule := 0
+var enemy_charge_threshold := 0
+var enemy_charge_progress := 0
+var enemy_charge_interrupted := false
+var _enemy_catalog: Resource
 
 
-# 用指定种子和可选敌人定义重置战斗；不传定义时保留阶段 1 的企鹅测试行为。
+# 用指定种子和可选敌人定义重置战斗及架势/蓄力；不传定义时保留阶段1的企鹅测试行为。
 func setup(
 		seed_value := 20260902,
 		enemy_definition: Resource = null,
@@ -147,6 +156,14 @@ func setup(
 		)
 	current_enemy_action = null
 	_enemy_action_index = 0
+	enemy_thorns_amount = 0
+	enemy_thorns_remaining = 0
+	enemy_charge_rule = 0
+	enemy_charge_threshold = 0
+	enemy_charge_progress = 0
+	enemy_charge_interrupted = false
+	_enemy_catalog = load("res://data/enemies/enemy_catalog.tres") if ResourceLoader.exists("res://data/enemies/enemy_catalog.tres") else null
+	enemy.damage_taken.connect(_on_enemy_damage_taken)
 	combo_state = COMBO_STATE.new()
 	item_runtime.setup(item_definitions, battle_seed + 7919)
 	_sync_red_card_threshold()
@@ -766,6 +783,14 @@ func _end_player_turn(rhythm_result: Dictionary = {}) -> void:
 	end_context["beat_in_bar"] = int(rhythm_result.get("beat_in_bar", -1))
 	end_context["is_last_beat"] = bool(rhythm_result.get("is_last_beat", false))
 	_resolve_item_commands(item_runtime.trigger(ITEM_EFFECT.Trigger.TURN_ENDED, end_context))
+	# 先结算末拍战利品加盾，再结算流血；流血致死后不能继续执行怪物行动。
+	var bleed_event: Dictionary = player.tick_bleed()
+	if not bleed_event.is_empty():
+		_log("流血结算：生命损失%d，剩余%d回合" % [bleed_event.health_damage, player.bleed_turns])
+		effect_resolved.emit(bleed_event)
+	if player.is_dead():
+		_finish_battle(false)
+		return
 	_advance_strength_status(player)
 	_execute_enemy_turn()
 
@@ -813,6 +838,10 @@ func _start_player_turn() -> void:
 func _execute_enemy_turn() -> void:
 	phase = Phase.ENEMY_TURN
 	var cleared_shield := enemy.clear_shield()
+	# 防御架势在自身下次行动开始时结束，剩余格挡或反伤次数不能跨越该边界。
+	enemy.single_block = 0
+	enemy_thorns_amount = 0
+	enemy_thorns_remaining = 0
 	_log("敌人行动（清除护盾 %d）" % cleared_shield)
 	_execute_current_enemy_action()
 	_advance_strength_status(enemy)
@@ -830,6 +859,11 @@ func _roll_enemy_damage() -> int:
 
 # 返回包含当前力量/虚弱倍率的最终敌人意图伤害。
 func get_enemy_intent_damage() -> int:
+	if current_enemy_action != null and not current_enemy_action.effects.is_empty():
+		for effect in current_enemy_action.effects:
+			if effect.effect_type in [ENEMY_ACTION_EFFECT.Type.DAMAGE, ENEMY_ACTION_EFFECT.Type.DRAIN]:
+				return maxi(roundi(effect.amount * enemy.strength_multiplier), 0)
+		return 0
 	return maxi(roundi(enemy_intent_damage * enemy.strength_multiplier), 0)
 
 
@@ -837,7 +871,39 @@ func get_enemy_intent_damage() -> int:
 func get_enemy_intent_text() -> String:
 	if current_enemy_action == null:
 		return "攻击 %d" % get_enemy_intent_damage()
+	if not current_enemy_action.effects.is_empty():
+		var descriptions: Array[String] = []
+		for effect in current_enemy_action.effects:
+			if effect.effect_type in [ENEMY_ACTION_EFFECT.Type.DAMAGE, ENEMY_ACTION_EFFECT.Type.DRAIN]:
+				var damage := maxi(roundi(effect.amount * enemy.strength_multiplier), 0)
+				descriptions.append("%d×%d伤害%s" % [damage, effect.hits, "并吸血" if effect.effect_type == ENEMY_ACTION_EFFECT.Type.DRAIN else ""])
+			elif effect.effect_type == ENEMY_ACTION_EFFECT.Type.BLEED:
+				descriptions.append("流血%d点/%d回合" % [effect.amount, effect.turns])
+			elif effect.effect_type == ENEMY_ACTION_EFFECT.Type.SHIELD:
+				descriptions.append("护盾%d" % effect.amount)
+			elif effect.effect_type == ENEMY_ACTION_EFFECT.Type.BLOCK:
+				descriptions.append("单次格挡%d" % effect.amount)
+			elif effect.effect_type == ENEMY_ACTION_EFFECT.Type.THORNS:
+				descriptions.append("反伤%d（最多%d次）" % [effect.amount, effect.hits])
+			else:
+				descriptions.append(current_enemy_action.description)
+		var text := "%s·%s：%s" % [["攻击", "防御", "技能"][current_enemy_action.category], current_enemy_action.display_name, "；".join(descriptions)]
+		if enemy_charge_rule > 0:
+			text += "\n%s %d/%d%s" % ["有效命中" if enemy_charge_rule == ENEMY_ACTION_EFFECT.BreakRule.HITS else "有效伤害", enemy_charge_progress, enemy_charge_threshold, "，已打断" if enemy_charge_interrupted else "可打断"]
+		return text
 	return current_enemy_action.get_intent_text(get_enemy_intent_damage())
+
+
+# 回合刷新时供真实界面持续显示状态，不能仅依赖会被出牌提示覆盖的日志。
+func get_enemy_rules_text() -> String:
+	var states: Array[String] = []
+	if player.bleed_turns > 0:
+		states.append("流血%d点/%d回合" % [player.bleed_amount, player.bleed_turns])
+	if enemy.single_block > 0:
+		states.append("敌方单次格挡%d" % enemy.single_block)
+	if enemy_thorns_remaining > 0:
+		states.append("敌方反伤%d×%d" % [enemy_thorns_amount, enemy_thorns_remaining])
+	return "　".join(states)
 
 
 # 为线性敌人顺序取行动，为 Boss 按权重取行动，并仅在此刻结算随机浮动。
@@ -848,11 +914,13 @@ func _prepare_enemy_intent() -> void:
 		return
 
 	if current_enemy_definition.action_mode == ENEMY_DEFINITION.ActionMode.WEIGHTED_RANDOM:
-		current_enemy_action = _pick_weighted_action(current_enemy_definition.actions)
+		current_enemy_action = _pick_weighted_action(current_enemy_definition.actions, current_enemy_definition.action_weights)
 	else:
 		current_enemy_action = current_enemy_definition.actions[
 			_enemy_action_index % current_enemy_definition.actions.size()
 		]
+	if enemy_charge_interrupted and current_enemy_action.interrupted_action_id > 0 and _enemy_catalog != null:
+		current_enemy_action = _enemy_catalog.find_action(current_enemy_action.interrupted_action_id)
 
 	var variance: float = current_enemy_action.variance_percent / 100.0
 	if variance > 0.0:
@@ -863,18 +931,21 @@ func _prepare_enemy_intent() -> void:
 		enemy_intent_damage = current_enemy_action.amount
 
 
-# 权重选择只读取定义；非正权重会被忽略，全部无效时安全回退第一项。
-func _pick_weighted_action(actions: Array[Resource]) -> Resource:
+# 新表读取怪物列表对应权重（空值默认每个行为1），旧表读取行动权重；非正权重安全忽略。
+func _pick_weighted_action(actions: Array[Resource], configured_weights: Array[int] = []) -> Resource:
 	var total_weight := 0
-	for action in actions:
-		total_weight += maxi(action.weight, 0)
+	var weights: Array[int] = []
+	for index in range(actions.size()):
+		var weight: int = actions[index].weight if configured_weights.is_empty() else (configured_weights[index] if index < configured_weights.size() else 0)
+		weights.append(maxi(weight, 0))
+		total_weight += weights.back()
 	if total_weight <= 0:
 		return actions[0]
 	var roll := _rng.randi_range(1, total_weight)
-	for action in actions:
-		roll -= maxi(action.weight, 0)
+	for index in range(actions.size()):
+		roll -= weights[index]
 		if roll <= 0:
-			return action
+			return actions[index]
 	return actions.back()
 
 
@@ -882,6 +953,11 @@ func _pick_weighted_action(actions: Array[Resource]) -> Resource:
 func _execute_current_enemy_action() -> void:
 	if current_enemy_action == null:
 		_execute_enemy_damage(get_enemy_intent_damage(), false)
+		return
+	if not current_enemy_action.effects.is_empty():
+		_execute_table_enemy_action()
+		if current_enemy_definition.action_mode == ENEMY_DEFINITION.ActionMode.SEQUENCE:
+			_enemy_action_index += 1
 		return
 
 	match current_enemy_action.action_type:
@@ -914,6 +990,71 @@ func _execute_current_enemy_action() -> void:
 		_enemy_action_index += 1
 
 
+# 一次只执行选定行为，效果按表中步骤结算；任一方死亡立即停止剩余段数和附带效果。
+func _execute_table_enemy_action() -> void:
+	var consuming_charge := enemy_charge_rule > 0
+	for effect in current_enemy_action.effects:
+		if player.is_dead() or enemy.is_dead():
+			break
+		var recipient = player if effect.target == ENEMY_ACTION_EFFECT.Target.PLAYER else enemy
+		match effect.effect_type:
+			ENEMY_ACTION_EFFECT.Type.DAMAGE, ENEMY_ACTION_EFFECT.Type.DRAIN:
+				for hit in range(effect.hits):
+					if player.is_dead():
+						break
+					_execute_enemy_damage(maxi(roundi(effect.amount * enemy.strength_multiplier), 0), effect.effect_type == ENEMY_ACTION_EFFECT.Type.DRAIN)
+			ENEMY_ACTION_EFFECT.Type.SHIELD:
+				var gained: int = recipient.gain_shield(effect.amount)
+				effect_resolved.emit({"type": "shield", "amount": gained, "target": recipient, "health_after": recipient.health, "shield_after": recipient.shield})
+			ENEMY_ACTION_EFFECT.Type.HEAL:
+				var healed: int = recipient.heal(effect.amount)
+				effect_resolved.emit({"type": "heal", "amount": healed, "target": recipient, "health_after": recipient.health, "shield_after": recipient.shield})
+			ENEMY_ACTION_EFFECT.Type.WEAKNESS:
+				recipient.apply_weakness(effect.multiplier, effect.turns)
+				effect_resolved.emit({"type": "weakness", "target": recipient, "multiplier": recipient.strength_multiplier, "turns": recipient.strength_turns})
+			ENEMY_ACTION_EFFECT.Type.STRENGTH:
+				recipient.apply_strength(effect.multiplier, effect.turns + 1)
+				# 自身技能在行动末尾也推进状态，因此补一回合，保证后续完整享有表中指定回合数。
+				effect_resolved.emit({"type": "strength", "target": recipient, "multiplier": recipient.strength_multiplier, "turns": effect.turns})
+			ENEMY_ACTION_EFFECT.Type.BLEED:
+				recipient.apply_bleed(effect.amount, effect.turns)
+				_log("施加流血%d点，持续%d回合" % [effect.amount, effect.turns])
+			ENEMY_ACTION_EFFECT.Type.BLOCK:
+				recipient.single_block = effect.amount
+			ENEMY_ACTION_EFFECT.Type.THORNS:
+				enemy_thorns_amount = effect.amount
+				enemy_thorns_remaining = effect.hits
+			ENEMY_ACTION_EFFECT.Type.CHARGE:
+				enemy_charge_rule = effect.break_rule
+				enemy_charge_threshold = effect.threshold
+				enemy_charge_progress = 0
+				enemy_charge_interrupted = false
+	if consuming_charge:
+		enemy_charge_rule = 0
+		enemy_charge_threshold = 0
+		enemy_charge_progress = 0
+		enemy_charge_interrupted = false
+
+
+# 从每段真实受伤入口统计蓄力与有限反伤，避免同步多段在整牌结算后才触发机制。
+func _on_enemy_damage_taken(result: Dictionary) -> void:
+	var effective_damage := int(result.absorbed) + int(result.health_damage)
+	if effective_damage <= 0:
+		return
+	if enemy_charge_rule > 0 and not enemy_charge_interrupted:
+		enemy_charge_progress += 1 if enemy_charge_rule == ENEMY_ACTION_EFFECT.BreakRule.HITS else effective_damage
+		if enemy_charge_progress >= enemy_charge_threshold:
+			enemy_charge_interrupted = true
+			if current_enemy_action != null and current_enemy_action.interrupted_action_id > 0 and _enemy_catalog != null:
+				current_enemy_action = _enemy_catalog.find_action(current_enemy_action.interrupted_action_id)
+			_log("蓄力已打断，重击改为普通攻击")
+	if enemy_thorns_remaining > 0 and not player.is_dead():
+		enemy_thorns_remaining -= 1
+		var reflected: Dictionary = player.take_damage(enemy_thorns_amount)
+		_log("架势反伤%d，剩余%d次" % [enemy_thorns_amount, enemy_thorns_remaining])
+		effect_resolved.emit({"type": "damage", "amount": enemy_thorns_amount, "absorbed": reflected.absorbed, "health_damage": reflected.health_damage, "target": player, "source": enemy, "damage_tag": "passive", "health_after": player.health, "shield_after": player.shield})
+
+
 # 敌人攻击统一结算护盾；吸血只恢复实际造成的生命伤害，不把护盾吸收量算入治疗。
 func _execute_enemy_damage(final_damage: int, drain: bool) -> void:
 	var result := player.take_damage(final_damage)
@@ -931,6 +1072,8 @@ func _execute_enemy_damage(final_damage: int, drain: bool) -> void:
 		"health_damage": result.health_damage,
 		"target": player,
 		"source": enemy,
+		"health_after": player.health,
+		"shield_after": player.shield,
 	}
 	effect_resolved.emit(event)
 	if drain and result.health_damage > 0:

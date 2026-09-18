@@ -27,6 +27,7 @@ const MISS_AUDIO_STREAM := preload("res://sound/sounds/miss.mp3")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const BEAR := preload("res://data/enemies/enemy_bear.tres")
 const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
+const ENEMY_CATALOG := preload("res://data/enemies/enemy_catalog.tres")
 const SUPER_ATTACK := preload("res://data/skills/skill_super_attack.tres")
 const SUPER_DEFENSE := preload("res://data/skills/skill_super_defense.tres")
 const SUPER_ABILITY := preload("res://data/skills/skill_super_ability.tres")
@@ -74,6 +75,7 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var turn_label: Label = %TurnLabel
 @onready var phase_label: Label = %PhaseLabel
 @onready var intent_label: Label = %IntentLabel
+@onready var monster_rules_label: Label = %MonsterRulesLabel
 @onready var energy_label: Label = %EnergyLabel
 @onready var status_label: Label = %StatusLabel
 @onready var card_warning_overlay: PanelContainer = %CardWarningOverlay
@@ -279,6 +281,7 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 # 使用训练敌人的完整行动配置保证测试战斗仍覆盖真实敌方回合；duplicate 避免把 100 血写回共享资源。
 func _create_test_enemy() -> Resource:
 	var test_enemy := TURTLE.duplicate(true)
+	test_enemy.id = 6098
 	test_enemy.max_health = TEST_ENEMY_MAX_HEALTH
 	test_enemy.display_name = "测试怪物"
 	return test_enemy
@@ -539,9 +542,10 @@ func _shake_battle(duration: float, amplitude: float) -> void:
 func _select_room_enemy(room: Dictionary) -> Resource:
 	var cached_id: String = run_state.map_state.get_enemy_id(room.id)
 	if not cached_id.is_empty():
-		var cached_path := "res://data/enemies/%s.tres" % cached_id
-		if ResourceLoader.exists(cached_path):
-			return load(cached_path)
+		var cached_enemy: Resource = ENEMY_CATALOG.resolve_cached_id(cached_id)
+		if cached_enemy != null:
+			run_state.map_state.set_enemy_id(room.id, str(cached_enemy.id))
+			return cached_enemy
 		_record_missing_encounter("enemy", {"enemy_id": cached_id})
 		return TURTLE
 	var pool_path := "res://data/encounters/chapter_%d.tres" % run_state.chapter
@@ -561,7 +565,12 @@ func _select_room_enemy(room: Dictionary) -> Resource:
 			"room_type": room.type,
 		})
 		return TURTLE
-	run_state.map_state.set_enemy_id(room.id, enemy.enemy_id)
+	# 旧章节资源通过白名单补充数字ID，新表资源直接使用数字目录；英文名不再参与正式查找。
+	if enemy.id <= 0:
+		enemy = ENEMY_CATALOG.resolve_cached_id(enemy.enemy_id)
+	if enemy == null:
+		return TURTLE
+	run_state.map_state.set_enemy_id(room.id, str(enemy.id))
 	return enemy
 
 
@@ -796,7 +805,13 @@ func _refresh_all() -> void:
 	# 当前玩法没有固定总回合数；独立底板只显示真实回合，行动阶段保留在顶部文字区。
 	turn_label.text = str(controller.turn_number)
 	phase_label.text = controller.get_phase_text()
-	intent_label.text = "意图：%s" % controller.get_enemy_intent_text()
+	var full_intent: String = controller.get_enemy_intent_text()
+	# 顶栏只显示类别与名称，完整数值、打断进度和临时状态在头像左侧换行显示，避免撑出360视口。
+	var table_action: bool = controller.current_enemy_action != null and not controller.current_enemy_action.effects.is_empty()
+	intent_label.text = full_intent.get_slice("：", 0) if table_action else "意图：%s" % full_intent
+	intent_label.tooltip_text = full_intent
+	monster_rules_label.text = full_intent + "\n\n" + controller.get_enemy_rules_text()
+	monster_rules_label.visible = table_action or not controller.get_enemy_rules_text().is_empty()
 	# 费用面板由独立背景、闪电与动态数字组成；临时费用允许超过上限，保留实际数值。
 	energy_label.text = "%d/%d" % [controller.player.energy, controller.player.max_energy]
 	pile_label.text = "抽牌 %d　弃牌 %d" % [deck_state.draw_pile.size(), deck_state.discard_pile.size()]

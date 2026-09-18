@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_soogw"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_e5bom"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_y064n"]
+
+[sub_resource type="Resource" id="Resource_n8qts"]
+script = ExtResource("1_soogw")
+amount = 4
+
+[sub_resource type="Resource" id="Resource_1pmp8"]
+script = ExtResource("2_e5bom")
+id = 6
+description = "造成4点伤害"
+effects = Array[Resource]([SubResource("Resource_n8qts")])
+display_name = "快踢"
+
+[sub_resource type="Resource" id="Resource_b3dvb"]
+script = ExtResource("1_soogw")
+amount = 3
+hits = 2
+
+[sub_resource type="Resource" id="Resource_uu7se"]
+script = ExtResource("2_e5bom")
+id = 7
+description = "连续造成2次3点伤害"
+effects = Array[Resource]([SubResource("Resource_b3dvb")])
+display_name = "双连踢"
+
+[resource]
+script = ExtResource("3_y064n")
+enemy_id = "enemy_rabbit"
+id = 6003
+action_ids = Array[int]([6, 6, 7])
+display_name = "兔子"
+max_health = 24
+actions = Array[Resource]([SubResource("Resource_1pmp8"), SubResource("Resource_1pmp8"), SubResource("Resource_uu7se")])

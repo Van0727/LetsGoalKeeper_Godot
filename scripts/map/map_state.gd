@@ -121,7 +121,7 @@ func mark_current_rest_used() -> bool:
 	return true
 
 
-# 记录该房间选定的敌人稳定 ID（进入战斗时确定，重进同一场不重新随机）。
+# 缓存数字怪物ID的十进制字符串，保留原存档字段类型；旧英文值由怪物目录迁移。
 func set_enemy_id(room_id: String, enemy_id: String) -> void:
 	var room := room_by_id(room_id)
 	if not room.is_empty():

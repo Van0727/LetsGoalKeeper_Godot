@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_k5rw2"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_tn6g1"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_d387i"]
+
+[sub_resource type="Resource" id="Resource_6b2b3"]
+script = ExtResource("1_k5rw2")
+amount = 5
+
+[sub_resource type="Resource" id="Resource_qn6d4"]
+script = ExtResource("2_tn6g1")
+id = 1
+description = "造成5点伤害"
+effects = Array[Resource]([SubResource("Resource_6b2b3")])
+display_name = "啄击"
+
+[sub_resource type="Resource" id="Resource_gdd1n"]
+script = ExtResource("1_k5rw2")
+amount = 3
+
+[sub_resource type="Resource" id="Resource_lt6ej"]
+script = ExtResource("1_k5rw2")
+effect_type = 6
+amount = 2
+turns = 2
+
+[sub_resource type="Resource" id="Resource_ho1sh"]
+script = ExtResource("2_tn6g1")
+id = 2
+description = "造成3点伤害并施加流血2点持续2回合"
+effects = Array[Resource]([SubResource("Resource_gdd1n"), SubResource("Resource_lt6ej")])
+display_name = "撕裂啄击"
+
+[sub_resource type="Resource" id="Resource_gqjqr"]
+script = ExtResource("1_k5rw2")
+effect_type = 1
+target = 1
+amount = 5
+
+[sub_resource type="Resource" id="Resource_mgnxg"]
+script = ExtResource("2_tn6g1")
+id = 3
+category = 1
+description = "获得5点护盾"
+effects = Array[Resource]([SubResource("Resource_gqjqr")])
+display_name = "羽翼防守"
+
+[resource]
+script = ExtResource("3_d387i")
+enemy_id = "enemy_street_chicken"
+id = 6001
+action_ids = Array[int]([1, 2, 3])
+display_name = "鸡"
+max_health = 28
+actions = Array[Resource]([SubResource("Resource_qn6d4"), SubResource("Resource_ho1sh"), SubResource("Resource_mgnxg")])

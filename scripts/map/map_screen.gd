@@ -8,6 +8,7 @@ extends Control
 @export_range(0.5, 3.0, 0.05) var rest_ui_scale := 1.2
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const MAP_STATE := preload("res://scripts/map/map_state.gd")
+const ENEMY_CATALOG := preload("res://data/enemies/enemy_catalog.tres")
 const ROOM_BUTTON := preload("res://scripts/map/map_room_button.gd")
 const ART_PATHS := {
 "base":"res://assets/ui/map/enemy_node_base_v2.png",
@@ -121,8 +122,8 @@ func _opponent_name(room: Dictionary) -> String:
 		return "休息"
 	var cached: String = room.get("enemy_id", "")
 	if not cached.is_empty():
-		var path := "res://data/enemies/%s.tres" % cached
-		return str(load(path).display_name) if ResourceLoader.exists(path) else "乌龟"
+		var cached_enemy: Resource = ENEMY_CATALOG.resolve_cached_id(cached)
+		return str(cached_enemy.display_name) if cached_enemy != null else "乌龟"
 	var pool_path := "res://data/encounters/chapter_%d.tres" % run_state.chapter
 	if not ResourceLoader.exists(pool_path):
 		return "乌龟"
