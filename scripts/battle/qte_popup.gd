@@ -94,12 +94,13 @@ func _create_sfx_player(node_name: String, stream: AudioStream, polyphony: int) 
 	return player
 
 
-# 以当前音乐播放头之后两个拍长作为首个判定点；速度提升1.5倍但目标仍保持逐拍间隔。
+# 从同一 BGM 播放头安排首个整拍目标，随后按半拍排列四个音符；逐曲校准由节拍时钟统一应用。
 func start_qte(rhythm_clock: Node, seed_value: int = 0, target_line_y: float = 278.0) -> bool:
 	if _running or rhythm_clock == null:
 		return false
 	_rhythm_clock = rhythm_clock
 	_rng.seed = seed_value if seed_value != 0 else Time.get_ticks_usec()
+	# 配置值是玩家听到的现实秒数；判定时再换算为当前音源时间，避免变调后窗口缩水或膨胀。
 	_perfect_window_seconds = float(_rhythm_clock.perfect_window_ms) / 1000.0
 	_good_window_seconds = float(_rhythm_clock.good_window_ms) / 1000.0
 	_target_line_y = target_line_y
@@ -158,8 +159,9 @@ func _process(delta: float) -> void:
 				_target_pulse_ages[lane] = -1.0
 	_judgement_age += maxf(delta, 0.0)
 	var music_time: float = _rhythm_clock.get_music_time()
+	var good_source_seconds := _get_source_window_seconds(_good_window_seconds)
 	for note in _notes:
-		if not bool(note.judged) and music_time > float(note.target_time) + _good_window_seconds:
+		if not bool(note.judged) and music_time > float(note.target_time) + good_source_seconds:
 			_apply_judgement(note, "Miss")
 	_refresh_visual_nodes()
 	if _judged_count() == NOTE_COUNT:
@@ -210,7 +212,7 @@ func _lane_at_pointer(pointer_position: Vector2) -> int:
 	return nearest_lane
 
 
-# 同轨只判定距离当前时刻最近且仍在Good窗口内的音符；空按不会误伤其他轨道音符。
+# 同轨只判定距离当前时刻最近且仍在现实 Good 窗口内的音符；空按不会误伤其他轨道音符。
 func judge_lane(lane: int, music_time_override: float = -1.0) -> String:
 	if not _running or lane < 0 or lane >= LANE_COUNT:
 		return ""
@@ -219,20 +221,26 @@ func judge_lane(lane: int, music_time_override: float = -1.0) -> String:
 	)
 	var candidate: Dictionary = {}
 	var closest_error := INF
+	var good_source_seconds := _get_source_window_seconds(_good_window_seconds)
 	for note in _notes:
 		if bool(note.judged) or int(note.lane) != lane:
 			continue
 		var error: float = absf(music_time - float(note.target_time))
-		if error <= _good_window_seconds and error < closest_error:
+		if error <= good_source_seconds and error < closest_error:
 			candidate = note
 			closest_error = error
 	if candidate.is_empty():
 		_show_judgement("Miss")
 		_play_miss_audio()
 		return ""
-	var grade := "Perfect" if closest_error <= _perfect_window_seconds else "Good"
+	var grade := "Perfect" if closest_error <= _get_source_window_seconds(_perfect_window_seconds) else "Good"
 	_apply_judgement(candidate, grade)
 	return grade
+
+
+# QTE 目标坐标是音源秒数，窗口配置是现实秒数；播放倍率可能在 QTE 期间变化，故每次即时读取。
+func _get_source_window_seconds(real_seconds: float) -> float:
+	return real_seconds * float(_rhythm_clock.get_playback_rate()) if _rhythm_clock != null else real_seconds
 
 
 func _apply_judgement(note: Dictionary, grade: String) -> void:
@@ -291,6 +299,7 @@ func _refresh_visual_nodes() -> void:
 	var beat_duration: float = _rhythm_clock.get_beat_duration()
 	var travel_seconds := beat_duration * TRAVEL_BEATS
 	var music_time: float = _rhythm_clock.get_music_time()
+	var good_source_seconds := _get_source_window_seconds(_good_window_seconds)
 	for lane in range(LANE_COUNT):
 		var lane_x := _get_lane_x(play_area, lane)
 		var lane_view := _lane_views[lane]
@@ -309,7 +318,7 @@ func _refresh_visual_nodes() -> void:
 		if bool(note.judged):
 			continue
 		var time_until_target: float = float(note.target_time) - music_time
-		if time_until_target > travel_seconds or time_until_target < -_good_window_seconds:
+		if time_until_target > travel_seconds or time_until_target < -good_source_seconds:
 			continue
 		var progress := 1.0 - time_until_target / travel_seconds
 		var lane: int = int(note.lane)

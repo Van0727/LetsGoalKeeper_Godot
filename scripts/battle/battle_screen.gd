@@ -61,6 +61,14 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var item_detail_name: Label = %Name
 @onready var item_detail_description: Label = %Description
 @onready var enemy_display: CharacterDisplay = %EnemyDisplay
+# 怪物信息层仅展示控制器已经结算出的生命和当前意图，不自行推算战斗规则。
+@onready var enemy_health_fill_clip: Control = %EnemyHealthFillClip
+@onready var enemy_health_text: Label = %EnemyHealthText
+@onready var behavior_attack: TextureRect = %BehaviorAttack
+@onready var behavior_defense: TextureRect = %BehaviorDefense
+@onready var behavior_skill: TextureRect = %BehaviorSkill
+@onready var behavior_value: Label = %BehaviorValue
+@onready var talking_text: Label = %TalkingText
 # 使用基础控件类型避免新增脚本的全局类缓存尚未刷新时阻塞战斗场景解析。
 @onready var drag_threshold_guide: Control = %DragThresholdGuide
 # 使用基础节点类型避免首次导入时全局类缓存尚未登记 BallFlight 而阻塞战斗场景解析。
@@ -78,6 +86,9 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var monster_rules_label: Label = %MonsterRulesLabel
 @onready var energy_label: Label = %EnergyLabel
 @onready var status_label: Label = %StatusLabel
+@onready var bgm_calibration_toggle: Button = %BgmCalibrationToggle
+@onready var bgm_calibration_panel: PanelContainer = %BgmCalibrationPanel
+@onready var calibration_value_label: Label = %CalibrationValueLabel
 @onready var card_warning_overlay: PanelContainer = %CardWarningOverlay
 @onready var card_warning_label: Label = %CardWarningLabel
 @onready var hand_layer: Control = %HandLayer
@@ -122,6 +133,9 @@ var _victory_result_delay_pending := false
 var _battle_generation := 0
 # 当前出牌对应的音频拍点；所有分段发射和命中都从同一锚点计算，避免逐帧计时累积漂移。
 var _resolution_beat_anchor_time := 0.0
+# 测试玩法可临时试听偏移；只有按保存后才更新 SettingsService 的逐曲记录。
+var _saved_bgm_offset_ms := 0
+var _calibration_status := ""
 var _visual_rng := RandomNumberGenerator.new()
 # 实战命中音统一由常驻播放器输出；多声部允许攻击间隔短于音效长度时每段仍清晰触发。
 var _attack_hit_audio: AudioStreamPlayer
@@ -220,6 +234,7 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_pending_battle_result = null
 	_is_presenting_resolution = false
 	card_warning_overlay.hide()
+	_setup_bgm_calibration()
 	var bgm_service := get_node_or_null("/root/BgmService")
 	if bgm_service != null:
 		rhythm_clock.start_music_with_player(bgm_service.start_battle_bgm(rhythm_clock.music))
@@ -276,6 +291,73 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_refresh_all()
 	if not selected_enemy.passive_description.is_empty():
 		status_label.text = "%s被动：%s" % [selected_enemy.display_name, selected_enemy.passive_description]
+
+
+# 战斗启动时按当前曲目读取已保存的设备校准；测试玩法仅保留小按钮，面板默认收起。
+func _setup_bgm_calibration() -> void:
+	bgm_calibration_toggle.visible = run_state.is_test_battle and rhythm_clock.music != null
+	bgm_calibration_panel.hide()
+	bgm_calibration_toggle.text = "校准"
+	_saved_bgm_offset_ms = 0
+	_calibration_status = ""
+	var settings_service := get_node_or_null("/root/SettingsService")
+	if settings_service != null and rhythm_clock.music != null:
+		_saved_bgm_offset_ms = settings_service.get_bgm_offset_ms(rhythm_clock.music.resource_path)
+	rhythm_clock.set_calibration_offset_ms(float(_saved_bgm_offset_ms))
+	_refresh_bgm_calibration_label()
+
+
+# 展开和收起只改变控件可见性；当前试听值与保存状态在本场战斗中继续保留。
+func _on_calibration_toggle_pressed() -> void:
+	if not bgm_calibration_toggle.visible:
+		return
+	bgm_calibration_panel.visible = not bgm_calibration_panel.visible
+	bgm_calibration_toggle.text = "收起" if bgm_calibration_panel.visible else "校准"
+
+
+# 每按一次只移动 1 ms，现场立即试听；上下限与持久化校验一致，防止误触后难以恢复。
+func _change_bgm_calibration(delta_ms: int) -> void:
+	if not bgm_calibration_panel.visible:
+		return
+	var settings_service := get_node_or_null("/root/SettingsService")
+	var limit := int(settings_service.MAX_BGM_OFFSET_MS) if settings_service != null else 500
+	rhythm_clock.set_calibration_offset_ms(float(clampi(
+		roundi(rhythm_clock.calibration_offset_ms) + delta_ms, -limit, limit
+	)))
+	_calibration_status = ""
+	_refresh_bgm_calibration_label()
+
+
+func _on_calibration_minus_pressed() -> void:
+	_change_bgm_calibration(-1)
+
+
+func _on_calibration_plus_pressed() -> void:
+	_change_bgm_calibration(1)
+
+
+# 失败时保留当前试听值供重试，但下次进场仍以最后成功保存的值为准。
+func _on_calibration_save_pressed() -> void:
+	if not bgm_calibration_panel.visible or rhythm_clock.music == null:
+		return
+	var settings_service := get_node_or_null("/root/SettingsService")
+	if settings_service == null:
+		_calibration_status = "保存失败"
+	else:
+		var offset_ms := roundi(rhythm_clock.calibration_offset_ms)
+		if settings_service.save_bgm_offset_ms(rhythm_clock.music.resource_path, offset_ms):
+			_saved_bgm_offset_ms = offset_ms
+			_calibration_status = "已保存"
+		else:
+			_calibration_status = "保存失败"
+	_refresh_bgm_calibration_label()
+
+
+func _refresh_bgm_calibration_label() -> void:
+	var offset_ms := roundi(rhythm_clock.calibration_offset_ms)
+	var marker := " *" if offset_ms != _saved_bgm_offset_ms else ""
+	var status := " · %s" % _calibration_status if not _calibration_status.is_empty() else ""
+	calibration_value_label.text = "偏移 %+d ms%s%s" % [offset_ms, marker, status]
 
 
 # 使用训练敌人的完整行动配置保证测试战斗仍覆盖真实敌方回合；duplicate 避免把 100 血写回共享资源。
@@ -802,6 +884,7 @@ func _refresh_all() -> void:
 	player_display.set_shield(controller.player.shield)
 	enemy_display.set_health(controller.enemy.health)
 	enemy_display.set_shield(controller.enemy.shield)
+	_refresh_monster_info()
 	# 当前玩法没有固定总回合数；独立底板只显示真实回合，行动阶段保留在顶部文字区。
 	turn_label.text = str(controller.turn_number)
 	phase_label.text = controller.get_phase_text()
@@ -817,6 +900,34 @@ func _refresh_all() -> void:
 	pile_label.text = "抽牌 %d　弃牌 %d" % [deck_state.draw_pile.size(), deck_state.discard_pile.size()]
 	_refresh_owned_item_icons()
 	_update_input_state()
+
+
+# 按真实生命比例裁切红色切图；无有效行为时使用控制器的默认攻击意图。
+func _refresh_monster_info() -> void:
+	var max_health: int = maxi(controller.enemy.max_health, 1)
+	var health: int = clampi(controller.enemy.health, 0, max_health)
+	enemy_health_fill_clip.size.x = 123.0 * float(health) / float(max_health)
+	enemy_health_text.text = "%d/%d" % [health, max_health]
+	var action: Resource = controller.current_enemy_action
+	var category := 0
+	if action != null:
+		if not action.effects.is_empty():
+			category = clampi(action.category, 0, 2)
+		elif action.action_type == 1:
+			category = 1
+		elif action.action_type != 0 and action.action_type != 4:
+			category = 2
+	# 意图栏只保留当前类别图标，容器自动回收隐藏图标的宽度。
+	behavior_attack.visible = category == 0
+	behavior_defense.visible = category == 1
+	behavior_skill.visible = category == 2
+	var amount := controller.get_enemy_intent_damage() if category == 0 else (int(action.amount) if action != null else 0)
+	behavior_value.text = str(amount) if amount > 0 else ""
+	var full_intent: String = controller.get_enemy_intent_text()
+	# 气泡只放行动短名；过长名称截断，完整规则仍可通过提示查看。
+	var action_name: String = str(action.display_name) if action != null else "攻击"
+	talking_text.text = action_name.substr(0, 7) + "…" if action_name.length() > 8 else action_name
+	talking_text.tooltip_text = full_intent
 
 
 # 底部只显示战利品图片、不显示名称；图标根据品级使用现阶段的纯色占位，容器会按可用宽度自动换行。

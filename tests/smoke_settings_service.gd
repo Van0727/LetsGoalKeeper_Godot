@@ -1,4 +1,4 @@
-# 设置功能冒烟测试：验证默认圆圈、已有波形偏好往返、损坏降级、音频总线及设置界面绑定。
+# 设置功能冒烟测试：验证偏好与逐曲偏移往返、损坏降级、音频总线及设置界面绑定。
 extends SceneTree
 
 const SETTINGS_SERVICE_SCRIPT := preload("res://autoload/settings_service.gd")
@@ -18,6 +18,7 @@ func _run() -> void:
 	_cleanup()
 	_test_circle_defaults()
 	_test_round_trip_and_boundaries()
+	_test_bgm_calibration_persistence()
 	_test_legacy_config_defaults_to_circle()
 	_test_corrupt_config_fallback()
 	await _test_audio_bus_routing()
@@ -64,6 +65,30 @@ func _test_round_trip_and_boundaries() -> void:
 		"res://scenes/main_menu.tscn",
 		"来源路径只消费一次"
 	)
+	source.free()
+	restored.free()
+
+
+# 各曲目独立保存；无效路径、越界和写入失败不得污染已保存的内存状态。
+func _test_bgm_calibration_persistence() -> void:
+	var source = SETTINGS_SERVICE_SCRIPT.new()
+	var restored = SETTINGS_SERVICE_SCRIPT.new()
+	source.settings_path = _path
+	restored.settings_path = _path
+	var battle_bgm := "res://sound/bgm/bg_basicDrum2_bpm100.mp3"
+	var main_bgm := "res://sound/bgm/bg_main_bpm110.mp3"
+	_assert_equal(source.get_bgm_offset_ms(battle_bgm), 0, "新曲默认零校准")
+	_assert_true(source.save_bgm_offset_ms(battle_bgm, 37), "战斗曲保存正偏移")
+	_assert_true(source.save_bgm_offset_ms(main_bgm, -19), "主菜单曲保存负偏移")
+	_assert_true(restored.load_settings(), "逐曲偏移可回读")
+	_assert_equal(restored.get_bgm_offset_ms(battle_bgm), 37, "战斗曲偏移往返")
+	_assert_equal(restored.get_bgm_offset_ms(main_bgm), -19, "主菜单曲偏移独立往返")
+	_assert_true(not source.save_bgm_offset_ms(battle_bgm, 501), "越界偏移被拒绝")
+	_assert_true(not source.save_bgm_offset_ms("res://sound/sounds/kick.mp3", 10), "非BGM路径被拒绝")
+	_assert_equal(source.get_bgm_offset_ms(battle_bgm), 37, "非法保存不覆盖旧偏移")
+	source.settings_path = "res://tests/nonexistent_calibration_dir/failed.cfg"
+	_assert_true(not source.save_bgm_offset_ms(battle_bgm, 44), "文件写入失败可检测")
+	_assert_equal(source.get_bgm_offset_ms(battle_bgm), 37, "写入失败恢复旧偏移")
 	source.free()
 	restored.free()
 

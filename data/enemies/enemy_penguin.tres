@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="EnemyDefinition" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3 uid="uid://dunv7daj31s0t"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
+[ext_resource type="Script" uid="uid://djk4dngla0ujr" path="res://scripts/enemies/enemy_definition.gd" id="1_enemy"]
+[ext_resource type="Script" uid="uid://dr0lb186v2jcj" path="res://scripts/enemies/enemy_action_definition.gd" id="2_action"]
 
 [sub_resource type="Resource" id="Action_drain_7"]
 script = ExtResource("2_action")
@@ -31,8 +31,6 @@ multiplier = 0.5
 script = ExtResource("1_enemy")
 enemy_id = "enemy_penguin"
 display_name = "企鹅"
-tier = 0
 max_health = 45
-action_mode = 0
 actions = Array[Resource]([SubResource("Action_drain_7"), SubResource("Action_drain_10"), SubResource("Action_weakness")])
 migration_note = "阶段8暂定生命45；保留 Unity 的吸血与虚弱行动，作为第一、二章普通敌人。"

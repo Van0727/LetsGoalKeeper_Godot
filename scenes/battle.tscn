@@ -3,17 +3,15 @@
 [ext_resource type="Script" uid="uid://0sqy2h3jprll" path="res://scripts/battle/battle_screen.gd" id="1_screen"]
 [ext_resource type="Script" uid="uid://ivhrdkoixvyp" path="res://scripts/battle/battle_controller.gd" id="2_controller"]
 [ext_resource type="PackedScene" path="res://scenes/character_display.tscn" id="3_display"]
-[ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="4_pause"]
+[ext_resource type="PackedScene" uid="uid://cul2ho1d7dah5" path="res://scenes/pause_overlay.tscn" id="4_pause"]
 [ext_resource type="Script" uid="uid://dstsf6onv5y00" path="res://scripts/battle/drag_threshold_guide.gd" id="5_guide"]
 [ext_resource type="PackedScene" path="res://scenes/ball_flight.tscn" id="6_ball"]
 [ext_resource type="Script" uid="uid://d2og83hjwtbaf" path="res://scripts/battle/rhythm_clock.gd" id="7_rhythm_clock"]
 [ext_resource type="Script" uid="uid://bja7wb0jlsy7b" path="res://scripts/battle/rhythm_feedback.gd" id="8_rhythm_feedback"]
 [ext_resource type="AudioStream" uid="uid://c7ve7fwgjlskr" path="res://sound/bgm/bg_basicDrum2_bpm100.mp3" id="9_music"]
-[ext_resource type="Script" path="res://scripts/battle/rhythm_accent_waveform.gd" id="28_accent_waveform"]
 [ext_resource type="Script" uid="uid://c0bv06ogioc3v" path="res://scripts/battle/rhythm_waveform.gd" id="10_waveform"]
 [ext_resource type="Script" uid="uid://dp2rjeesedydd" path="res://scripts/battle/qte_popup.gd" id="11_qte"]
-[ext_resource type="Texture2D" path="res://assets/ui/backgrounds/battle_stage_background_v2.png" id="12_background_art"]
-[ext_resource type="Script" path="res://scripts/battle/stage_lights.gd" id="29_stage_lights"]
+[ext_resource type="Texture2D" uid="uid://dbo1joqxlljb4" path="res://assets/ui/backgrounds/battle_stage_background_v2.png" id="12_background_art"]
 [ext_resource type="Texture2D" uid="uid://cdd7onxysf5gb" path="res://assets/placeholders/top_status.png" id="13_top_status_art"]
 [ext_resource type="Texture2D" uid="uid://0pvr5eh4qvyt" path="res://assets/placeholders/rhythm_lane.png" id="15_rhythm_lane_art"]
 [ext_resource type="Texture2D" uid="uid://dsd3baeberqwu" path="res://assets/placeholders/resource_and_combo.png" id="16_resource_art"]
@@ -21,14 +19,20 @@
 [ext_resource type="Texture2D" uid="uid://bwqr7t5tx00jq" path="res://assets/placeholders/action_button.png" id="19_action_button_art"]
 [ext_resource type="Texture2D" uid="uid://6uivojbpsb5v" path="res://assets/placeholders/overlay_dark.png" id="20_overlay_art"]
 [ext_resource type="Texture2D" uid="uid://beb7i0waldixb" path="res://assets/placeholders/drag_guide.png" id="21_drag_guide_art"]
-[ext_resource type="Texture2D" uid="uid://o7ps4gypkw7q" path="res://assets/ui/energy_background_panel.png" id="25_energy_panel"]
 [ext_resource type="Texture2D" uid="uid://bam38e2g4w8bv" path="res://assets/ui/energy_lightning_icon.png" id="26_energy_icon"]
 [ext_resource type="Texture2D" uid="uid://c64hcak6vtxr5" path="res://assets/ui/turn_panel_v1.png" id="27_turn_panel"]
+[ext_resource type="Script" uid="uid://dhbglkq8pbw6x" path="res://scripts/battle/rhythm_accent_waveform.gd" id="28_accent_waveform"]
+[ext_resource type="Script" uid="uid://bvkob0qj4luqu" path="res://scripts/battle/stage_lights.gd" id="29_stage_lights"]
+[ext_resource type="Texture2D" uid="uid://bbrdoh1dpmdyn" path="res://assets/ui/battle/hpbar.png" id="30_enemy_hpbar"]
+[ext_resource type="Texture2D" uid="uid://c0po4vlpk0txw" path="res://assets/ui/battle/hpbar_red.png" id="31_enemy_hp_fill"]
+[ext_resource type="Texture2D" uid="uid://cloavq0py7432" path="res://assets/ui/battle/hpicon.png" id="32_enemy_hp_icon"]
+[ext_resource type="Texture2D" uid="uid://drdxenrmklr2t" path="res://assets/ui/battle/behavior_attack.png" id="33_behavior_attack"]
+[ext_resource type="Texture2D" uid="uid://brssp8453co3p" path="res://assets/ui/battle/behavior_defense.png" id="34_behavior_defense"]
+[ext_resource type="Texture2D" uid="uid://p2rkip8n06pm" path="res://assets/ui/battle/behavior_skill.png" id="35_behavior_skill"]
+[ext_resource type="Texture2D" uid="uid://bq11tx7il7tif" path="res://assets/ui/battle/talkingbubble.png" id="36_talking_bubble"]
 
 [sub_resource type="StyleBoxTexture" id="Style_button"]
 texture = ExtResource("19_action_button_art")
-
-[sub_resource type="StyleBoxEmpty" id="Style_pitch_clear"]
 
 [sub_resource type="StyleBoxFlat" id="Style_monster_rules"]
 content_margin_left = 5.0
@@ -40,6 +44,8 @@ corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxEmpty" id="Style_pitch_clear"]
 
 [sub_resource type="StyleBoxFlat" id="Style_card_warning"]
 bg_color = Color(1, 1, 1, 1)
@@ -107,6 +113,17 @@ texture = ExtResource("12_background_art")
 expand_mode = 1
 stretch_mode = 6
 
+[node name="StageLights" type="ColorRect" parent="Background" unique_id=827444847]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+script = ExtResource("29_stage_lights")
+
 [node name="TopStatusArt" type="TextureRect" parent="." unique_id=2065843277]
 visible = false
 layout_mode = 1
@@ -157,17 +174,6 @@ text = "1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="StageLights" type="ColorRect" parent="Background"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(1, 1, 1, 0)
-script = ExtResource("29_stage_lights")
-
 [node name="Header" type="HBoxContainer" parent="." unique_id=27598144]
 layout_mode = 1
 anchors_preset = 10
@@ -207,15 +213,27 @@ text = "GM"
 [node name="IntentLabel" type="Label" parent="Header" unique_id=1304130037]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(92, 0)
-clip_text = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.66, 0.55, 1)
 theme_override_font_sizes/font_size = 10
 text = "敌人意图：8"
 horizontal_alignment = 2
 vertical_alignment = 1
+clip_text = true
 
-[node name="MonsterRulesLabel" type="Label" parent="."]
+[node name="BgmCalibrationToggle" type="Button" parent="." unique_id=32229601]
+unique_name_in_owner = true
+visible = false
+z_index = 25
+layout_mode = 0
+offset_left = 294.0
+offset_top = 4.0
+offset_right = 354.0
+offset_bottom = 34.0
+theme_override_font_sizes/font_size = 12
+text = "校准"
+
+[node name="MonsterRulesLabel" type="Label" parent="." unique_id=1367241009]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
@@ -223,7 +241,6 @@ offset_left = 6.0
 offset_top = 76.0
 offset_right = 112.0
 offset_bottom = 230.0
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.92, 0.95, 1, 1)
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("Style_monster_rules")
@@ -238,12 +255,155 @@ offset_bottom = 238.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_pitch_clear")
 
-[node name="Combatants" type="CenterContainer" parent="Pitch" unique_id=1536811906]
-layout_mode = 2
-
-[node name="EnemyDisplay" parent="Pitch/Combatants" unique_id=731636213 instance=ExtResource("3_display")]
+[node name="EnemyDisplay" parent="." unique_id=731636213 instance=ExtResource("3_display")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(138, 132)
+layout_mode = 0
+offset_left = 111.0
+offset_top = 126.0
+offset_right = 249.0
+offset_bottom = 258.0
+theme_override_styles/panel = SubResource("Style_pitch_clear")
+
+[node name="MonsterInfo" type="Control" parent="." unique_id=1112546801]
+anchors_preset = 0
+offset_right = 360.0
+offset_bottom = 145.0
+mouse_filter = 2
+
+[node name="HealthBarBackground" type="TextureRect" parent="MonsterInfo" unique_id=1727070963]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 76.0
+offset_right = 225.0
+offset_bottom = 97.0
+mouse_filter = 2
+texture = ExtResource("30_enemy_hpbar")
+expand_mode = 1
+
+[node name="EnemyHealthFillClip" type="Control" parent="MonsterInfo" unique_id=1570453775]
+unique_name_in_owner = true
+clip_contents = true
+anchors_preset = 0
+offset_left = 95.0
+offset_top = 80.0
+offset_right = 218.0
+offset_bottom = 93.0
+mouse_filter = 2
+
+[node name="Fill" type="TextureRect" parent="MonsterInfo/EnemyHealthFillClip" unique_id=1116430427]
+layout_mode = 0
+offset_right = 123.0
+offset_bottom = 13.0
+mouse_filter = 2
+texture = ExtResource("31_enemy_hp_fill")
+expand_mode = 1
+
+[node name="HealthIcon" type="TextureRect" parent="MonsterInfo" unique_id=820576592]
+layout_mode = 0
+offset_left = 87.0
+offset_top = 70.0
+offset_right = 118.0
+offset_bottom = 101.0
+mouse_filter = 2
+texture = ExtResource("32_enemy_hp_icon")
+expand_mode = 1
+
+[node name="EnemyHealthText" type="Label" parent="MonsterInfo" unique_id=698835892]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 228.0
+offset_top = 77.0
+offset_right = 340.0
+offset_bottom = 97.0
+theme_override_colors/font_color = Color(1, 0.94, 0.81, 1)
+theme_override_font_sizes/font_size = 14
+text = "45/60"
+vertical_alignment = 1
+
+[node name="BehaviorPanel" type="PanelContainer" parent="MonsterInfo" unique_id=607048963]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 100.0
+offset_right = 190.0
+offset_bottom = 125.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_monster_rules")
+
+[node name="Row" type="HBoxContainer" parent="MonsterInfo/BehaviorPanel" unique_id=2089718171]
 layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="NextLabel" type="Label" parent="MonsterInfo/BehaviorPanel/Row" unique_id=261494409]
+custom_minimum_size = Vector2(35, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.94, 0.81, 1)
+theme_override_font_sizes/font_size = 8
+text = "NEXT
+ACTION"
+vertical_alignment = 1
+
+[node name="BehaviorAttack" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row" unique_id=841887491]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(19, 20)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("33_behavior_attack")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BehaviorDefense" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row" unique_id=814443013]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(19, 20)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("34_behavior_defense")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BehaviorSkill" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row" unique_id=1954539643]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(19, 20)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("35_behavior_skill")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BehaviorValue" type="Label" parent="MonsterInfo/BehaviorPanel/Row" unique_id=1238368452]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.94, 0.81, 1)
+theme_override_font_sizes/font_size = 11
+text = "8"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TalkingBubble" type="TextureRect" parent="MonsterInfo" unique_id=1963925052]
+layout_mode = 0
+offset_left = 198.0
+offset_top = 99.0
+offset_right = 257.0
+offset_bottom = 139.0
+mouse_filter = 2
+texture = ExtResource("36_talking_bubble")
+expand_mode = 1
+
+[node name="TalkingText" type="Label" parent="MonsterInfo/TalkingBubble" unique_id=2041217748]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 5.0
+offset_top = 3.0
+offset_right = 55.0
+offset_bottom = 30.0
+theme_override_colors/font_color = Color(0.35, 0.12, 0.12, 1)
+theme_override_font_sizes/font_size = 9
+text = "攻击 8"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+clip_text = true
 
 [node name="RhythmWaveform" type="Control" parent="." unique_id=1632314955]
 unique_name_in_owner = true
@@ -257,7 +417,7 @@ grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("10_waveform")
 
-[node name="RhythmAccentWaveform" type="Control" parent="."]
+[node name="RhythmAccentWaveform" type="Control" parent="." unique_id=749135070]
 unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 0.2
@@ -267,6 +427,7 @@ offset_bottom = 392.0
 grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("28_accent_waveform")
+
 [node name="RhythmLaneArt" type="TextureRect" parent="." unique_id=564343026]
 layout_mode = 1
 anchors_preset = -1
@@ -364,23 +525,24 @@ text = "松开以出牌"
 horizontal_alignment = 1
 
 [node name="EnergyPanel" type="TextureRect" parent="." unique_id=2107471581]
+z_index = 2
 texture_filter = 2
 layout_mode = 0
-offset_left = 4.0
-offset_top = 274.0
-offset_right = 88.0
-offset_bottom = 310.25
+offset_left = 11.0
+offset_top = 303.0
+offset_right = 87.0
+offset_bottom = 343.0
 mouse_filter = 2
-texture = ExtResource("25_energy_panel")
+texture = ExtResource("27_turn_panel")
 expand_mode = 1
 
 [node name="LightningIcon" type="TextureRect" parent="EnergyPanel" unique_id=609372865]
 texture_filter = 2
 layout_mode = 0
-offset_left = 6.6
-offset_top = 5.1
-offset_right = 21.3
-offset_bottom = 29.9
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 24.0
+offset_bottom = 33.0
 mouse_filter = 2
 texture = ExtResource("26_energy_icon")
 expand_mode = 1
@@ -389,13 +551,13 @@ stretch_mode = 5
 [node name="EnergyLabel" type="Label" parent="EnergyPanel" unique_id=761422072]
 unique_name_in_owner = true
 layout_mode = 1
-offset_left = 25.0
-offset_top = 3.0
-offset_right = 77.0
-offset_bottom = 29.0
+offset_left = 27.0
+offset_top = 7.0
+offset_right = 70.0
+offset_bottom = 34.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.88, 0.95, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 19
 text = "3/3"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -466,6 +628,51 @@ theme_override_font_sizes/font_size = 10
 text = "拖动卡牌到绿色区域出牌"
 horizontal_alignment = 1
 text_overrun_behavior = 3
+
+[node name="BgmCalibrationPanel" type="PanelContainer" parent="." unique_id=1544192411]
+unique_name_in_owner = true
+visible = false
+z_index = 25
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 12.0
+offset_top = 182.0
+offset_right = -12.0
+offset_bottom = 222.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_energy")
+
+[node name="Controls" type="HBoxContainer" parent="BgmCalibrationPanel" unique_id=1046689694]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="CalibrationMinusButton" type="Button" parent="BgmCalibrationPanel/Controls" unique_id=1484533177]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 34)
+layout_mode = 2
+text = "−"
+
+[node name="CalibrationValueLabel" type="Label" parent="BgmCalibrationPanel/Controls" unique_id=1734841814]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "偏移 +0 ms"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CalibrationPlusButton" type="Button" parent="BgmCalibrationPanel/Controls" unique_id=352527888]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 34)
+layout_mode = 2
+text = "+"
+
+[node name="CalibrationSaveButton" type="Button" parent="BgmCalibrationPanel/Controls" unique_id=1499664126]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(58, 34)
+layout_mode = 2
+text = "保存"
 
 [node name="HandLayer" type="Control" parent="." unique_id=1471273463]
 unique_name_in_owner = true
@@ -851,6 +1058,10 @@ text = "返回主菜单"
 
 [connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="Header/GMMenuButton" to="." method="_on_gm_menu_pressed"]
+[connection signal="pressed" from="BgmCalibrationToggle" to="." method="_on_calibration_toggle_pressed"]
+[connection signal="pressed" from="BgmCalibrationPanel/Controls/CalibrationMinusButton" to="." method="_on_calibration_minus_pressed"]
+[connection signal="pressed" from="BgmCalibrationPanel/Controls/CalibrationPlusButton" to="." method="_on_calibration_plus_pressed"]
+[connection signal="pressed" from="BgmCalibrationPanel/Controls/CalibrationSaveButton" to="." method="_on_calibration_save_pressed"]
 [connection signal="pressed" from="Footer/SkillButton" to="." method="_on_skill_pressed"]
 [connection signal="pressed" from="Footer/EndTurnButton" to="." method="_on_end_turn_pressed"]
 [connection signal="pressed" from="GMOverlay/Center/Panel/Content/GMSkipButton" to="." method="_on_gm_skip_pressed"]

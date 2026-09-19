@@ -22,13 +22,14 @@ var _flash_tween: Tween
 var _feedback_tween: Tween
 
 
-# 按战斗位置压缩角色信息：敌人保留头像和全部状态，玩家在底部只显示生命条与数值。
+# 按战斗位置压缩角色信息：敌方数值交给专用信息层，此控件保留头像与受击反馈。
 func set_battle_layout_role(role: BattleLayoutRole) -> void:
 	var margin := $Margin as MarginContainer
 	var content := $Margin/Content as VBoxContainer
 	match role:
 		BattleLayoutRole.ENEMY:
-			custom_minimum_size = Vector2(128, 178)
+			# 战斗场景直接定位整个控件；头像显示区对应参考图中央约 130×107 的怪物范围。
+			custom_minimum_size = Vector2(138, 132)
 			# 敌人信息直接叠在场景背景上；显式空样式避免移除覆盖后回退到默认深色面板。
 			add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 			margin.add_theme_constant_override("margin_left", 4)
@@ -36,16 +37,12 @@ func set_battle_layout_role(role: BattleLayoutRole) -> void:
 			margin.add_theme_constant_override("margin_right", 4)
 			margin.add_theme_constant_override("margin_bottom", 2)
 			content.add_theme_constant_override("separation", 1)
-			portrait.custom_minimum_size = Vector2(48, 72)
+			portrait.custom_minimum_size = Vector2(130, 107)
 			feedback_label.custom_minimum_size = Vector2(0, 20)
-			name_label.add_theme_font_size_override("font_size", 16)
-			health_label.add_theme_font_size_override("font_size", 12)
-			shield_label.add_theme_font_size_override("font_size", 13)
-			# 敌方生命和护盾放在头像上方，保持与参考图相同的自上而下阅读顺序。
-			content.move_child(health_bar, 1)
-			content.move_child(health_label, 2)
-			content.move_child(shield_label, 3)
-			content.move_child(portrait, 4)
+			name_label.hide()
+			health_bar.hide()
+			health_label.hide()
+			shield_label.hide()
 		BattleLayoutRole.PLAYER_BAR:
 			custom_minimum_size = Vector2.ZERO
 			margin.add_theme_constant_override("margin_left", 0)

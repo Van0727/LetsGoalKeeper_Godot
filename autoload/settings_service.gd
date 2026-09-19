@@ -1,4 +1,4 @@
-# 全局设置服务：独立保存音量、语言、窗口模式和节拍器样式，并应用经过校验的值。
+# 全局设置服务：独立保存音量、语言、窗口模式、节拍器样式与逐曲节奏校准，并应用经过校验的值。
 extends Node
 
 signal settings_changed
@@ -9,6 +9,7 @@ const BUS_MASTER := "Master"
 const BUS_MUSIC := "Music"
 const BUS_SFX := "SFX"
 const SUPPORTED_LOCALES := ["zh_CN", "en"]
+const MAX_BGM_OFFSET_MS := 500
 
 enum WindowMode {
 	WINDOWED,
@@ -28,6 +29,8 @@ var sfx_volume := 0.8
 var language := "zh_CN"
 var window_mode := WindowMode.WINDOWED
 var metronome_style := MetronomeStyle.CIRCLE
+# 以 BGM 资源路径为键保存设备听感偏移；不改曲目本身的首拍起音参数。
+var bgm_offsets_ms: Dictionary = {}
 var last_error := ""
 # 暂停菜单进入设置时暂存来源场景；该字段不写配置，应用重启后自然清空。
 var settings_return_scene := ""
@@ -70,6 +73,7 @@ func load_settings() -> bool:
 	metronome_style = _normalize_metronome_style(
 		config.get_value("general", "metronome_style", metronome_style)
 	)
+	bgm_offsets_ms = _normalize_bgm_offsets(config.get_value("audio", "bgm_offsets_ms", {}))
 	last_error = ""
 	return true
 
@@ -84,6 +88,7 @@ func save_settings() -> bool:
 	config.set_value("general", "language", language)
 	config.set_value("general", "metronome_style", metronome_style)
 	config.set_value("display", "window_mode", window_mode)
+	config.set_value("audio", "bgm_offsets_ms", bgm_offsets_ms)
 	var error := config.save(settings_path)
 	if error != OK:
 		last_error = "无法保存设置：%s" % error_string(error)
@@ -91,6 +96,24 @@ func save_settings() -> bool:
 	last_error = ""
 	_record_diagnostic("saved", {"language": language, "window_mode": window_mode})
 	return true
+
+
+# 只接受 sound/bgm 中的资源路径；未知曲目或旧设置缺字段时使用零校准。
+func get_bgm_offset_ms(music_path: String) -> int:
+	return int(bgm_offsets_ms.get(music_path, 0)) if _is_bgm_path(music_path) else 0
+
+
+# 保存失败时恢复内存中的旧值，避免下一场战斗误以为未落盘的偏移已保存。
+func save_bgm_offset_ms(music_path: String, offset_ms: int) -> bool:
+	if not _is_bgm_path(music_path) or absi(offset_ms) > MAX_BGM_OFFSET_MS:
+		last_error = "BGM 路径或偏移量无效"
+		return false
+	var previous := bgm_offsets_ms.duplicate()
+	bgm_offsets_ms[music_path] = offset_ms
+	if save_settings():
+		return true
+	bgm_offsets_ms = previous
+	return false
 
 
 # 音量入口统一限制到 0～1，并立即同步三个引擎总线。
@@ -137,6 +160,29 @@ func _reset_defaults() -> void:
 	language = "zh_CN"
 	window_mode = WindowMode.WINDOWED
 	metronome_style = MetronomeStyle.CIRCLE
+	bgm_offsets_ms.clear()
+
+
+# 配置文件是用户可编辑文本，逐项过滤类型、范围和资源目录，坏项不影响其他设置。
+func _normalize_bgm_offsets(value: Variant) -> Dictionary:
+	var valid := {}
+	if not value is Dictionary:
+		return valid
+	for path in value:
+		var offset: Variant = value[path]
+		if path is String and _is_bgm_path(path) and offset is int and absi(offset) <= MAX_BGM_OFFSET_MS:
+			valid[path] = offset
+	return valid
+
+
+func _is_bgm_path(path: String) -> bool:
+	return (
+		path.begins_with("res://sound/bgm/")
+		and not path.contains("..")
+		and not path.contains("\\")
+		and path.get_file() != ""
+		and path.get_extension().to_lower() in ["mp3", "ogg", "wav"]
+	)
 
 
 func _normalize_volume(value: Variant) -> float:

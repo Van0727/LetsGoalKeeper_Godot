@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_chain_feint_rounded_v1.png" id="3_illustration"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://cj1lljrvwig1"]
 
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_ho4t1"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_21k8w"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_ho4t1"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_21k8w"]
+[ext_resource type="Texture2D" uid="uid://bapbrko37jkxl" path="res://assets/ui/cards/card_chain_feint_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_wy66h"]
 script = ExtResource("1_ho4t1")
@@ -13,9 +13,9 @@ target = 0
 script = ExtResource("2_21k8w")
 id = 2013
 card_id = "card_chain_feint"
-illustration = ExtResource("3_illustration")
 display_name = "连续假动作"
 description = "下一张香蕉球每段伤害+2；若本回合此前已打出技能牌，恢复1点能量"
 archetype_hint = "桑巴精灵·技能连打"
+illustration = ExtResource("3_illustration")
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_wy66h")])

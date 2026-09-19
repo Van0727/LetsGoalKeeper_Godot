@@ -1,9 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://bh4wfgflwdjk"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_carnival_finale_rounded_v1.png" id="3_illustration"]
-
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_6fgre"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_lxp7d"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_6fgre"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_lxp7d"]
+[ext_resource type="Texture2D" uid="uid://dk254mjjotcqx" path="res://assets/ui/cards/card_carnival_finale_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_0tjig"]
 script = ExtResource("1_6fgre")
@@ -13,11 +12,11 @@ amount = 4
 script = ExtResource("2_lxp7d")
 id = 1016
 card_id = "card_carnival_finale"
-illustration = ExtResource("3_illustration")
 display_name = "嘉年华终曲"
 description = "造成4点香蕉球伤害；本回合每打出1张技能牌便追加1颗，最多追加4颗"
 archetype_hint = "桑巴精灵·技能终结"
 cost = 3
+illustration = ExtResource("3_illustration")
 shot_type = 2
 multi_hit_interval_beats = 0.25
 rarity = 1

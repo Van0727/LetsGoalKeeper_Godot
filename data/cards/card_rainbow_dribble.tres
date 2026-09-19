@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_rainbow_dribble_rounded_v1.png" id="3_illustration"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://bl7khbed3vq6w"]
 
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_gem30"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_o0y38"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_gem30"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_o0y38"]
+[ext_resource type="Texture2D" uid="uid://bx8w4m0vjp5pp" path="res://assets/ui/cards/card_rainbow_dribble_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_bt6ty"]
 script = ExtResource("1_gem30")
@@ -13,9 +13,9 @@ target = 0
 script = ExtResource("2_o0y38")
 id = 2011
 card_id = "card_rainbow_dribble"
-illustration = ExtResource("3_illustration")
 display_name = "彩虹过人"
 description = "下一张攻击牌改为香蕉球，且每段伤害+1"
 archetype_hint = "桑巴精灵·香蕉启动"
+illustration = ExtResource("3_illustration")
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_bt6ty")])

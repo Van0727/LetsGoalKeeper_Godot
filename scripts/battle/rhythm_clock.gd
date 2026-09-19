@@ -32,6 +32,15 @@ var _last_raw_music_time := 0.0
 var _music_loop_offset := 0.0
 
 
+# 现场校准同步移动缓存的播放头；减小偏移时不因单调保护而等待旧时间追上新时间。
+func set_calibration_offset_ms(value: float) -> void:
+	var next_value := clampf(value, -500.0, 500.0)
+	var delta_source_seconds := (next_value - calibration_offset_ms) * get_playback_rate() / 1000.0
+	calibration_offset_ms = next_value
+	_last_raw_music_time = maxf(_last_raw_music_time + delta_source_seconds, 0.0)
+	_last_music_time = maxf(_last_music_time + delta_source_seconds, 0.0)
+
+
 # 运行时创建播放器并固定接入 Music 总线，避免节拍算法依赖场景结构，
 # 同时保证设置页的音乐音量只影响背景音乐；测试仍可不播放音乐而直接调用 judge_at。
 func _ready() -> void:
@@ -110,11 +119,12 @@ func is_music_playing() -> bool:
 func get_music_time() -> float:
 	if not is_music_playing():
 		return 0.0
+	# 播放头使用音源时间；混音间隔和设备延迟是现实秒数，变调后须换算到同一时间单位。
+	var playback_rate := get_playback_rate()
 	var raw_music_time := maxf((
 		_audio_player.get_playback_position()
-		+ AudioServer.get_time_since_last_mix()
-		- AudioServer.get_output_latency()
-		+ calibration_offset_ms / 1000.0
+		+ (AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency()
+		+ calibration_offset_ms / 1000.0) * playback_rate
 	), 0.0)
 	var stream_length := music.get_length() if music != null else 0.0
 	if did_playback_wrap(_last_raw_music_time, raw_music_time, stream_length):
@@ -143,7 +153,8 @@ func judge_at(music_time: float) -> Dictionary:
 	var relative_time := music_time - first_beat_offset
 	var beat_index := maxi(roundi(relative_time / beat_duration), 0)
 	var target_time := first_beat_offset + beat_index * beat_duration
-	var signed_error_ms := (music_time - target_time) * 1000.0
+	# 判定窗口按玩家实际听到的毫秒数计算；升降调不能悄悄改变 Perfect/Good 的手感。
+	var signed_error_ms := (music_time - target_time) * 1000.0 / get_playback_rate()
 	var absolute_error_ms := absf(signed_error_ms)
 	var grade := JudgementGrade.MISS
 	var multiplier := 0.5
@@ -172,6 +183,11 @@ func judge_at(music_time: float) -> Dictionary:
 # 返回单拍秒数；导出范围已经阻止零 BPM，这里仍保留下限以保护运行时脚本赋值。
 func get_beat_duration() -> float:
 	return 60.0 / maxf(bpm, 1.0)
+
+
+# 音源坐标中的拍长保持原样；只有现实时间的延迟补偿和判定窗口需要播放倍率。
+func get_playback_rate() -> float:
+	return maxf(_audio_player.pitch_scale, 0.01) if _audio_player != null else 1.0
 
 
 # 所有卡牌表现统一通过这里把拍数换算为秒，避免飞行和多段间隔各自维护 BPM 公式。

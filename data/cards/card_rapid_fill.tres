@@ -1,9 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://dadhqd26txvup"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_rapid_fill_rounded_v1.png" id="3_illustration"]
-
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_6oge3"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_k60ux"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_6oge3"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_k60ux"]
+[ext_resource type="Texture2D" uid="uid://b260skk7oca2x" path="res://assets/ui/cards/card_rapid_fill_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_5g1ku"]
 script = ExtResource("1_6oge3")
@@ -14,11 +13,11 @@ hits = 4
 script = ExtResource("2_k60ux")
 id = 1018
 card_id = "card_rapid_fill"
-illustration = ExtResource("3_illustration")
 display_name = "疾速过门"
 description = "以0.125拍间隔攻击4次，每次造成3点伤害"
 archetype_hint = "爆裂鼓手·高速多段"
 cost = 2
+illustration = ExtResource("3_illustration")
 shot_type = 4
 multi_hit_interval_beats = 0.125
 effects = Array[Resource]([SubResource("Resource_5g1ku")])

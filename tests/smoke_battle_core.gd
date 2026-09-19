@@ -174,7 +174,7 @@ func _test_deterministic_seed() -> void:
 	second_explosion.free()
 
 
-# 验证 100 BPM 最近拍判定、提前/延后对称，以及 Miss 只缩放对敌伤害而不削弱自身效果。
+# 验证 100 BPM 最近拍判定、变调后的现实毫秒窗口，以及 Miss 只缩放对敌伤害而不削弱自身效果。
 func _test_rhythm_judgement_and_damage() -> void:
 	var clock = RHYTHM_CLOCK.new()
 	clock.bpm = 100.0
@@ -204,6 +204,22 @@ func _test_rhythm_judgement_and_damage() -> void:
 	_assert_equal(clock.judge_at(0.55).grade, clock.JudgementGrade.PERFECT, "下一拍前50ms为Perfect")
 	_assert_equal(roundi(clock.judge_at(0.55).error_ms), -50, "提前判定保留负误差")
 	_assert_equal(clock.judge_at(0.55).target_time, 0.6, "判定结果保留最近拍点供命中同步")
+	# 音源时间随 pitch_scale 加速或减速，但玩家按键窗口应维持相同的现实毫秒宽度。
+	clock._audio_player = AudioStreamPlayer.new()
+	clock._audio_player.pitch_scale = 2.0
+	_assert_equal(clock.judge_at(0.70).grade, clock.JudgementGrade.PERFECT, "二倍速下音源晚100ms仍在现实50ms窗口")
+	_assert_equal(roundi(clock.judge_at(0.70).error_ms), 50, "升调反馈显示现实时间偏差")
+	clock._audio_player.pitch_scale = 0.5
+	_assert_equal(clock.judge_at(0.65).grade, clock.JudgementGrade.GOOD, "半速下音源晚50ms对应现实100ms")
+	_assert_equal(clock.judge_at(0.70).grade, clock.JudgementGrade.MISS, "半速下现实200ms超过Good窗口")
+	clock._last_music_time = 3.0
+	clock._last_raw_music_time = 3.0
+	clock.set_calibration_offset_ms(-10.0)
+	_assert_true(absf(clock._last_music_time - 2.995) < 0.00001, "负向现场校准立即移动缓存时间")
+	clock.set_calibration_offset_ms(1000.0)
+	_assert_equal(clock.calibration_offset_ms, 500.0, "现场校准限制在安全上限")
+	clock._audio_player.free()
+	clock._audio_player = null
 	_assert_equal(clock.get_next_beat_time(0.15), 0.6, "四分之一拍启动时锚定到下一个整数拍")
 	_assert_equal(clock.get_next_beat_time(0.30), 0.6, "半拍启动时锚定到下一个整数拍")
 	_assert_equal(clock.get_next_beat_time(0.45), 0.6, "四分之三拍启动时锚定到下一个整数拍")

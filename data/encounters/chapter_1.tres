@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="EncounterPool" format=3]
+[gd_resource type="Resource" script_class="EncounterPool" format=3 uid="uid://l0gw5ynkcsai"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_82yex"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_n7sn5"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_kytos"]
-[ext_resource type="Script" path="res://scripts/enemies/encounter_pool.gd" id="4_1b47b"]
+[ext_resource type="Script" uid="uid://c385qeydrlp07" path="res://scripts/enemies/enemy_action_effect.gd" id="1_82yex"]
+[ext_resource type="Script" uid="uid://dr0lb186v2jcj" path="res://scripts/enemies/enemy_action_definition.gd" id="2_n7sn5"]
+[ext_resource type="Script" uid="uid://djk4dngla0ujr" path="res://scripts/enemies/enemy_definition.gd" id="3_kytos"]
+[ext_resource type="Script" uid="uid://caipawexsfs3v" path="res://scripts/enemies/encounter_pool.gd" id="4_1b47b"]
 
 [sub_resource type="Resource" id="Resource_dh4vr"]
 script = ExtResource("1_82yex")

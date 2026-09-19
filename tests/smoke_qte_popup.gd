@@ -1,4 +1,4 @@
-# 主动技QTE冒烟测试：验证内嵌遮罩、三轨四音符、半拍间隔、输入锁和完成后延迟结算。
+# 主动技QTE冒烟测试：验证半拍目标、变调后的现实判定窗口、输入锁和延迟结算。
 extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
@@ -19,6 +19,14 @@ func _run() -> void:
 	battle.run_state.start_new_run(8108)
 	battle.start_new_battle(TURTLE)
 	await process_frame
+	# QTE 与普通出牌共用逐曲校准后的播放头，正负校准在同一首曲上应产生相反时间移动。
+	await create_timer(0.2).timeout
+	battle.rhythm_clock.set_calibration_offset_ms(40.0)
+	var positive_time: float = battle.rhythm_clock.get_music_time()
+	battle.rhythm_clock.set_calibration_offset_ms(-40.0)
+	var negative_time: float = battle.rhythm_clock.get_music_time()
+	_assert_true(absf((positive_time - negative_time) - 0.08) < 0.02, "正负40ms校准在播放头中形成约80ms差异")
+	battle.rhythm_clock.set_calibration_offset_ms(0.0)
 
 	# 直接准备三点攻击连击，确认按下技能只打开弹窗，不会提前消耗连击或造成伤害。
 	battle.controller.combo_state.card_type = 0
@@ -41,6 +49,7 @@ func _run() -> void:
 	)
 	battle._on_skill_pressed()
 	_assert_true(battle.qte_popup.visible, "主动技打开战斗内嵌QTE弹窗")
+	_assert_true(battle.qte_popup._rhythm_clock == battle.rhythm_clock, "QTE复用已校准的战斗播放头")
 	_assert_equal(battle.qte_popup._notes.size(), 4, "QTE固定生成四个音符")
 	_assert_equal(battle.qte_popup.TRAVEL_BEATS, 2.0, "音符下落时长缩短到两拍即速度提升1.5倍")
 	var note_interval: float = (
@@ -135,28 +144,31 @@ func _run() -> void:
 			"任意随机种子都不会生成四连同轨"
 		)
 
-	# 分别覆盖Perfect、Good和超时Miss；其余音符精确击中后应进入统一完成流程。
+	# 升降调时窗口使用现实毫秒，与普通出牌一致；超时分支使用相同换算。
 	var first_note: Dictionary = battle.qte_popup._notes[0]
 	var second_note: Dictionary = battle.qte_popup._notes[1]
 	var third_note: Dictionary = battle.qte_popup._notes[2]
+	battle.rhythm_clock._audio_player.pitch_scale = 2.0
+	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.14) - 0.28) < 0.0001, "二倍速下140ms窗口对应280ms音源时间")
 	_assert_equal(
-		battle.qte_popup.judge_lane(int(first_note.lane), float(first_note.target_time)),
+		battle.qte_popup.judge_lane(int(first_note.lane), float(first_note.target_time) + 0.10),
 		"Perfect",
-		"目标拍点命中判定为Perfect"
+		"二倍速下音源晚100ms仍为现实50ms的Perfect"
 	)
-	var good_offset: float = (
-		battle.qte_popup._perfect_window_seconds + battle.qte_popup._good_window_seconds
-	) * 0.5
+	battle.rhythm_clock._audio_player.pitch_scale = 0.5
+	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.14) - 0.07) < 0.0001, "半速下140ms窗口对应70ms音源时间")
 	_assert_equal(
-		battle.qte_popup.judge_lane(int(second_note.lane), float(second_note.target_time) + good_offset),
+		battle.qte_popup.judge_lane(int(second_note.lane), float(second_note.target_time) + 0.05),
 		"Good",
-		"Perfect窗口外且Good窗口内判定为Good"
+		"半速下音源晚50ms对应现实100ms的Good"
 	)
+	battle.rhythm_clock._audio_player.pitch_scale = 2.0
 	third_note.target_time = (
-		battle.rhythm_clock.get_music_time() - battle.qte_popup._good_window_seconds - 0.01
+		battle.rhythm_clock.get_music_time() - battle.qte_popup._get_source_window_seconds(battle.qte_popup._good_window_seconds) - 0.01
 	)
 	battle.qte_popup._process(0.0)
-	_assert_true(bool(third_note.judged) and third_note.grade == "Miss", "越过Good窗口自动补记Miss")
+	_assert_true(bool(third_note.judged) and third_note.grade == "Miss", "二倍速下越过现实Good窗口自动补记Miss")
+	battle.rhythm_clock._audio_player.pitch_scale = 1.0
 	_assert_true(qte_miss_audio_count[0] >= 2, "音符超时Miss播放对应音效")
 	for note_index in range(3, battle.qte_popup._notes.size() - 1):
 		var note: Dictionary = battle.qte_popup._notes[note_index]

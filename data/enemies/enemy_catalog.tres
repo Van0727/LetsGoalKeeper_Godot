@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="EnemyCatalog" format=3]
+[gd_resource type="Resource" script_class="EnemyCatalog" format=3 uid="uid://culauqp4vfs0u"]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_0pfy0"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_2gw5x"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_vdbr6"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_catalog.gd" id="4_7p873"]
+[ext_resource type="Script" uid="uid://c385qeydrlp07" path="res://scripts/enemies/enemy_action_effect.gd" id="1_0pfy0"]
+[ext_resource type="Script" uid="uid://dr0lb186v2jcj" path="res://scripts/enemies/enemy_action_definition.gd" id="2_2gw5x"]
+[ext_resource type="Script" uid="uid://djk4dngla0ujr" path="res://scripts/enemies/enemy_definition.gd" id="3_vdbr6"]
+[ext_resource type="Script" uid="uid://bhrnrlgw2epmw" path="res://scripts/enemies/enemy_catalog.gd" id="4_7p873"]
 
 [sub_resource type="Resource" id="Resource_bvawq"]
 script = ExtResource("1_0pfy0")

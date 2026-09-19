@@ -1,4 +1,4 @@
-# 战斗界面冒烟测试：验证节拍入口、起手、结算锁、回合抽弃牌与胜负界面。
+# 战斗界面冒烟测试：验证校准面板收展与数值保留、节拍入口、起手及胜负界面。
 extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
@@ -260,8 +260,48 @@ func _run() -> void:
 	battle_screen._on_gm_close_pressed()
 
 	# 测试玩法的胜利不进入奖励或存档，而是延迟后直接生成下一只固定 100 血怪物。
+	var original_settings_path: String = settings_service.settings_path
+	var original_offsets: Dictionary = settings_service.bgm_offsets_ms.duplicate()
+	settings_service.bgm_offsets_ms = {}
 	battle_screen.run_state.start_test_battle(7302)
 	battle_screen.start_new_battle()
+	# 测试入口才显示按钮；加减只改现场试听值，保存后重开战斗应恢复该曲记录。
+	var calibration_path := "res://tests/.smoke_bgm_ui_%d.cfg" % OS.get_process_id()
+	settings_service.settings_path = calibration_path
+	var music_path: String = battle_screen.rhythm_clock.music.resource_path
+	var initial_offset: int = roundi(battle_screen.rhythm_clock.calibration_offset_ms)
+	_assert_true(battle_screen.bgm_calibration_toggle.visible, "测试玩法显示小型校准按钮")
+	_assert_true(not battle_screen.bgm_calibration_panel.visible, "校准面板默认收起")
+	_assert_true(
+		battle_screen.bgm_calibration_toggle.get_global_rect().position.x >= battle_screen.get_node("Header").get_global_rect().end.x,
+		"校准按钮位于顶栏右侧空位"
+	)
+	battle_screen.bgm_calibration_toggle.pressed.emit()
+	_assert_true(battle_screen.bgm_calibration_panel.visible, "点击校准按钮展开面板")
+	_assert_equal(battle_screen.bgm_calibration_toggle.text, "收起", "展开后按钮说明可收起")
+	var calibration_rect: Rect2 = battle_screen.bgm_calibration_panel.get_global_rect()
+	_assert_true(calibration_rect.position.y >= battle_screen.get_node("MonsterInfo").get_global_rect().end.y, "校准栏位于敌人信息下方")
+	_assert_true(calibration_rect.end.y <= battle_screen.rhythm_feedback.get_global_rect().position.y, "校准栏不遮挡节奏轨道")
+	battle_screen.get_node("%CalibrationPlusButton").pressed.emit()
+	_assert_equal(roundi(battle_screen.rhythm_clock.calibration_offset_ms), initial_offset + 1, "加号立即增加1ms")
+	_assert_equal(settings_service.get_bgm_offset_ms(music_path), initial_offset, "试听值尚未写入设置")
+	battle_screen.bgm_calibration_toggle.pressed.emit()
+	_assert_true(not battle_screen.bgm_calibration_panel.visible, "再次点击收起面板")
+	_assert_equal(roundi(battle_screen.rhythm_clock.calibration_offset_ms), initial_offset + 1, "收起不丢失未保存的试听值")
+	battle_screen.bgm_calibration_toggle.pressed.emit()
+	_assert_true(battle_screen.bgm_calibration_panel.visible, "收起后可以重新展开")
+	battle_screen.get_node("%CalibrationMinusButton").pressed.emit()
+	_assert_equal(roundi(battle_screen.rhythm_clock.calibration_offset_ms), initial_offset, "减号立即减少1ms")
+	battle_screen.get_node("%CalibrationPlusButton").pressed.emit()
+	battle_screen.get_node("%CalibrationSaveButton").pressed.emit()
+	_assert_equal(settings_service.get_bgm_offset_ms(music_path), initial_offset + 1, "保存按钮记录当前曲目偏移")
+	battle_screen.start_new_battle()
+	_assert_equal(roundi(battle_screen.rhythm_clock.calibration_offset_ms), initial_offset + 1, "新战斗加载已保存偏移")
+	_assert_true(not battle_screen.bgm_calibration_panel.visible, "新战斗再次默认收起面板")
+	settings_service.bgm_offsets_ms = original_offsets
+	settings_service.settings_path = original_settings_path
+	if FileAccess.file_exists(calibration_path):
+		DirAccess.remove_absolute(calibration_path)
 	battle_screen.controller.player.health = 67
 	var test_battle_generation: int = battle_screen._battle_generation
 	_assert_true(battle_screen.controller.debug_force_victory(), "测试玩法可击杀当前怪物")
@@ -273,6 +313,8 @@ func _run() -> void:
 	battle_screen.run_state.start_new_run(7303)
 	# 切回正式本局后同步重建控制器，不能继续复用测试玩法刚刷新的战斗实例。
 	battle_screen.start_new_battle()
+	_assert_true(not battle_screen.bgm_calibration_panel.visible, "正式战斗隐藏测试校准按钮")
+	_assert_true(not battle_screen.bgm_calibration_toggle.visible, "正式战斗也隐藏校准开关")
 
 	# 面板内跳过按钮绕过乌龟反伤，直接复用正常胜利与奖励入口。
 	battle_screen.controller.player.health = 1

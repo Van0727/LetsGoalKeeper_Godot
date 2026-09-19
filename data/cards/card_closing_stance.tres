@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_closing_stance_rounded_v1.png" id="3_illustration"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://c2xjmhcjdci27"]
 
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_31jap"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_4akxr"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_31jap"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_4akxr"]
+[ext_resource type="Texture2D" uid="uid://cge1gthjya1lt" path="res://assets/ui/cards/card_closing_stance_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_nyxw3"]
 script = ExtResource("1_31jap")
@@ -14,9 +14,9 @@ amount = 5
 script = ExtResource("2_4akxr")
 id = 3002
 card_id = "card_closing_stance"
-illustration = ExtResource("3_illustration")
 display_name = "收拍架势"
 description = "获得5点护盾；在小节最后一拍打出时额外获得4点护盾"
 archetype_hint = "爆裂鼓手·末拍防御"
+illustration = ExtResource("3_illustration")
 card_type = 1
 effects = Array[Resource]([SubResource("Resource_nyxw3")])

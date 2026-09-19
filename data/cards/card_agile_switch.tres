@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_agile_switch_rounded_v1.png" id="3_illustration"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://c12v5bf6cot8q"]
 
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_30pci"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_pav7x"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_30pci"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_pav7x"]
+[ext_resource type="Texture2D" uid="uid://mjiqp6qdgk4r" path="res://assets/ui/cards/card_agile_switch_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_dfled"]
 script = ExtResource("1_30pci")
@@ -13,10 +13,10 @@ target = 0
 script = ExtResource("2_pav7x")
 id = 2012
 card_id = "card_agile_switch"
-illustration = ExtResource("3_illustration")
 display_name = "灵巧换边"
 description = "切换当前香蕉球方向；本回合下一张香蕉球每段伤害+1"
 archetype_hint = "桑巴精灵·方向控制"
 cost = 0
+illustration = ExtResource("3_illustration")
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_dfled")])

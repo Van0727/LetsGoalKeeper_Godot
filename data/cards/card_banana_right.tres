@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_banana_right_rounded_v1.png" id="3_illustration"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://ccqvqgm5eltpc"]
 
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://bklbuncxlpdqf" path="res://assets/ui/cards/card_banana_right_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_srfw0"]
 script = ExtResource("2")
@@ -13,9 +13,9 @@ target = 0
 script = ExtResource("1")
 id = 2010
 card_id = "card_banana_right"
-illustration = ExtResource("3_illustration")
 display_name = "弹道偏右"
 description = "本场战斗所有香蕉球改为向右踢出，直到当前怪物死亡"
 archetype_hint = "桑巴精灵·方向控制"
+illustration = ExtResource("3_illustration")
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_srfw0")])

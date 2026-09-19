@@ -1,9 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://b2prj3ypu4gfc"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_gate_breaker_rounded_v1.png" id="3_illustration"]
-
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_akt03"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_0dybe"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_akt03"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_0dybe"]
+[ext_resource type="Texture2D" uid="uid://dx22qaeif37ak" path="res://assets/ui/cards/card_gate_breaker_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_ubtt7"]
 script = ExtResource("1_akt03")
@@ -13,11 +12,11 @@ amount = 6
 script = ExtResource("2_0dybe")
 id = 1020
 card_id = "card_gate_breaker"
-illustration = ExtResource("3_illustration")
 display_name = "城门爆破"
 description = "消耗全部护盾，造成6点伤害，并追加所消耗护盾值2倍的伤害"
 archetype_hint = "钢铁门神·终结爆发"
 cost = 2
+illustration = ExtResource("3_illustration")
 shot_type = 1
 rarity = 1
 effects = Array[Resource]([SubResource("Resource_ubtt7")])

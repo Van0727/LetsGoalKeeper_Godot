@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_pitch_down_rounded_v1.png" id="3_illustration"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://de7ajif3ji6ub"]
 
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Texture2D" uid="uid://l0imkcxkvfvf" path="res://assets/ui/cards/card_pitch_down_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_1n4c8"]
 script = ExtResource("2_effect")
@@ -13,9 +13,9 @@ target = 0
 script = ExtResource("1_card")
 id = 2007
 card_id = "card_pitch_down"
-illustration = ExtResource("3_illustration")
 display_name = "降调"
 description = "BGM降低1个半音"
 archetype_hint = "鼓手·音调"
+illustration = ExtResource("3_illustration")
 card_type = 2
 effects = Array[Resource]([SubResource("Resource_1n4c8")])
