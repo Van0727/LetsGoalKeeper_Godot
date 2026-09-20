@@ -285,6 +285,8 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	controller.player.health = clampi(run_state.player_hp, 1, run_state.max_hp)
 	player_display.configure(controller.player.display_name, controller.player.max_health, Color(0.45, 0.75, 1.0))
 	enemy_display.configure(controller.enemy.display_name, controller.enemy.max_health, Color(1.0, 0.55, 0.42))
+	# 怪物图片由配表 ID 指定；每场战斗重设以免复用界面时显示上一只怪物。
+	enemy_display.set_enemy_image_id(selected_enemy.image_id)
 	deck_state.draw_cards(STARTING_HAND_SIZE)
 	_input_locked = false
 	_rebuild_hand()

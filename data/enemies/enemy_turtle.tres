@@ -20,6 +20,7 @@ amount = 6
 [resource]
 script = ExtResource("1_enemy")
 enemy_id = "enemy_turtle"
+image_id = null
 display_name = "乌龟"
 max_health = 50
 actions = Array[Resource]([SubResource("Action_attack"), SubResource("Action_shield")])

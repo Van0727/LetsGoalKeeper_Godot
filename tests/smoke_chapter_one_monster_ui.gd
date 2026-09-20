@@ -32,9 +32,17 @@ func _run() -> void:
 	_check(screen._select_room_enemy(room) != null, "无效缓存安全回退")
 	# 逐个实例化第一章定义，验证真实显示生命和行为意图。
 	for definition in CATALOG.enemies:
+		if definition.chapter != 1:
+			continue
 		screen.start_new_battle(definition)
 		await process_frame
 		_check(screen.controller.enemy.max_health == definition.max_health, "真实场景生命来自配表")
+		# 鸡使用配表图片且不染色；其余怪物仍回退通用占位图。
+		if definition.id == 6001:
+			_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/7001.png"), "鸡读取配表图片")
+			_check(screen.enemy_display.portrait.modulate == Color.WHITE, "正式怪物图片保持原色")
+		else:
+			_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/enemy_goalkeeper.png"), "未配置图片时回退占位图")
 		_check(screen.monster_rules_label.visible, "新版行为完整意图可见")
 		_check(screen.intent_label.get_global_rect().end.x <= 360.1, "顶栏意图不越界")
 		_check(screen.monster_rules_label.get_global_rect().end.x <= screen.enemy_display.get_global_rect().position.x, "意图详情不覆盖敌方信息")

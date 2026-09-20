@@ -23,6 +23,8 @@ enum PassiveType {
 @export var enemy_id := ""
 # 数字 ID 是新配表查找键；enemy_id 仅保留为旧存档迁移键和资源名。
 @export var id := 0
+# 图片 ID 对应 assets/ui/enemies 下的同名 PNG；0 表示沿用通用占位图。
+@export var image_id := 0
 @export var chapter := 1
 @export var action_ids: Array[int] = []
 @export var action_weights: Array[int] = []

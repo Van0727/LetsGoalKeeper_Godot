@@ -3,6 +3,7 @@ extends SceneTree
 
 const MAP_GENERATOR := preload("res://scripts/map/map_generator.gd")
 const ENEMY_DEFINITION := preload("res://scripts/enemies/enemy_definition.gd")
+const CATALOG := preload("res://data/enemies/enemy_catalog.tres")
 
 var _failed := false
 
@@ -56,7 +57,13 @@ func _test_tier(pool: Resource, chapter: int, tier: int) -> void:
 	_assert_true(first.encounter_enabled, "%s敌人已启用" % label)
 	_assert_true(first.max_health > 6, "%s不再使用生命6占位值" % label)
 	_assert_equal(first.enemy_id, second.enemy_id, "%s选择可复现" % label)
-	_assert_true(ResourceLoader.exists("res://data/enemies/%s.tres" % first.enemy_id), "%s稳定ID可加载" % label)
+	# 新配表怪物由数字目录定位，旧第二章资源仍从根目录按英文键加载。
+	if first.id >= 6001 and first.id <= 6099:
+		_assert_true(CATALOG.find_enemy(first.id) != null, "%s数字ID可从目录加载" % label)
+		var directory := "chapter_one" if chapter == 1 else "chapter_%d" % chapter
+		_assert_true(ResourceLoader.exists("res://data/enemies/%s/%s.tres" % [directory, first.enemy_id]), "%s独立资源可加载" % label)
+	else:
+		_assert_true(ResourceLoader.exists("res://data/enemies/%s.tres" % first.enemy_id), "%s旧版稳定ID可加载" % label)
 
 
 # 级别中文名只用于测试错误定位，不参与任何资源键判断。

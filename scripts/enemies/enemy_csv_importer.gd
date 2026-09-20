@@ -8,12 +8,13 @@ const ACTION := preload("res://scripts/enemies/enemy_action_definition.gd")
 const EFFECT := preload("res://scripts/enemies/enemy_action_effect.gd")
 const CATALOG := preload("res://scripts/enemies/enemy_catalog.gd")
 const POOL := preload("res://scripts/enemies/encounter_pool.gd")
-const MONSTER_FIELDS := ["id", "display_name", "tier", "chapter", "max_health", "action_mode", "action_ids", "action_weights", "enabled", "source_file"]
-const MONSTER_TYPES := ["uint16", "string", "uint8", "uint8", "uint16", "uint8", "uint16_list", "uint16_list", "uint8", "string"]
+const MONSTER_FIELDS := ["id", "display_name", "tier", "chapter", "max_health", "action_mode", "action_ids", "action_weights", "enabled", "source_file", "image_id"]
+const MONSTER_TYPES := ["uint16", "string", "uint8", "uint8", "uint16", "uint8", "uint16_list", "uint16_list", "uint8", "string", "uint16"]
 const ACTION_FIELDS := ["id", "display_name", "category", "description", "interrupted_action_id"]
 const ACTION_TYPES := ["uint16", "string", "uint8", "string", "uint16"]
-const EFFECT_FIELDS := ["id", "action_id", "step", "effect_type", "target", "amount", "hits", "turns", "multiplier_percent", "break_rule", "threshold"]
-const EFFECT_TYPES := ["uint16", "uint16", "uint8", "uint8", "uint8", "uint16", "uint8", "uint8", "uint16", "uint8", "uint16"]
+# 末列 remark 只供策划阅读；校验其表头与列数，但不写入运行时效果资源。
+const EFFECT_FIELDS := ["id", "action_id", "step", "effect_type", "target", "amount", "hits", "turns", "multiplier_percent", "break_rule", "threshold", "remark"]
+const EFFECT_TYPES := ["uint16", "uint16", "uint8", "uint8", "uint8", "uint16", "uint8", "uint8", "uint16", "uint8", "uint16", "string"]
 
 
 # 纯校验入口不写资源；统一工具可在卡牌与战利品写入前先验证怪物表。
@@ -26,6 +27,7 @@ func validate_tables(monsters_path := "res://tables/monsters.csv", actions_path 
 	var actions := {}
 	var effect_ids := {}
 	var source_files := {}
+	var image_ids := {}
 	for row in action_rows:
 		var action = ACTION.new()
 		action.id = _integer(row.id, 1, 65535, "行为ID", errors)
@@ -50,7 +52,7 @@ func validate_tables(monsters_path := "res://tables/monsters.csv", actions_path 
 		effect.hits = _integer(row.hits, 1, 20, "次数", errors)
 		effect.turns = _integer(row.turns, 0, 99, "持续回合", errors)
 		effect.multiplier = _integer(row.multiplier_percent, 0, 1000, "倍率百分比", errors) / 100.0
-		effect.break_rule = _integer(row.break_rule, 0, 2, "蓄力打断规则", errors)
+		effect.break_rule = _integer(row.break_rule, 0, 5, "蓄力打断规则", errors)
 		effect.threshold = _integer(row.threshold, 0, 9999, "打断阈值", errors)
 		if not actions.has(action_id):
 			errors.append("效果引用不存在的行为ID：%d" % action_id)
@@ -64,6 +66,13 @@ func validate_tables(monsters_path := "res://tables/monsters.csv", actions_path 
 		var action: Resource = actions[action_id]
 		if action.effects.is_empty():
 			errors.append("行为%d没有效果" % action_id)
+		# 多条蓄力效果表达或条件；重复规则会使阈值含义不明确。
+		var charge_rules := {}
+		for effect in action.effects:
+			if effect.effect_type == EFFECT.Type.CHARGE:
+				if charge_rules.has(effect.break_rule):
+					errors.append("行为%d蓄力打断规则重复" % action_id)
+				charge_rules[effect.break_rule] = true
 		if action.category == ACTION.Category.ATTACK:
 			var has_direct_damage := false
 			for effect in action.effects:
@@ -85,6 +94,14 @@ func validate_tables(monsters_path := "res://tables/monsters.csv", actions_path 
 		monster.action_mode = _integer(row.action_mode, 0, 1, "行动模式", errors)
 		monster.encounter_enabled = _integer(row.enabled, 0, 1, "启用", errors) == 1
 		monster.enemy_id = row.source_file
+		# 0 保留旧怪物占位图；非零图片必须唯一且文件存在，防止导出后显示错误怪物。
+		monster.image_id = _integer(row.image_id, 0, 65535, "怪物图片ID", errors)
+		if monster.image_id > 0:
+			_unique(monster.image_id, image_ids, "怪物图片ID", errors)
+			image_ids[monster.image_id] = true
+			var image_path := "res://assets/ui/enemies/%d.png" % monster.image_id
+			if not FileAccess.file_exists(image_path):
+				errors.append("怪物图片不存在：%s" % image_path)
 		var safe_name := RegEx.new()
 		safe_name.compile("^enemy_[a-z0-9_]+$")
 		if safe_name.search(monster.enemy_id) == null:
@@ -190,7 +207,11 @@ func import_monsters(monsters_path := "res://tables/monsters.csv", output_direct
 	var outputs := {}
 	var pools := {}
 	for monster in catalog.enemies:
-		outputs[output_directory.path_join(monster.enemy_id + ".tres")] = monster.duplicate(true)
+		# 保留第一章既有路径；新章节写入独立目录，避免所有资源误落在 chapter_one。
+		var monster_directory: String = output_directory
+		if monster.chapter > 1:
+			monster_directory = output_directory.get_base_dir().path_join("chapter_%d" % monster.chapter)
+		outputs[monster_directory.path_join(monster.enemy_id + ".tres")] = monster.duplicate(true)
 		if not pools.has(monster.chapter):
 			var pool = POOL.new()
 			pool.chapter = monster.chapter

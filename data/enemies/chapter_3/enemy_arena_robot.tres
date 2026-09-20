@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_okkc1"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_fd6pl"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_cpd8r"]
+
+[sub_resource type="Resource" id="Resource_ngxnw"]
+script = ExtResource("1_okkc1")
+amount = 10
+
+[sub_resource type="Resource" id="Resource_6eqi7"]
+script = ExtResource("2_fd6pl")
+id = 19
+description = "造成10点伤害"
+effects = Array[Resource]([SubResource("Resource_ngxnw")])
+display_name = "精准射击"
+
+[sub_resource type="Resource" id="Resource_aq0h3"]
+script = ExtResource("1_okkc1")
+effect_type = 1
+target = 1
+amount = 12
+
+[sub_resource type="Resource" id="Resource_yposc"]
+script = ExtResource("2_fd6pl")
+id = 20
+category = 1
+description = "获得12点护盾"
+effects = Array[Resource]([SubResource("Resource_aq0h3")])
+display_name = "机械护卫"
+
+[sub_resource type="Resource" id="Resource_ti240"]
+script = ExtResource("1_okkc1")
+amount = 4
+hits = 3
+
+[sub_resource type="Resource" id="Resource_7kopd"]
+script = ExtResource("2_fd6pl")
+id = 21
+description = "连续造成3次4点伤害"
+effects = Array[Resource]([SubResource("Resource_ti240")])
+display_name = "连发射击"
+
+[resource]
+script = ExtResource("3_cpd8r")
+enemy_id = "enemy_arena_robot"
+id = 6008
+chapter = 3
+action_ids = Array[int]([19, 20, 21])
+display_name = "机器人"
+max_health = 54
+actions = Array[Resource]([SubResource("Resource_6eqi7"), SubResource("Resource_yposc"), SubResource("Resource_7kopd")])

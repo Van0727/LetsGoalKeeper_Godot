@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_kka8v"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_mwn7b"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_u532n"]
+
+[sub_resource type="Resource" id="Resource_ia8v4"]
+script = ExtResource("1_kka8v")
+effect_type = 1
+target = 1
+amount = 16
+
+[sub_resource type="Resource" id="Resource_brnb5"]
+script = ExtResource("2_mwn7b")
+id = 26
+category = 1
+description = "获得16点护盾"
+effects = Array[Resource]([SubResource("Resource_ia8v4")])
+display_name = "河马坚守"
+
+[sub_resource type="Resource" id="Resource_tprb5"]
+script = ExtResource("1_kka8v")
+amount = 11
+
+[sub_resource type="Resource" id="Resource_i11g4"]
+script = ExtResource("2_mwn7b")
+id = 27
+description = "造成11点伤害"
+effects = Array[Resource]([SubResource("Resource_tprb5")])
+display_name = "河马重踢"
+
+[resource]
+script = ExtResource("3_u532n")
+enemy_id = "enemy_hippo"
+id = 6010
+chapter = 3
+action_ids = Array[int]([26, 27])
+display_name = "河马"
+max_health = 62
+actions = Array[Resource]([SubResource("Resource_brnb5"), SubResource("Resource_i11g4")])

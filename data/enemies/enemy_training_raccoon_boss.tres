@@ -29,6 +29,7 @@ amount = 10
 [resource]
 script = ExtResource("1_enemy")
 enemy_id = "enemy_training_raccoon_boss"
+image_id = null
 display_name = "测试浣熊队长"
 tier = 2
 max_health = 80

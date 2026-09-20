@@ -5,7 +5,7 @@ extends Resource
 
 enum Type { DAMAGE, SHIELD, HEAL, WEAKNESS, STRENGTH, DRAIN, BLEED, BLOCK, THORNS, CHARGE }
 enum Target { PLAYER, ENEMY }
-enum BreakRule { NONE, HITS, DAMAGE }
+enum BreakRule { NONE, HITS, DAMAGE, PERFECT_ATTACK, DISTINCT_SHOT_TYPES, PERFECT_ANY }
 
 @export var effect_type := Type.DAMAGE
 @export var target := Target.PLAYER
@@ -13,6 +13,7 @@ enum BreakRule { NONE, HITS, DAMAGE }
 @export var hits := 1
 @export var turns := 0
 @export var multiplier := 1.0
-# 蓄力条件、阈值使用数字枚举；反伤次数复用 hits，禁止解析显示文案决定规则。
+# 每条蓄力效果定义一个条件；同一行为的多条条件按“任一达成”打断。
+# 反伤次数复用 hits，禁止解析显示文案决定规则。
 @export var break_rule := BreakRule.NONE
 @export var threshold := 0

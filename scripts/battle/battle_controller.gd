@@ -130,6 +130,8 @@ var enemy_charge_rule := 0
 var enemy_charge_threshold := 0
 var enemy_charge_progress := 0
 var enemy_charge_interrupted := false
+# 多条件蓄力逐项记录进度；上面的单条件字段继续供旧界面与第一章测试读取。
+var enemy_charge_conditions: Array[Dictionary] = []
 var _enemy_catalog: Resource
 
 
@@ -162,6 +164,7 @@ func setup(
 	enemy_charge_threshold = 0
 	enemy_charge_progress = 0
 	enemy_charge_interrupted = false
+	enemy_charge_conditions.clear()
 	_enemy_catalog = load("res://data/enemies/enemy_catalog.tres") if ResourceLoader.exists("res://data/enemies/enemy_catalog.tres") else null
 	enemy.damage_taken.connect(_on_enemy_damage_taken)
 	combo_state = COMBO_STATE.new()
@@ -361,6 +364,8 @@ func play_card(
 	elif enemy.is_dead():
 		_finish_battle(true)
 	else:
+		# 出牌成功后统计牌型与 Perfect；真实命中仍由受伤信号单独累计。
+		_register_charge_card_play(card, effective_rhythm_result)
 		_register_successful_card_play()
 		state_changed.emit()
 	return true
@@ -885,11 +890,18 @@ func get_enemy_intent_text() -> String:
 				descriptions.append("单次格挡%d" % effect.amount)
 			elif effect.effect_type == ENEMY_ACTION_EFFECT.Type.THORNS:
 				descriptions.append("反伤%d（最多%d次）" % [effect.amount, effect.hits])
+			elif effect.effect_type == ENEMY_ACTION_EFFECT.Type.CHARGE:
+				# 多条蓄力效果共享同一行为文案，避免意图面板重复挤占空间。
+				if not descriptions.has(current_enemy_action.description):
+					descriptions.append(current_enemy_action.description)
 			else:
 				descriptions.append(current_enemy_action.description)
 		var text := "%s·%s：%s" % [["攻击", "防御", "技能"][current_enemy_action.category], current_enemy_action.display_name, "；".join(descriptions)]
-		if enemy_charge_rule > 0:
-			text += "\n%s %d/%d%s" % ["有效命中" if enemy_charge_rule == ENEMY_ACTION_EFFECT.BreakRule.HITS else "有效伤害", enemy_charge_progress, enemy_charge_threshold, "，已打断" if enemy_charge_interrupted else "可打断"]
+		if not enemy_charge_conditions.is_empty():
+			var conditions: Array[String] = []
+			for condition in enemy_charge_conditions:
+				conditions.append("%s %d/%d" % [_charge_rule_name(int(condition.rule)), int(condition.progress), int(condition.threshold)])
+			text += "\n%s%s" % [" 或 ".join(conditions), "，已打断" if enemy_charge_interrupted else "可打断"]
 		return text
 	return current_enemy_action.get_intent_text(get_enemy_intent_damage())
 
@@ -992,7 +1004,12 @@ func _execute_current_enemy_action() -> void:
 
 # 一次只执行选定行为，效果按表中步骤结算；任一方死亡立即停止剩余段数和附带效果。
 func _execute_table_enemy_action() -> void:
-	var consuming_charge := enemy_charge_rule > 0
+	var consuming_charge := not enemy_charge_conditions.is_empty()
+	# 新一轮蓄力必须清除上一轮进度；一个行为的多条 CHARGE 共同组成或条件。
+	for effect in current_enemy_action.effects:
+		if effect.effect_type == ENEMY_ACTION_EFFECT.Type.CHARGE:
+			_clear_enemy_charge()
+			break
 	for effect in current_enemy_action.effects:
 		if player.is_dead() or enemy.is_dead():
 			break
@@ -1025,15 +1042,12 @@ func _execute_table_enemy_action() -> void:
 				enemy_thorns_amount = effect.amount
 				enemy_thorns_remaining = effect.hits
 			ENEMY_ACTION_EFFECT.Type.CHARGE:
-				enemy_charge_rule = effect.break_rule
-				enemy_charge_threshold = effect.threshold
-				enemy_charge_progress = 0
-				enemy_charge_interrupted = false
+				enemy_charge_conditions.append({"rule": effect.break_rule, "threshold": effect.threshold, "progress": 0, "shot_types": {}})
+				if enemy_charge_conditions.size() == 1:
+					enemy_charge_rule = effect.break_rule
+					enemy_charge_threshold = effect.threshold
 	if consuming_charge:
-		enemy_charge_rule = 0
-		enemy_charge_threshold = 0
-		enemy_charge_progress = 0
-		enemy_charge_interrupted = false
+		_clear_enemy_charge()
 
 
 # 从每段真实受伤入口统计蓄力与有限反伤，避免同步多段在整牌结算后才触发机制。
@@ -1041,18 +1055,82 @@ func _on_enemy_damage_taken(result: Dictionary) -> void:
 	var effective_damage := int(result.absorbed) + int(result.health_damage)
 	if effective_damage <= 0:
 		return
-	if enemy_charge_rule > 0 and not enemy_charge_interrupted:
-		enemy_charge_progress += 1 if enemy_charge_rule == ENEMY_ACTION_EFFECT.BreakRule.HITS else effective_damage
-		if enemy_charge_progress >= enemy_charge_threshold:
-			enemy_charge_interrupted = true
-			if current_enemy_action != null and current_enemy_action.interrupted_action_id > 0 and _enemy_catalog != null:
-				current_enemy_action = _enemy_catalog.find_action(current_enemy_action.interrupted_action_id)
-			_log("蓄力已打断，重击改为普通攻击")
+	if not enemy_charge_interrupted:
+		for index in range(enemy_charge_conditions.size()):
+			var condition: Dictionary = enemy_charge_conditions[index]
+			if condition.rule == ENEMY_ACTION_EFFECT.BreakRule.HITS:
+				condition.progress += 1
+			elif condition.rule == ENEMY_ACTION_EFFECT.BreakRule.DAMAGE:
+				condition.progress += effective_damage
+			else:
+				continue
+			enemy_charge_conditions[index] = condition
+			_check_charge_break(index)
+			if enemy_charge_interrupted:
+				break
 	if enemy_thorns_remaining > 0 and not player.is_dead():
 		enemy_thorns_remaining -= 1
 		var reflected: Dictionary = player.take_damage(enemy_thorns_amount)
 		_log("架势反伤%d，剩余%d次" % [enemy_thorns_amount, enemy_thorns_remaining])
 		effect_resolved.emit({"type": "damage", "amount": enemy_thorns_amount, "absorbed": reflected.absorbed, "health_damage": reflected.health_damage, "target": player, "source": enemy, "damage_tag": "passive", "health_after": player.health, "shield_after": player.shield})
+
+
+# 仅成功打出的卡牌满足卡牌类打断条件；球型按物品与卡牌规则转换后的实际球型去重。
+func _register_charge_card_play(card: Resource, rhythm_result: Dictionary) -> void:
+	if enemy_charge_interrupted or enemy_charge_conditions.is_empty():
+		return
+	var is_attack := int(card.card_type) == 0
+	var is_perfect := rhythm_result.has("grade") and int(rhythm_result.grade) == 0
+	for index in range(enemy_charge_conditions.size()):
+		var condition: Dictionary = enemy_charge_conditions[index]
+		match int(condition.rule):
+			ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ATTACK:
+				if is_attack and is_perfect:
+					condition.progress += 1
+			ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ANY:
+				if is_perfect:
+					condition.progress += 1
+			ENEMY_ACTION_EFFECT.BreakRule.DISTINCT_SHOT_TYPES:
+				if is_attack:
+					var shot_types: Dictionary = condition.shot_types
+					shot_types[int(current_action_context.actual_shot_type)] = true
+					condition.shot_types = shot_types
+					condition.progress = shot_types.size()
+		enemy_charge_conditions[index] = condition
+		_check_charge_break(index)
+		if enemy_charge_interrupted:
+			break
+
+
+# 第一条件的镜像字段保持旧存档外的调试接口稳定；达标时立即替换当前预告行为。
+func _check_charge_break(index: int) -> void:
+	var condition: Dictionary = enemy_charge_conditions[index]
+	if index == 0:
+		enemy_charge_progress = int(condition.progress)
+	if int(condition.progress) < int(condition.threshold) or enemy_charge_interrupted:
+		return
+	enemy_charge_interrupted = true
+	if current_enemy_action != null and current_enemy_action.interrupted_action_id > 0 and _enemy_catalog != null:
+		current_enemy_action = _enemy_catalog.find_action(current_enemy_action.interrupted_action_id)
+	_log("蓄力已打断，重击改为普通攻击")
+
+
+func _clear_enemy_charge() -> void:
+	enemy_charge_conditions.clear()
+	enemy_charge_rule = 0
+	enemy_charge_threshold = 0
+	enemy_charge_progress = 0
+	enemy_charge_interrupted = false
+
+
+func _charge_rule_name(rule: int) -> String:
+	match rule:
+		ENEMY_ACTION_EFFECT.BreakRule.HITS: return "有效命中"
+		ENEMY_ACTION_EFFECT.BreakRule.DAMAGE: return "有效伤害"
+		ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ATTACK: return "Perfect攻击牌"
+		ENEMY_ACTION_EFFECT.BreakRule.DISTINCT_SHOT_TYPES: return "不同球型攻击牌"
+		ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ANY: return "Perfect卡牌"
+	return "未知条件"
 
 
 # 敌人攻击统一结算护盾；吸血只恢复实际造成的生命伤害，不把护盾吸收量算入治疗。

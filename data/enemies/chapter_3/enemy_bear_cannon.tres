@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_hpme3"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_sgf5x"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_5boog"]
+
+[sub_resource type="Resource" id="Resource_pa4n7"]
+script = ExtResource("1_hpme3")
+amount = 14
+
+[sub_resource type="Resource" id="Resource_53kmw"]
+script = ExtResource("2_sgf5x")
+id = 28
+description = "造成14点伤害"
+effects = Array[Resource]([SubResource("Resource_pa4n7")])
+display_name = "熊掌重击"
+
+[sub_resource type="Resource" id="Resource_twrxm"]
+script = ExtResource("1_hpme3")
+effect_type = 1
+target = 1
+amount = 14
+
+[sub_resource type="Resource" id="Resource_jj1ap"]
+script = ExtResource("2_sgf5x")
+id = 29
+category = 1
+description = "获得14点护盾"
+effects = Array[Resource]([SubResource("Resource_twrxm")])
+display_name = "熊式防守"
+
+[sub_resource type="Resource" id="Resource_umao8"]
+script = ExtResource("1_hpme3")
+effect_type = 9
+target = 1
+break_rule = 2
+threshold = 24
+
+[sub_resource type="Resource" id="Resource_vo6n6"]
+script = ExtResource("2_sgf5x")
+id = 30
+category = 2
+description = "蓄力下一次重炮；24点有效伤害可打断"
+effects = Array[Resource]([SubResource("Resource_umao8")])
+display_name = "重炮蓄力"
+
+[sub_resource type="Resource" id="Resource_t1jx6"]
+script = ExtResource("1_hpme3")
+amount = 28
+
+[sub_resource type="Resource" id="Resource_3nlsi"]
+script = ExtResource("2_sgf5x")
+id = 31
+description = "造成28点伤害"
+effects = Array[Resource]([SubResource("Resource_t1jx6")])
+interrupted_action_id = 32
+display_name = "熊式重炮"
+
+[resource]
+script = ExtResource("3_5boog")
+enemy_id = "enemy_bear_cannon"
+id = 6015
+chapter = 3
+action_ids = Array[int]([28, 29, 30, 31])
+display_name = "熊重炮手"
+tier = 1
+max_health = 110
+actions = Array[Resource]([SubResource("Resource_53kmw"), SubResource("Resource_jj1ap"), SubResource("Resource_vo6n6"), SubResource("Resource_3nlsi")])

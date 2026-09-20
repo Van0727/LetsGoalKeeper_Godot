@@ -1,0 +1,46 @@
+[gd_resource type="Resource" script_class="EnemyDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_sgle2"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_rsbcm"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_767p0"]
+
+[sub_resource type="Resource" id="Resource_0efl2"]
+script = ExtResource("1_sgle2")
+amount = 8
+
+[sub_resource type="Resource" id="Resource_el0f0"]
+script = ExtResource("2_rsbcm")
+id = 39
+description = "造成8点伤害"
+effects = Array[Resource]([SubResource("Resource_0efl2")])
+display_name = "刺球射门"
+
+[sub_resource type="Resource" id="Resource_dc70e"]
+script = ExtResource("1_sgle2")
+effect_type = 1
+target = 1
+amount = 8
+
+[sub_resource type="Resource" id="Resource_fw0x3"]
+script = ExtResource("1_sgle2")
+effect_type = 8
+target = 1
+amount = 3
+
+[sub_resource type="Resource" id="Resource_nwtn1"]
+script = ExtResource("2_rsbcm")
+id = 40
+category = 1
+description = "获得8点护盾；下回合前首次受伤反伤3点"
+effects = Array[Resource]([SubResource("Resource_dc70e"), SubResource("Resource_fw0x3")])
+display_name = "尖刺防守"
+
+[resource]
+script = ExtResource("3_767p0")
+enemy_id = "enemy_hedgehog"
+id = 6031
+chapter = 3
+action_ids = Array[int]([39, 40])
+display_name = "刺猬球员"
+max_health = 52
+actions = Array[Resource]([SubResource("Resource_el0f0"), SubResource("Resource_nwtn1")])

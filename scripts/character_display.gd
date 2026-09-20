@@ -8,6 +8,8 @@ enum BattleLayoutRole {
 	PLAYER_BAR,
 }
 
+const ENEMY_PLACEHOLDER := preload("res://assets/placeholders/enemy_goalkeeper.png")
+
 @onready var name_label: Label = %NameLabel
 @onready var portrait: TextureRect = %Portrait
 @onready var health_bar: ProgressBar = %HealthBar
@@ -28,8 +30,8 @@ func set_battle_layout_role(role: BattleLayoutRole) -> void:
 	var content := $Margin/Content as VBoxContainer
 	match role:
 		BattleLayoutRole.ENEMY:
-			# 战斗场景直接定位整个控件；头像显示区对应参考图中央约 130×107 的怪物范围。
-			custom_minimum_size = Vector2(138, 132)
+			# 战斗场景决定怪物显示框尺寸，头像随编辑器中拖出的框缩放，不再写死宽高。
+			custom_minimum_size = Vector2.ZERO
 			# 敌人信息直接叠在场景背景上；显式空样式避免移除覆盖后回退到默认深色面板。
 			add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 			margin.add_theme_constant_override("margin_left", 4)
@@ -37,7 +39,9 @@ func set_battle_layout_role(role: BattleLayoutRole) -> void:
 			margin.add_theme_constant_override("margin_right", 4)
 			margin.add_theme_constant_override("margin_bottom", 2)
 			content.add_theme_constant_override("separation", 1)
-			portrait.custom_minimum_size = Vector2(130, 107)
+			portrait.custom_minimum_size = Vector2.ZERO
+			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			portrait.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			feedback_label.custom_minimum_size = Vector2(0, 20)
 			name_label.hide()
 			health_bar.hide()
@@ -69,6 +73,27 @@ func configure(display_name: String, max_health: int, portrait_tint: Color) -> v
 	health_bar.max_value = _max_health
 	set_health(_max_health)
 	set_shield(0)
+
+
+# 按配表图片 ID 替换头像；正式图片保持原色，缺图时回退占位图与既有染色。
+func set_enemy_image_id(image_id: int) -> void:
+	portrait.texture = ENEMY_PLACEHOLDER
+	if image_id <= 0:
+		portrait.modulate = _portrait_tint
+		return
+	var image_path := "res://assets/ui/enemies/%d.png" % image_id
+	if not ResourceLoader.exists(image_path, "Texture2D"):
+		push_warning("怪物图片不存在：%s" % image_path)
+		portrait.modulate = _portrait_tint
+		return
+	var image := ResourceLoader.load(image_path, "Texture2D") as Texture2D
+	if image == null:
+		push_warning("怪物图片加载失败：%s" % image_path)
+		portrait.modulate = _portrait_tint
+		return
+	portrait.texture = image
+	_portrait_tint = Color.WHITE
+	portrait.modulate = Color.WHITE
 
 
 # 更新生命条与文本，数值会限制在合法范围内。

@@ -7,7 +7,8 @@ const MAP := preload("res://scripts/map/map_state.gd")
 const GENERATOR := preload("res://scripts/map/map_generator.gd")
 const POOL := preload("res://data/encounters/chapter_1.tres")
 var _failed := false
-var _directory := "user://monster_tables_%d" % OS.get_process_id()
+# 沙箱与本地编辑器的 user:// 可写性可能不同；夹具放在项目缓存并在测试末清理。
+var _directory := "res://.godot/monster_tables_%d" % OS.get_process_id()
 
 
 func _initialize() -> void:
@@ -19,9 +20,11 @@ func _run() -> void:
 	var result := importer.validate_tables()
 	_check(result.ok, "正式三表校验成功")
 	if result.ok:
-		_check(result.monsters.size() == 6 and result.actions.size() == 18 and result.effect_count == 22, "正式数据数量")
+		_check(result.monsters.size() == 13 and result.actions.size() == 44 and result.effect_count == 54, "正式数据数量")
 	DirAccess.make_dir_recursive_absolute(_directory)
 	var rows := _read_rows("res://tables/monsters.csv")
+	# 夹具只取第一章六只；第三章正式数据由下方目录与章节池回读覆盖。
+	rows = rows.slice(0, 3) + rows.slice(3).filter(func(row: Array) -> bool: return row[3] == "1")
 	# 自建怪物夹具使用6091～6096号段，隔离正式ID与资源路径。
 	for index in range(3, rows.size()):
 		rows[index][0] = str(6091 + index - 3)
@@ -44,13 +47,14 @@ func _run() -> void:
 	_check(good.ok, "临时三表生成并回读")
 	if good.ok:
 		var catalog: Resource = ResourceLoader.load(catalog_path, "", ResourceLoader.CACHE_MODE_IGNORE_DEEP)
-		_check(catalog.enemies.size() == 6 and catalog.actions.size() == 18, "目录收录完整")
+		_check(catalog.enemies.size() == 6 and catalog.actions.size() == 44, "目录收录完整")
 		_check(catalog.find_enemy(6091).action_ids == [1, 2, 3], "列表写入正确")
+		_check(catalog.find_enemy(6091).image_id == 7001, "图片ID生成资源回读正确")
 		_check(catalog.find_action(2).effects[1].amount == 2, "附带流血回读正确")
 	var failing_output := _directory.path_join("must_not_exist")
 	var missing := importer.import_monsters(_directory.path_join("missing.csv"), failing_output)
 	_check(not missing.ok and not DirAccess.dir_exists_absolute(failing_output), "缺失文件不生成部分资源")
-	for scenario in ["header", "types", "comments", "duplicate", "range", "reference", "filename", "weight", "charge_random"]:
+	for scenario in ["header", "types", "comments", "duplicate", "range", "reference", "filename", "weight", "charge_random", "image_duplicate", "image_missing", "image_range"]:
 		var bad_rows: Array = rows.duplicate(true)
 		match scenario:
 			"header": bad_rows[1][0] = "wrong_id"
@@ -60,6 +64,9 @@ func _run() -> void:
 			"range": bad_rows[3][4] = "0"
 			"reference": bad_rows[3][6] = "65535"
 			"filename": bad_rows[3][9] = "../bad"
+			"image_duplicate": bad_rows[4][10] = bad_rows[3][10]
+			"image_missing": bad_rows[3][10] = "7002"
+			"image_range": bad_rows[3][10] = "65536"
 			"weight":
 				bad_rows[3][5] = "1"
 				bad_rows[3][7] = "1;0"
@@ -80,6 +87,20 @@ func _run() -> void:
 	var bad_effects_path := _directory.path_join("bad_effects.csv")
 	_write_rows(bad_effects_path, bad_effects)
 	_check(not importer.validate_tables(valid_path, "res://tables/monster_actions.csv", bad_effects_path).ok, "效果枚举越界拒绝")
+	# 中文备注只校验末列结构，内容可调整且不能改变效果资源的结算字段。
+	var remark_rows := _read_rows("res://tables/monster_action_effects.csv")
+	remark_rows[3][11] = "策划可自行修改的中文说明"
+	var remark_path := _directory.path_join("remark.csv")
+	_write_rows(remark_path, remark_rows)
+	var remark_result := importer.validate_tables(valid_path, "res://tables/monster_actions.csv", remark_path)
+	_check(remark_result.ok and remark_result.actions[1].effects[0].amount == 5, "备注不参与效果结算")
+	remark_rows[1][11] = "wrong_remark"
+	_write_rows(remark_path, remark_rows)
+	_check(not importer.validate_tables(valid_path, "res://tables/monster_actions.csv", remark_path).ok, "备注列表头错误被拒绝")
+	for row in remark_rows:
+		row.pop_back()
+	_write_rows(remark_path, remark_rows)
+	_check(not importer.validate_tables(valid_path, "res://tables/monster_actions.csv", remark_path).ok, "备注列缺失被拒绝")
 	_test_related_tables(importer, valid_path)
 	# 最后一个输出路径故意使用目录，模拟前面资源已发布后发生IO失败。
 	var blocked_catalog := _directory.path_join("blocked_catalog")
