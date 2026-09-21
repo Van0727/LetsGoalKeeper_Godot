@@ -37,10 +37,11 @@ func _run() -> void:
 		screen.start_new_battle(definition)
 		await process_frame
 		_check(screen.controller.enemy.max_health == definition.max_health, "真实场景生命来自配表")
-		# 鸡使用配表图片且不染色；其余怪物仍回退通用占位图。
-		if definition.id == 6001:
-			_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/7001.png"), "鸡读取配表图片")
-			_check(screen.enemy_display.portrait.modulate == Color.WHITE, "正式怪物图片保持原色")
+		# 第一章普通小怪分别读取7001～7003；精英与Boss尚未配置时继续安全回退占位图。
+		if definition.id in [6001, 6002, 6003]:
+			var expected_image_id: int = 7000 + int(definition.id) - 6000
+			_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/%d.png" % expected_image_id), "%s读取配表图片" % definition.display_name)
+			_check(screen.enemy_display.portrait.modulate == Color.WHITE, "%s的正式怪物图片保持原色" % definition.display_name)
 		else:
 			_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/enemy_goalkeeper.png"), "未配置图片时回退占位图")
 		_check(screen.monster_rules_label.visible, "新版行为完整意图可见")

@@ -43,10 +43,29 @@ func _run() -> void:
 	await process_frame
 	var resized_size: Vector2 = screen.enemy_display.portrait.get_global_rect().size
 	_check(resized_size.x > portrait_size.x and resized_size.y > portrait_size.y, "怪物图片随显示框缩放")
-	var turtle: Resource = CATALOG.find_enemy(6002)
-	screen.start_new_battle(turtle)
-	await process_frame
-	_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/enemy_goalkeeper.png"), "未配置图片使用占位图")
+	# 第一章普通小怪均已接入数字图片 ID；逐只切换时必须加载各自纹理并保持原色。
+	for entry in [
+		{"id": 6002, "image_id": 7002},
+		{"id": 6003, "image_id": 7003},
+	]:
+		var definition: Resource = CATALOG.find_enemy(entry.id)
+		_check(definition != null and definition.image_id == entry.image_id, "%d的配表图片 ID 已导入" % entry.id)
+		var expected_path := "res://assets/ui/enemies/%d.png" % entry.image_id
+		var expected_texture := ResourceLoader.load(expected_path, "Texture2D") as Texture2D
+		_check(expected_texture != null and expected_texture.get_size() == Vector2(512, 512), "%d的正式图片可加载" % entry.id)
+		screen.start_new_battle(definition)
+		await process_frame
+		_check(screen.enemy_display.portrait.texture == expected_texture, "%d的战斗头像读取对应图片" % entry.id)
+		_check(screen.enemy_display.portrait.modulate == Color.WHITE, "%d的正式图片保持原色" % entry.id)
+		_check(screen.enemy_display.feedback_label.text.strip_edges().is_empty(), "%d切换后不保留上一只怪物的反馈文字" % entry.id)
+		# 捕获每只新增小怪的真实战斗布局，便于同时验收裁切、缩放与透明边缘。
+		if "--capture" in OS.get_cmdline_user_args():
+			await RenderingServer.frame_post_draw
+			_check(root.get_texture().get_image().save_png("res://.godot/monster_image_%d.png" % entry.id) == OK, "%d的真实战斗截图保存成功" % entry.id)
+		# 乌龟受击后立即切换兔子，回归验证旧闪色 Tween 不会污染下一只怪物的原色。
+		if entry.id == 6002:
+			screen.enemy_display.show_damage(1)
+	# 非法图片 ID 继续回退占位图，避免损坏配表或缺失资源导致战斗界面报错。
 	screen.enemy_display.set_enemy_image_id(65535)
 	_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/enemy_goalkeeper.png"), "缺失图片安全回退")
 	print("smoke_monster_image: %s; portrait=%s" % ["FAIL" if _failed else "PASS", portrait_size])

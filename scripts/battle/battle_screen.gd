@@ -449,6 +449,8 @@ func _on_card_drag_finished(_card_view: DraggableCard, valid_drop: bool) -> void
 # 音频跨过新拍点时触发一次表现脉冲，并显示当前小节内的拍位。
 func _on_rhythm_beat_reached(beat_index: int, _bar_index: int) -> void:
 	rhythm_feedback.pulse_beat(beat_index, rhythm_clock.beats_per_bar)
+	# 怪物待机只由真实音乐拍点驱动，暂停或切曲时不会继续运行独立循环。
+	enemy_display.play_rhythm_beat(beat_index, rhythm_clock.beats_per_bar)
 	if rhythm_waveform != null:
 		rhythm_waveform.pulse_beat()
 
@@ -464,6 +466,8 @@ func _on_end_turn_pressed() -> void:
 	# 结束回合按钮即时采样 BGM 拍位，回转鼓组不依赖上一次出牌时的拍位。
 	var end_timing: Dictionary = rhythm_clock.judge_now()
 	end_timing["is_last_beat"] = int(end_timing.get("beat_in_bar", -1)) == rhythm_clock.beats_per_bar - 1
+	# 攻击表现与核心同步启动但不阻塞结算，避免视觉时长改变伤害顺序。
+	enemy_display.play_enemy_attack()
 	controller.end_player_turn(end_timing)
 	if controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN:
 		deck_state.draw_cards(STARTING_HAND_SIZE)
@@ -1115,6 +1119,8 @@ func _play_pending_resolution() -> void:
 # 红牌等待当前牌的所有飞行与反馈完成后再弃牌、推进敌方行动，避免动画引用过期状态。
 func _force_end_turn_after_red_card() -> void:
 	var discarded := deck_state.discard_hand()
+	# 红牌强制结束回合也会触发敌方行动，保持与手动结束回合相同的攻击表现。
+	enemy_display.play_enemy_attack()
 	if not controller.force_end_turn_for_red_card():
 		_finish_resolution()
 		return

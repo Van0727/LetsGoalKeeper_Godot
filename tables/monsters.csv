@@ -2,8 +2,8 @@
 id,display_name,tier,chapter,max_health,action_mode,action_ids,action_weights,enabled,source_file,image_id
 uint16,string,uint8,uint8,uint16,uint8,uint16_list,uint16_list,uint8,string,uint16
 6001,鸡,0,1,28,0,1;2;3,,1,enemy_street_chicken,7001
-6002,乌龟,0,1,36,0,5;4,,1,enemy_street_turtle,0
-6003,兔子,0,1,24,0,6;6;7,,1,enemy_rabbit,0
+6002,乌龟,0,1,36,0,5;4,,1,enemy_street_turtle,7002
+6003,兔子,0,1,24,0,6;6;7,,1,enemy_rabbit,7003
 6008,机器人,0,3,54,0,19;20;21,,1,enemy_arena_robot,0
 6009,猎豹,0,3,48,0,22;23;24,,1,enemy_leopard,0
 6010,河马,0,3,62,0,26;27,,1,enemy_hippo,0

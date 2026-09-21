@@ -9,6 +9,26 @@ enum BattleLayoutRole {
 }
 
 const ENEMY_PLACEHOLDER := preload("res://assets/placeholders/enemy_goalkeeper.png")
+const MONSTER_BLINK_SHADER := preload("res://shaders/monster_blink.gdshader")
+
+# 单图眨眼区域按图片单独配置；没有配置的怪物保留其他程序动画并安全跳过眨眼。
+const ENEMY_BLINK_CONFIG := {
+	7001: {
+		"left_eye_center": Vector2(0.378, 0.528),
+		"right_eye_center": Vector2(0.632, 0.528),
+		"eye_radius": Vector2(0.061, 0.066),
+	},
+}
+
+const RHYTHM_DOWN_SECONDS := 0.075
+const RHYTHM_RETURN_SECONDS := 0.24
+const ATTACK_WINDUP_SECONDS := 0.12
+const ATTACK_RELEASE_SECONDS := 0.10
+const ATTACK_RETURN_SECONDS := 0.18
+const HIT_SHAKE_SECONDS := 0.055
+const BLINK_CLOSE_SECONDS := 0.065
+const BLINK_HOLD_SECONDS := 0.035
+const BLINK_OPEN_SECONDS := 0.085
 
 @onready var name_label: Label = %NameLabel
 @onready var portrait: TextureRect = %Portrait
@@ -19,13 +39,22 @@ const ENEMY_PLACEHOLDER := preload("res://assets/placeholders/enemy_goalkeeper.p
 
 # 缓存基础外观和当前反馈动画，避免连续反馈互相覆盖后残留状态。
 var _max_health := 1
+var _current_health := 1
 var _portrait_tint := Color.WHITE
 var _flash_tween: Tween
 var _feedback_tween: Tween
+var _motion_tween: Tween
+var _blink_tween: Tween
+var _blink_timer: Timer
+var _battle_layout_role := BattleLayoutRole.DEFAULT
+var _action_animation_active := false
+var _portrait_dead := false
+var _rhythm_direction := 1.0
 
 
 # 按战斗位置压缩角色信息：敌方数值交给专用信息层，此控件保留头像与受击反馈。
 func set_battle_layout_role(role: BattleLayoutRole) -> void:
+	_battle_layout_role = role
 	var margin := $Margin as MarginContainer
 	var content := $Margin/Content as VBoxContainer
 	match role:
@@ -66,8 +95,10 @@ func set_battle_layout_role(role: BattleLayoutRole) -> void:
 
 # 设置角色名称、生命上限和占位头像颜色。
 func configure(display_name: String, max_health: int, portrait_tint: Color) -> void:
+	reset_portrait_animation()
 	name_label.text = display_name
 	_max_health = maxi(max_health, 1)
+	_current_health = _max_health
 	_portrait_tint = portrait_tint
 	portrait.modulate = _portrait_tint
 	health_bar.max_value = _max_health
@@ -77,7 +108,10 @@ func configure(display_name: String, max_health: int, portrait_tint: Color) -> v
 
 # 按配表图片 ID 替换头像；正式图片保持原色，缺图时回退占位图与既有染色。
 func set_enemy_image_id(image_id: int) -> void:
+	reset_portrait_animation()
 	portrait.texture = ENEMY_PLACEHOLDER
+	portrait.material = null
+	_stop_blink_timer()
 	if image_id <= 0:
 		portrait.modulate = _portrait_tint
 		return
@@ -94,11 +128,13 @@ func set_enemy_image_id(image_id: int) -> void:
 	portrait.texture = image
 	_portrait_tint = Color.WHITE
 	portrait.modulate = Color.WHITE
+	_configure_blink_material(image_id)
 
 
 # 更新生命条与文本，数值会限制在合法范围内。
 func set_health(current_health: int) -> void:
 	var safe_health := clampi(current_health, 0, _max_health)
+	_current_health = safe_health
 	health_bar.value = safe_health
 	health_label.text = "%d / %d" % [safe_health, _max_health]
 
@@ -116,6 +152,12 @@ func get_portrait_global_center() -> Vector2:
 # 播放红色受击反馈。
 func show_damage(amount: int) -> void:
 	_play_feedback("-%d" % amount, Color(1.0, 0.32, 0.28), Color(1.0, 0.35, 0.35))
+	if _battle_layout_role != BattleLayoutRole.ENEMY:
+		return
+	if _current_health <= 0:
+		play_death()
+	else:
+		play_hit()
 
 
 # 播放绿色治疗反馈。
@@ -150,3 +192,171 @@ func _play_feedback(text: String, text_color: Color, flash_color: Color) -> void
 	_feedback_tween = create_tween()
 	_feedback_tween.tween_interval(0.35)
 	_feedback_tween.tween_property(feedback_label, "modulate:a", 0.0, 0.45)
+
+
+# 每个真实拍点播放一次完整律动；重拍幅度更明显，动作时长短于一拍以避免跨拍累积。
+func play_rhythm_beat(beat_index: int, beats_per_bar: int) -> void:
+	if _battle_layout_role != BattleLayoutRole.ENEMY or _action_animation_active or _portrait_dead:
+		return
+	_kill_motion_tween()
+	_prepare_portrait_transform()
+	var strong_beat := posmod(beat_index, maxi(beats_per_bar, 1)) == 0
+	var strength := 1.0 if strong_beat else 0.62
+	_rhythm_direction *= -1.0
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(0.0, 2.4 * strength), RHYTHM_DOWN_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.025, 0.965).lerp(Vector2.ONE, 1.0 - strength), RHYTHM_DOWN_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_rotation", deg_to_rad(0.8 * strength * _rhythm_direction), RHYTHM_DOWN_SECONDS)
+	_motion_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2.ZERO, RHYTHM_RETURN_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2.ONE, RHYTHM_RETURN_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_rotation", 0.0, RHYTHM_RETURN_SECONDS)
+
+
+# 敌方行动只接管显示层：下压蓄力、向前冲出并回弹，不延迟核心结算。
+func play_enemy_attack() -> void:
+	if _battle_layout_role != BattleLayoutRole.ENEMY or _portrait_dead:
+		return
+	_begin_action_animation()
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(0.0, 5.0), ATTACK_WINDUP_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.055, 0.91), ATTACK_WINDUP_SECONDS)
+	_motion_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2(0.0, -8.0), ATTACK_RELEASE_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(0.96, 1.075), ATTACK_RELEASE_SECONDS)
+	_motion_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2.ZERO, ATTACK_RETURN_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2.ONE, ATTACK_RETURN_SECONDS)
+	_motion_tween.chain().tween_callback(_finish_action_animation)
+
+
+# 受击使用短促左右震动和挤压；完成后恢复基准状态，下一拍可继续律动。
+func play_hit() -> void:
+	if _battle_layout_role != BattleLayoutRole.ENEMY or _portrait_dead:
+		return
+	_begin_action_animation()
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(-4.0, 1.5), HIT_SHAKE_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.045, 0.955), HIT_SHAKE_SECONDS)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2(3.0, -1.0), HIT_SHAKE_SECONDS)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(-2.0, 0.5), HIT_SHAKE_SECONDS)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2.ZERO, HIT_SHAKE_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2.ONE, HIT_SHAKE_SECONDS)
+	_motion_tween.chain().tween_callback(_finish_action_animation)
+
+
+# 死亡表现保持在显示层：压扁、下沉并淡出；新战斗 configure 会完整恢复状态。
+func play_death() -> void:
+	if _battle_layout_role != BattleLayoutRole.ENEMY or _portrait_dead:
+		return
+	_portrait_dead = true
+	_begin_action_animation()
+	if _flash_tween and _flash_tween.is_running():
+		_flash_tween.kill()
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(0.0, 14.0), 0.38)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.10, 0.72), 0.38)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_rotation", deg_to_rad(4.0), 0.38)
+	_motion_tween.parallel().tween_property(portrait, "modulate:a", 0.0, 0.38)
+
+
+# 切换怪物或开始新战斗时终止旧动画，避免 Tween 的末值污染用户在场景中调整的位置和尺寸。
+func reset_portrait_animation() -> void:
+	_kill_motion_tween()
+	# 受击闪色和反馈位移动画也会持续写入头像属性；换怪时必须一并停止，避免旧怪动画给新图片染色。
+	if _flash_tween and _flash_tween.is_running():
+		_flash_tween.kill()
+	if _feedback_tween and _feedback_tween.is_running():
+		_feedback_tween.kill()
+	feedback_label.text = " "
+	feedback_label.modulate = Color.WHITE
+	if _blink_tween and _blink_tween.is_running():
+		_blink_tween.kill()
+	_action_animation_active = false
+	_portrait_dead = false
+	_rhythm_direction = 1.0
+	_prepare_portrait_transform()
+	portrait.offset_transform_position = Vector2.ZERO
+	portrait.offset_transform_scale = Vector2.ONE
+	portrait.offset_transform_rotation = 0.0
+	portrait.modulate = _portrait_tint
+	var shader_material := portrait.material as ShaderMaterial
+	if shader_material != null:
+		shader_material.set_shader_parameter("blink_amount", 0.0)
+
+
+# 为单张图片创建独立材质，避免多个怪物实例共享眨眼参数。
+func _configure_blink_material(image_id: int) -> void:
+	if not ENEMY_BLINK_CONFIG.has(image_id):
+		return
+	var config: Dictionary = ENEMY_BLINK_CONFIG[image_id]
+	var shader_material := ShaderMaterial.new()
+	shader_material.shader = MONSTER_BLINK_SHADER
+	shader_material.set_shader_parameter("left_eye_center", config.left_eye_center)
+	shader_material.set_shader_parameter("right_eye_center", config.right_eye_center)
+	shader_material.set_shader_parameter("eye_radius", config.eye_radius)
+	portrait.material = shader_material
+	_start_blink_timer()
+
+
+# 随机眨眼避免固定周期的机械感；计时器只在配置了眼睛区域的敌人上运行。
+func _start_blink_timer() -> void:
+	if _blink_timer == null:
+		_blink_timer = Timer.new()
+		_blink_timer.one_shot = true
+		_blink_timer.timeout.connect(_play_blink)
+		add_child(_blink_timer)
+	_schedule_next_blink()
+
+
+func _schedule_next_blink() -> void:
+	if _blink_timer == null or portrait.material == null or _portrait_dead:
+		return
+	_blink_timer.start(randf_range(2.4, 4.8))
+
+
+func _stop_blink_timer() -> void:
+	if _blink_timer != null:
+		_blink_timer.stop()
+
+
+# 眨眼仅修改材质参数，不与位置、缩放和受击闪色争用同一属性。
+func _play_blink() -> void:
+	var shader_material := portrait.material as ShaderMaterial
+	if shader_material == null or _portrait_dead:
+		return
+	if _blink_tween and _blink_tween.is_running():
+		_blink_tween.kill()
+	_blink_tween = create_tween()
+	_blink_tween.tween_property(shader_material, "shader_parameter/blink_amount", 1.0, BLINK_CLOSE_SECONDS)
+	_blink_tween.tween_interval(BLINK_HOLD_SECONDS)
+	_blink_tween.tween_property(shader_material, "shader_parameter/blink_amount", 0.0, BLINK_OPEN_SECONDS)
+	_blink_tween.tween_callback(_schedule_next_blink)
+
+
+func _prepare_portrait_transform() -> void:
+	portrait.offset_transform_enabled = true
+	portrait.offset_transform_visual_only = true
+	portrait.offset_transform_pivot_ratio = Vector2(0.5, 0.78)
+
+
+func _begin_action_animation() -> void:
+	_kill_motion_tween()
+	_action_animation_active = true
+	_prepare_portrait_transform()
+
+
+func _finish_action_animation() -> void:
+	portrait.offset_transform_position = Vector2.ZERO
+	portrait.offset_transform_scale = Vector2.ONE
+	portrait.offset_transform_rotation = 0.0
+	_action_animation_active = false
+
+
+func _kill_motion_tween() -> void:
+	if _motion_tween and _motion_tween.is_running():
+		_motion_tween.kill()
