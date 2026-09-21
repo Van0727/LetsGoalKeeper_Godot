@@ -28,6 +28,7 @@ const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const BEAR := preload("res://data/enemies/enemy_bear.tres")
 const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
 const ENEMY_CATALOG := preload("res://data/enemies/enemy_catalog.tres")
+const ENCOUNTER_PLANNER := preload("res://scripts/enemies/encounter_planner.gd")
 const SUPER_ATTACK := preload("res://data/skills/skill_super_attack.tres")
 const SUPER_DEFENSE := preload("res://data/skills/skill_super_defense.tres")
 const SUPER_ABILITY := preload("res://data/skills/skill_super_ability.tres")
@@ -107,8 +108,13 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var gm_cards_list: VBoxContainer = %GMCardsList
 @onready var gm_hint: Label = $GMOverlay/Center/Panel/Content/Hint
 @onready var result_overlay: TextureRect = %ResultOverlay
+@onready var result_panel: PanelContainer = $ResultOverlay/ResultCenter/ResultPanel
+@onready var result_kicker: Label = %ResultKicker
+@onready var victory_mark: Label = %VictoryMark
 @onready var result_title: Label = %ResultTitle
 @onready var result_detail: Label = %ResultDetail
+@onready var health_stat_label: Label = %HealthStatLabel
+@onready var reward_stat_label: Label = %RewardStatLabel
 @onready var result_action_button: Button = %RestartButton
 
 var deck_state := DECK_STATE.new()
@@ -642,10 +648,14 @@ func _select_room_enemy(room: Dictionary) -> Resource:
 		_record_missing_encounter("encounter_pool", {"chapter": run_state.chapter})
 		return TURTLE
 	var pool: Resource = load(pool_path)
-	var rng := RandomNumberGenerator.new()
-	# 敌人随机数由本局seed与房间位置共同派生，同一局内重进同一房间会得到同一个敌人。
-	rng.seed = run_state.seed + room.layer * 1000 + room.index * 100 + 17
-	var enemy: Resource = pool.pick_enemy(room.type, rng)
+	# 全图规划同时保证同行不重复、相邻层真实连线不重复，且与地图名称预览使用同一结果。
+	var plan: Dictionary = ENCOUNTER_PLANNER.plan(run_state.map_state, pool, ENEMY_CATALOG, run_state.seed)
+	var enemy: Resource = plan.get(room.id)
+	if enemy == null:
+		# 无解时保留原本的单房间确定性降级，避免内容配置错误导致无法进战。
+		var rng := RandomNumberGenerator.new()
+		rng.seed = run_state.seed + room.layer * 1000 + room.index * 100 + 17
+		enemy = pool.pick_enemy(room.type, rng)
 	if enemy == null:
 		push_error("第%d章%s房间遭遇池为空，回退到乌龟" % [run_state.chapter, room.type])
 		_record_missing_encounter("enemy_pool_entry", {
@@ -735,7 +745,7 @@ func _rebuild_gm_items_list() -> void:
 		checkbox.toggled.connect(_on_gm_item_toggled.bind(item, checkbox))
 		entry.add_child(checkbox)
 		var effect_label := Label.new()
-		effect_label.text = item.description if item.enabled else "%s（未启用，不可勾选）" % item.description
+		effect_label.text = item.description if item.enabled else "%s（未实装，不可勾选）" % item.description
 		effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		effect_label.custom_minimum_size = Vector2(270.0, 0.0)
 		effect_label.add_theme_font_size_override("font_size", 12)
@@ -777,10 +787,11 @@ func _rebuild_gm_cards_list() -> void:
 		var checkbox := CheckBox.new()
 		checkbox.text = card.display_name
 		checkbox.set_pressed_no_signal(card.card_id in run_state.deck_card_ids)
+		checkbox.disabled = not card.enabled
 		checkbox.toggled.connect(_on_gm_card_toggled.bind(card, checkbox))
 		entry.add_child(checkbox)
 		var description := Label.new()
-		description.text = card.description
+		description.text = card.description if card.enabled else "%s（未实装，不可勾选）" % card.description
 		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		description.custom_minimum_size = Vector2(270.0, 0.0)
 		description.add_theme_font_size_override("font_size", 12)
@@ -788,7 +799,7 @@ func _rebuild_gm_cards_list() -> void:
 
 
 func _on_gm_card_toggled(checked: bool, card: Resource, checkbox: CheckBox) -> void:
-	if not _gm_menu_open or not gm_cards_page.visible or _input_locked:
+	if not _gm_menu_open or not gm_cards_page.visible or _input_locked or not card.enabled:
 		checkbox.set_pressed_no_signal(card.card_id in run_state.deck_card_ids)
 		return
 	var changed: bool = run_state.add_card(card.card_id) if checked else _remove_gm_card(card.card_id)
@@ -1253,7 +1264,12 @@ func _apply_effect_feedback(event: Dictionary) -> void:
 			display.set_health(event.get("health_after", target.health))
 			display.set_shield(event.get("shield_after", target.shield))
 			if event.get("health_damage", 0) > 0:
-				display.show_damage(event.health_damage)
+				# 射门事件携带真实弹道和方向，显示层据此选择击退或压扁动作。
+				display.show_damage(
+					event.health_damage,
+					int(event.get("shot_type", 0)),
+					int(event.get("shot_direction", 0))
+				)
 			elif event.get("absorbed", 0) > 0:
 				display.show_shield_loss(event.absorbed)
 		"heal":
@@ -1358,9 +1374,14 @@ func _finalize_battle_result(victory: bool) -> void:
 		run_state.mark_run_failed()
 		run_state.cancel_current_room()
 	_update_input_state()
+	# 结算层继续保留战斗舞台作为背景；标题、徽记与摘要共同说明结果，避免只靠按钮颜色区分胜负。
+	result_kicker.text = "STAGE CLEAR  •  LIVE COMPLETE" if victory else "RUN ENDED  •  GOAL LOST"
+	victory_mark.text = "✦  V  ✦" if victory else "—  ×  —"
 	result_title.text = "战斗胜利" if victory else "战斗失败"
-	result_detail.text = "选择卡牌和战利品后返回路线地图。" if victory else "本局失败：返回主菜单后可开始新的一局。"
-	result_action_button.text = "领取奖励" if victory else "返回主菜单"
+	result_detail.text = "节拍仍在继续，领取本场奖励后返回路线地图。" if victory else "球门失守，本局已经结束；整顿阵容后再来一场。"
+	health_stat_label.text = "♥  %d / %d" % [run_state.player_hp, run_state.max_hp]
+	reward_stat_label.text = "✦  2 项奖励" if victory else "本局已结算"
+	result_action_button.text = "领取战利品  →" if victory else "查看本局结算  →"
 	if victory:
 		run_state.pending_reward_is_boss = (
 			controller.current_enemy_definition != null
@@ -1379,7 +1400,19 @@ func _finalize_battle_result(victory: bool) -> void:
 			"chapter": run_state.chapter,
 		})
 	result_overlay.show()
+	_play_result_entrance()
 	_victory_result_delay_pending = false
+
+
+# 结果面板以短促上浮进入，动效只影响表现层，不延迟存档与奖励状态提交。
+func _play_result_entrance() -> void:
+	result_panel.pivot_offset = result_panel.size * 0.5
+	result_panel.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	result_panel.scale = Vector2(0.94, 0.94)
+	var tween := create_tween().bind_node(result_panel).set_parallel(true)
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(result_panel, "scale", Vector2.ONE, 0.28)
+	tween.tween_property(result_panel, "modulate:a", 1.0, 0.18)
 
 
 # 胜利进入两步奖励，失败进入独立结算页展示本局摘要。

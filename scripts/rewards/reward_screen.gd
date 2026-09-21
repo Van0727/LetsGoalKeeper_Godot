@@ -12,7 +12,10 @@ enum Phase { CARD, ITEM }
 @onready var title_label: Label = %TitleLabel
 @onready var subtitle_label: Label = %SubtitleLabel
 @onready var run_label: Label = %RunLabel
+@onready var card_step: PanelContainer = %CardStep
+@onready var item_step: PanelContainer = %ItemStep
 @onready var choice_buttons: Array[Button] = [%Choice0, %Choice1, %Choice2]
+@onready var selection_rings: Array[Panel] = [%SelectionRing0, %SelectionRing1, %SelectionRing2]
 @onready var card_views: Array[BattleCardView] = [%RewardCard0, %RewardCard1, %RewardCard2]
 @onready var item_contents: Array[VBoxContainer] = [%ItemContent0, %ItemContent1, %ItemContent2]
 @onready var item_icons: Array[TextureRect] = [%ItemIcon0, %ItemIcon1, %ItemIcon2]
@@ -32,6 +35,8 @@ var _selected_index := -1
 var _choice_scale_tweens: Dictionary = {}
 # 按原字体共享本页副本，避免每个标签重复建立字形缓存，也不改动全局或战斗字体。
 var _reward_font_copies: Dictionary = {}
+var _step_active_style: StyleBox
+var _step_idle_style: StyleBox
 
 const SELECTED_SCALE := Vector2(1.5, 1.5)
 const NORMAL_SCALE := Vector2.ONE
@@ -52,6 +57,9 @@ func _ready() -> void:
 		run_state = RUN_STATE_SCRIPT.new()
 		add_child(run_state)
 	_rng.seed = run_state.seed + run_state.battles_won * 1009 + 61
+	# 保存场景内两种步骤胶囊样式，阶段切换时交换引用，不在运行时重复创建资源。
+	_step_active_style = card_step.get_theme_stylebox("panel")
+	_step_idle_style = item_step.get_theme_stylebox("panel")
 	for button in choice_buttons:
 		_prepare_scaled_fonts(button)
 	for index in range(choice_buttons.size()):
@@ -100,6 +108,7 @@ func _copy_reward_font(source: Font) -> Font:
 # 展示当前战斗级别对应的三张候选卡。
 func _show_card_choices() -> void:
 	phase = Phase.CARD
+	_refresh_phase_progress()
 	title_label.text = "选择卡牌奖励"
 	subtitle_label.text = "选择1张加入本局牌库"
 	choices = _service.generate_card_choices(run_state.pending_reward_is_boss, _rng)
@@ -109,6 +118,7 @@ func _show_card_choices() -> void:
 # 展示未拥有战利品；池耗尽时提供明确的继续入口。
 func _show_item_choices() -> void:
 	phase = Phase.ITEM
+	_refresh_phase_progress()
 	title_label.text = "选择遗物奖励"
 	subtitle_label.text = "选择1件遗物，确认后立即生效"
 	choices = _service.generate_item_choices(
@@ -136,7 +146,7 @@ func _refresh_buttons() -> void:
 	reward_detail.text = "点击卡牌查看完整说明" if phase == Phase.CARD else "点击战利品查看完整说明"
 	reward_detail.scroll_to_line(0)
 	confirm_button.self_modulate = Color.WHITE
-	confirm_button.text = "确认获得"
+	confirm_button.text = "确认选择  →"
 	confirm_button.disabled = true
 	run_label.text = "生命 %d/%d　牌库 %d　战利品 %d" % [
 		run_state.player_hp, run_state.max_hp,
@@ -149,6 +159,7 @@ func _refresh_buttons() -> void:
 		button.modulate = Color.WHITE
 		button.scale = NORMAL_SCALE
 		button.z_index = 0
+		selection_rings[index].hide()
 		button.disabled = false
 		if index >= choices.size():
 			button.hide()
@@ -203,7 +214,20 @@ func _on_choice_pressed(index: int) -> void:
 			SELECT_SCALE_DURATION if is_selected else DESELECT_SCALE_DURATION
 		)
 		button.z_index = 1 if is_selected else 0
+		selection_rings[button_index].visible = is_selected
+		# 未选项轻微降亮，突出当前选择但仍保留内容可读性。
+		button.modulate = Color.WHITE if is_selected else Color(0.78, 0.84, 0.9, 1.0)
 	confirm_button.disabled = false
+	confirm_button.text = "获得这张卡牌  →" if phase == Phase.CARD else "获得这件战利品  →"
+
+
+# 顶部两步进度与实际奖励阶段保持一致，卡牌领取后明确提示玩家仍需选择战利品。
+func _refresh_phase_progress() -> void:
+	var card_active := phase == Phase.CARD
+	card_step.add_theme_stylebox_override("panel", _step_active_style if card_active else _step_idle_style)
+	item_step.add_theme_stylebox_override("panel", _step_idle_style if card_active else _step_active_style)
+	card_step.modulate = Color.WHITE if card_active else Color(0.72, 0.78, 0.84, 1.0)
+	item_step.modulate = Color(0.72, 0.78, 0.84, 1.0) if card_active else Color.WHITE
 
 
 # 选中和取消选中都从当前尺寸平滑衔接，并用 Ease Out Back 提供柔和的轻微回弹。

@@ -87,8 +87,62 @@ content_margin_right = 18.0
 content_margin_bottom = 14.0
 texture = ExtResource("13_top_status_art")
 
-[sub_resource type="StyleBoxTexture" id="Style_result"]
-texture = ExtResource("13_top_status_art")
+[sub_resource type="StyleBoxFlat" id="Style_result"]
+content_margin_left = 18.0
+content_margin_top = 20.0
+content_margin_right = 18.0
+content_margin_bottom = 18.0
+bg_color = Color(0.035, 0.07, 0.13, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.58, 0.2, 0.9)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+shadow_color = Color(1, 0.25, 0.08, 0.28)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="Style_result_primary"]
+bg_color = Color(1, 0.38, 0.12, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.78, 0.3, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(1, 0.25, 0.05, 0.32)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_result_secondary"]
+bg_color = Color(0.055, 0.105, 0.18, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.55, 0.7, 0.75)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="Style_result_stat"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.07, 0.13, 0.22, 0.92)
+border_width_bottom = 2
+border_color = Color(0.18, 0.75, 0.82, 0.75)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
 
 [node name="Battle" type="Control" unique_id=14672112]
 layout_mode = 3
@@ -1044,48 +1098,100 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="ResultPanel" type="PanelContainer" parent="ResultOverlay/ResultCenter" unique_id=168857218]
-custom_minimum_size = Vector2(300, 230)
+custom_minimum_size = Vector2(320, 350)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_result")
 
 [node name="ResultContent" type="VBoxContainer" parent="ResultOverlay/ResultCenter/ResultPanel" unique_id=1149530290]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 alignment = 1
+
+[node name="ResultKicker" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.38, 0.86, 0.9, 1)
+theme_override_font_sizes/font_size = 12
+text = "STAGE CLEAR  •  LIVE COMPLETE"
+horizontal_alignment = 1
+
+[node name="VictoryMark" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.66, 0.18, 1)
+theme_override_font_sizes/font_size = 36
+text = "✦  V  ✦"
+horizontal_alignment = 1
 
 [node name="ResultTitle" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=1009519450]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 30
 text = "战斗胜利"
 horizontal_alignment = 1
 
 [node name="ResultDetail" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=387209701]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.9, 0.92, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.82, 0.88, 0.94, 1)
+theme_override_font_sizes/font_size = 14
 text = "守住球门，完成本场测试！"
 horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ResultStats" type="HBoxContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="HealthStat" type="PanelContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats"]
+custom_minimum_size = Vector2(132, 42)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_result_stat")
+
+[node name="HealthStatLabel" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats/HealthStat"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.76, 0.72, 1)
+theme_override_font_sizes/font_size = 13
+text = "♥  100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RewardStat" type="PanelContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats"]
+custom_minimum_size = Vector2(132, 42)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_result_stat")
+
+[node name="RewardStatLabel" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats/RewardStat"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.87, 0.35, 1)
+theme_override_font_sizes/font_size = 13
+text = "✦  2 项奖励"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="RestartButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=1955356802]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
-theme_override_font_sizes/font_size = 17
-theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/pressed = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
-text = "挑战下一个敌人"
+theme_override_colors/font_color = Color(1, 0.98, 0.9, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("Style_result_primary")
+theme_override_styles/pressed = SubResource("Style_result_primary")
+theme_override_styles/hover = SubResource("Style_result_primary")
+text = "领取战利品  →"
 
 [node name="MenuButton" type="Button" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=577035393]
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/pressed = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
+theme_override_colors/font_color = Color(0.72, 0.82, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("Style_result_secondary")
+theme_override_styles/pressed = SubResource("Style_result_secondary")
+theme_override_styles/hover = SubResource("Style_result_secondary")
 text = "返回主菜单"
 
 [connection signal="pressed" from="Header/BackButton" to="." method="_on_back_pressed"]

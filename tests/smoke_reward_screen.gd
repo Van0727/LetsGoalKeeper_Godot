@@ -25,6 +25,8 @@ func _run() -> void:
 	root.add_child(screen)
 	await process_frame
 	_assert_equal(screen.phase, screen.Phase.CARD, "奖励先进入卡牌步骤")
+	_assert_equal(screen.card_step.modulate, Color.WHITE, "卡牌步骤使用高亮进度胶囊")
+	_assert_true(screen.item_step.modulate != Color.WHITE, "未到达的战利品步骤保持降亮")
 	_assert_equal(screen.choices.size(), 3, "显示三张卡牌候选")
 	_assert_equal(screen.card_views[0].card_definition, screen.choices[0], "奖励卡牌复用战斗卡面并绑定候选定义")
 	await process_frame
@@ -57,6 +59,8 @@ func _run() -> void:
 	screen._on_confirm_pressed()
 	_assert_equal(screen.run_state.deck_card_ids.size(), initial_deck_size, "未预选时确认不会发放卡牌")
 	screen._on_choice_pressed(0)
+	_assert_true(screen.selection_rings[0].visible, "预选卡牌显示金色选择框")
+	_assert_true(not screen.selection_rings[1].visible, "未选卡牌不显示选择框")
 	_assert_equal(screen.run_state.deck_card_ids.size(), initial_deck_size, "预选卡牌时不立即加入牌库")
 	_assert_equal(
 		screen.choice_buttons[0].pivot_offset,
@@ -115,6 +119,8 @@ func _run() -> void:
 	await create_timer(screen.REWARD_FLY_DURATION + 0.1).timeout
 	_assert_equal(screen.run_state.deck_card_ids.size(), initial_deck_size + 1, "确认后卡牌加入牌库")
 	_assert_equal(screen.phase, screen.Phase.ITEM, "卡牌后进入战利品步骤")
+	_assert_true(screen.card_step.modulate != Color.WHITE, "已完成的卡牌步骤降亮")
+	_assert_equal(screen.item_step.modulate, Color.WHITE, "战利品步骤切换为高亮")
 	_assert_equal(screen.confirm_button.self_modulate.a, 1.0, "进入遗物步骤后重新显示确认按钮")
 	_assert_equal(screen.choices.size(), 3, "普通战显示三件战利品候选")
 	# 遗物描述必须在固定的三等分槽位内换行，不能因长文本挤宽整个奖励行。
@@ -193,11 +199,16 @@ func _run() -> void:
 
 # 可选真实渲染验收：仅在显式传入 --capture 时保存场景截图，无头逻辑测试不读取空纹理。
 func _capture(stage: String, screen: Control) -> void:
-	if not "--capture" in OS.get_cmdline_user_args():
+	if not _capture_requested():
 		return
 	await RenderingServer.frame_post_draw
 	var image := screen.get_viewport().get_texture().get_image()
 	_assert_equal(image.save_png("res://output/reward_%s.png" % stage), OK, "奖励界面截图保存")
+
+
+# 本地截图验收兼容直接参数与 `--` 后用户参数，避免不同 Godot 启动方式漏掉视觉检查。
+func _capture_requested() -> bool:
+	return "--capture" in OS.get_cmdline_args() or "--capture" in OS.get_cmdline_user_args()
 
 
 # 通用相等断言。

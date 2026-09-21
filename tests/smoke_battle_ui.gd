@@ -328,6 +328,13 @@ func _run() -> void:
 	_assert_true(battle_screen.gm_menu_button.disabled, "胜利后锁定GM入口")
 	# 固定计时器到点与协程恢复可能落在同一帧；在有限超时内等待真实 UI 状态，避免把调度顺序误报为失败。
 	_assert_true(await _wait_until_visible(battle_screen.result_overlay, battle_screen.VICTORY_RESULT_DELAY_SECONDS + 1.0), "怪物死亡一秒后显示胜利结果层")
+	_assert_equal(battle_screen.result_kicker.text, "STAGE CLEAR  •  LIVE COMPLETE", "胜利层展示舞台通关提示")
+	_assert_equal(battle_screen.victory_mark.text, "✦  V  ✦", "胜利层展示独立胜利徽记")
+	_assert_true("1 / 100" in battle_screen.health_stat_label.text, "胜利层回读并展示本场剩余生命")
+	_assert_equal(battle_screen.reward_stat_label.text, "✦  2 项奖励", "胜利层明确后续两步奖励")
+	_assert_equal(battle_screen.result_action_button.text, "领取战利品  →", "胜利主按钮使用奖励行动文案")
+	_assert_true(battle_screen.result_panel.custom_minimum_size.y >= 350.0, "胜利面板为结算摘要预留完整高度")
+	await _capture_battle_result(battle_screen)
 
 	# 重开后把玩家置于濒死状态，验证敌方行动可进入失败结果且不会再抽牌。
 	battle_screen.start_new_battle()
@@ -336,6 +343,10 @@ func _run() -> void:
 	await process_frame
 	_assert_equal(battle_screen.controller.phase, battle_screen.controller.Phase.FINISHED, "致命敌方攻击结束战斗")
 	_assert_equal(battle_screen.result_title.text, "战斗失败", "失败结果标题")
+	_assert_equal(battle_screen.result_kicker.text, "RUN ENDED  •  GOAL LOST", "失败层切换为本局结束提示")
+	_assert_equal(battle_screen.victory_mark.text, "—  ×  —", "失败层不沿用胜利徽记")
+	_assert_equal(battle_screen.reward_stat_label.text, "本局已结算", "失败层不误报两项奖励")
+	_assert_equal(battle_screen.result_action_button.text, "查看本局结算  →", "失败主按钮指向本局结算")
 	_assert_true(battle_screen.result_overlay.visible, "失败后显示结果层")
 	_assert_equal(
 		battle_screen.run_state.run_status,
@@ -431,3 +442,14 @@ func _wait_until_next_battle(battle_screen: Control, previous_generation: int, t
 	while battle_screen._battle_generation <= previous_generation and Time.get_ticks_msec() < deadline:
 		await process_frame
 	return battle_screen._battle_generation > previous_generation
+
+
+# 显式截图模式保存胜利层真实渲染，供 360×640 基准视口的遮挡与层级验收。
+func _capture_battle_result(battle_screen: Control) -> void:
+	if not ("--capture" in OS.get_cmdline_args() or "--capture" in OS.get_cmdline_user_args()):
+		return
+	# 等待短促入场 Tween 完成，截图验收最终稳态而不是首帧透明过渡。
+	await create_timer(0.35).timeout
+	await RenderingServer.frame_post_draw
+	var image := battle_screen.get_viewport().get_texture().get_image()
+	_assert_equal(image.save_png("res://output/battle_victory_result.png"), OK, "保存胜利层验收截图")
