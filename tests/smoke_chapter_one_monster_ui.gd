@@ -37,13 +37,19 @@ func _run() -> void:
 		screen.start_new_battle(definition)
 		await process_frame
 		_check(screen.controller.enemy.max_health == definition.max_health, "真实场景生命来自配表")
-		# 第一章普通小怪分别读取7001～7003；精英与Boss尚未配置时继续安全回退占位图。
-		if definition.id in [6001, 6002, 6003]:
-			var expected_image_id: int = 7000 + int(definition.id) - 6000
-			_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/%d.png" % expected_image_id), "%s读取配表图片" % definition.display_name)
-			_check(screen.enemy_display.portrait.modulate == Color.WHITE, "%s的正式怪物图片保持原色" % definition.display_name)
-		else:
-			_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/enemy_goalkeeper.png"), "未配置图片时回退占位图")
+		# 第一章全部六种怪物读取各自的正式数字图片ID，防止新增精英或Boss图片后测试仍误判为占位图。
+		var expected_image_ids := {
+			6001: 7001,
+			6002: 7002,
+			6003: 7003,
+			6011: 7011,
+			6012: 7012,
+			6021: 7021,
+		}
+		var expected_image_id: int = expected_image_ids.get(definition.id, 0)
+		_check(expected_image_id > 0, "%s已配置正式怪物图片ID" % definition.display_name)
+		_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/%d.png" % expected_image_id), "%s读取配表图片" % definition.display_name)
+		_check(screen.enemy_display.portrait.modulate == Color.WHITE, "%s的正式怪物图片保持原色" % definition.display_name)
 		_check(screen.monster_rules_label.visible, "新版行为完整意图可见")
 		_check(screen.intent_label.get_global_rect().end.x <= 360.1, "顶栏意图不越界")
 		_check(screen.monster_rules_label.get_global_rect().end.x <= screen.enemy_display.get_global_rect().position.x, "意图详情不覆盖敌方信息")

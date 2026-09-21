@@ -7,10 +7,10 @@ uint16,string,uint8,uint8,uint16,uint8,uint16_list,uint16_list,uint8,string,uint
 6008,机器人,0,3,54,0,19;20;21,,1,enemy_arena_robot,0
 6009,猎豹,0,3,48,0,22;23;24,,1,enemy_leopard,0
 6010,河马,0,3,62,0,26;27,,1,enemy_hippo,0
-6011,野猪前锋,1,1,65,0,8;9;10,,1,enemy_boar,0
-6012,犰狳铁卫,1,1,72,0,13;12,,1,enemy_armadillo,0
+6011,野猪前锋,1,1,65,0,8;9;10,,1,enemy_boar,7011
+6012,犰狳铁卫,1,1,72,0,13;12,,1,enemy_armadillo,7012
 6015,熊重炮手,1,3,110,0,28;29;30;31,,1,enemy_bear_cannon,0
-6021,大象门神,2,1,120,0,14;15;16;17,,1,enemy_street_elephant_boss,0
+6021,大象门神,2,1,120,0,14;15;16;17,,1,enemy_street_elephant_boss,7021
 6023,螳螂冠军,2,3,220,0,33;34;35;36;37,,1,enemy_mantis_champion,0
 6031,刺猬球员,0,3,52,0,39;40,,1,enemy_hedgehog,0
 6041,猎鹰队长,1,3,100,0,41;42;43,,1,enemy_falcon_captain,0
