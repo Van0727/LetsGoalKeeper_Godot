@@ -35,15 +35,35 @@ func _run() -> void:
 	await create_timer(0.28).timeout
 	_check(display.portrait.offset_transform_scale.is_equal_approx(Vector2.ONE), "攻击结束恢复缩放")
 
+	# 自定义步进精确检查各球型的第一段受力，不依赖无窗口运行时的帧间隔。
 	display.set_health(12)
-	display.show_damage(8)
-	await create_timer(0.04).timeout
-	_check(display.portrait.offset_transform_position != Vector2.ZERO, "受击触发短促震动")
-	await create_timer(0.30).timeout
-	_check(display.portrait.offset_transform_position.is_equal_approx(Vector2.ZERO), "受击结束恢复位置")
+	display.show_damage(2, 1, 0)
+	(display.get("_motion_tween") as Tween).custom_step(0.06)
+	_check(display.portrait.offset_transform_position.y < 0.0, "直球命中向上击退")
+	display.reset_portrait_animation()
+
+	display.show_damage(2, 2, -1)
+	(display.get("_motion_tween") as Tween).custom_step(0.06)
+	_check(display.portrait.offset_transform_position.x > 0.0, "左侧香蕉球命中向右后击退")
+	display.reset_portrait_animation()
+
+	display.show_damage(2, 2, 1)
+	(display.get("_motion_tween") as Tween).custom_step(0.06)
+	_check(display.portrait.offset_transform_position.x < 0.0, "右侧香蕉球命中向左后击退")
+	display.reset_portrait_animation()
+
+	display.show_damage(2, 3, 0)
+	(display.get("_motion_tween") as Tween).custom_step(0.06)
+	_check(display.portrait.offset_transform_scale.x > 1.0 and display.portrait.offset_transform_scale.y < 1.0, "挑射命中压扁怪物")
+	display.reset_portrait_animation()
+
+	display.show_damage(2)
+	(display.get("_motion_tween") as Tween).custom_step(0.04)
+	_check(absf(display.portrait.offset_transform_position.x) <= 2.5, "非射门伤害使用轻量通用反馈")
+	display.reset_portrait_animation()
 
 	display.set_health(0)
-	display.show_damage(12)
+	display.show_damage(12, 1, 0)
 	await create_timer(0.20).timeout
 	_check(display.portrait.modulate.a < 1.0, "生命归零触发下沉淡出")
 	display.configure("下一只怪物", 20, Color.WHITE)

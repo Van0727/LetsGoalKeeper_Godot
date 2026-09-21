@@ -26,6 +26,8 @@ const ATTACK_WINDUP_SECONDS := 0.12
 const ATTACK_RELEASE_SECONDS := 0.10
 const ATTACK_RETURN_SECONDS := 0.18
 const HIT_SHAKE_SECONDS := 0.055
+const SHOT_HIT_SECONDS := 0.09
+const SHOT_RECOVER_SECONDS := 0.22
 const BLINK_CLOSE_SECONDS := 0.065
 const BLINK_HOLD_SECONDS := 0.035
 const BLINK_OPEN_SECONDS := 0.085
@@ -149,15 +151,15 @@ func get_portrait_global_center() -> Vector2:
 	return portrait.get_global_rect().get_center()
 
 
-# 播放红色受击反馈。
-func show_damage(amount: int) -> void:
+# 播放红色受击反馈；射门类型和方向只决定显示动作，不参与伤害与护盾结算。
+func show_damage(amount: int, shot_type := 0, shot_direction := 0) -> void:
 	_play_feedback("-%d" % amount, Color(1.0, 0.32, 0.28), Color(1.0, 0.35, 0.35))
 	if _battle_layout_role != BattleLayoutRole.ENEMY:
 		return
 	if _current_health <= 0:
 		play_death()
 	else:
-		play_hit()
+		play_hit(shot_type, shot_direction)
 
 
 # 播放绿色治疗反馈。
@@ -232,17 +234,75 @@ func play_enemy_attack() -> void:
 	_motion_tween.chain().tween_callback(_finish_action_animation)
 
 
-# 受击使用短促左右震动和挤压；完成后恢复基准状态，下一拍可继续律动。
-func play_hit() -> void:
+# 根据实际射门类型选择受力方向；非射门伤害使用轻量通用震动。
+func play_hit(shot_type := 0, shot_direction := 0) -> void:
 	if _battle_layout_role != BattleLayoutRole.ENEMY or _portrait_dead:
 		return
+	match shot_type:
+		1:
+			_play_straight_hit()
+		2:
+			_play_banana_hit(shot_direction)
+		3:
+			_play_lob_hit()
+		_:
+			_play_generic_hit()
+
+
+# 直球从正面命中后产生短促向上位移，并用纵向拉伸强调冲击方向。
+func _play_straight_hit() -> void:
+	_begin_action_animation()
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(0.0, -7.0), SHOT_HIT_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(0.97, 1.055), SHOT_HIT_SECONDS)
+	_motion_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2.ZERO, SHOT_RECOVER_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2.ONE, SHOT_RECOVER_SECONDS)
+	_motion_tween.chain().tween_callback(_finish_action_animation)
+
+
+# 香蕉球按来球方向的反方向横向击退；左侧来球向右后退，右侧来球向左后退。
+func _play_banana_hit(shot_direction: int) -> void:
+	_begin_action_animation()
+	var safe_direction := signi(shot_direction)
+	if safe_direction == 0:
+		# 无方向的旧事件仍给出轻微横向反馈，但不修改核心方向状态。
+		safe_direction = -1 if _rhythm_direction < 0.0 else 1
+	var knockback_x := float(-safe_direction) * 8.0
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(knockback_x, -3.0), SHOT_HIT_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_rotation", deg_to_rad(signf(knockback_x) * 3.0), SHOT_HIT_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.02, 0.98), SHOT_HIT_SECONDS)
+	_motion_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2.ZERO, SHOT_RECOVER_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_rotation", 0.0, SHOT_RECOVER_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2.ONE, SHOT_RECOVER_SECONDS)
+	_motion_tween.chain().tween_callback(_finish_action_animation)
+
+
+# 挑射从上方落下，怪物短暂压扁并向两侧展开后弹回。
+func _play_lob_hit() -> void:
+	_begin_action_animation()
+	_motion_tween = create_tween()
+	_motion_tween.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(0.0, 3.0), SHOT_HIT_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.10, 0.78), SHOT_HIT_SECONDS)
+	_motion_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2.ZERO, SHOT_RECOVER_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2.ONE, SHOT_RECOVER_SECONDS)
+	_motion_tween.chain().tween_callback(_finish_action_animation)
+
+
+# 流血等没有足球方向的伤害只做轻量震动，避免冒充特定射门受力。
+func _play_generic_hit() -> void:
 	_begin_action_animation()
 	_motion_tween = create_tween()
 	_motion_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(-4.0, 1.5), HIT_SHAKE_SECONDS)
-	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.045, 0.955), HIT_SHAKE_SECONDS)
-	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2(3.0, -1.0), HIT_SHAKE_SECONDS)
-	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(-2.0, 0.5), HIT_SHAKE_SECONDS)
+	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2(-2.5, 0.8), HIT_SHAKE_SECONDS)
+	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2(1.025, 0.975), HIT_SHAKE_SECONDS)
+	_motion_tween.chain().tween_property(portrait, "offset_transform_position", Vector2(1.5, -0.5), HIT_SHAKE_SECONDS)
 	_motion_tween.tween_property(portrait, "offset_transform_position", Vector2.ZERO, HIT_SHAKE_SECONDS)
 	_motion_tween.parallel().tween_property(portrait, "offset_transform_scale", Vector2.ONE, HIT_SHAKE_SECONDS)
 	_motion_tween.chain().tween_callback(_finish_action_animation)

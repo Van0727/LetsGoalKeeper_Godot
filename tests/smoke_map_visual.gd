@@ -22,14 +22,18 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	check(not screen.info_label.visible, "底部状态信息应隐藏")
-	var pool: Resource = load("res://data/encounters/chapter_1.tres")
 	for room in run.map_state.rooms:
 		var button = screen.room_buttons[room.id]
 		check(room.enemy_id.is_empty(), "名称预览不能提前写入敌人缓存")
 		if room.type != 3:
-			var rng := RandomNumberGenerator.new()
-			rng.seed = run.seed + room.layer * 1000 + room.index * 100 + 17
-			check(button.title_label.text == pool.pick_enemy(room.type,rng).display_name, "地图名称应与战斗敌人一致")
+			check(button.title_label.text == screen._enemy_plan[room.id].display_name, "地图名称应与全图遇敌方案一致")
+			if room.type != 2 and screen._enemy_plan[room.id].image_id > 0:
+				var expected_path := (
+					"res://assets/ui/map/chicken_map_icon_v1.png"
+					if screen._enemy_plan[room.id].image_id == 7001
+					else "res://assets/ui/enemies/%d.png" % screen._enemy_plan[room.id].image_id
+				)
+				check(button.art.monster.resource_path == expected_path, "地图怪物头像应与房间实际敌人一致")
 		check(button.position.x >= 0 and button.position.y >= 0, "节点不得越出地图上边界")
 	var first: Dictionary = run.map_state.rooms_on_layer(1)[0]
 	var boss: Dictionary = run.map_state.rooms_on_layer(run.map_state.layer_count)[0]
@@ -74,7 +78,7 @@ func _run() -> void:
 	# 缺失底板可安全绘制，旧缓存无法加载时使用战斗的乌龟回退。
 	var room: Dictionary = run.map_state.rooms[0]
 	room.enemy_id = "missing_map_visual_enemy"
-	check(screen._opponent_name(room) == "乌龟", "坏缓存应安全回退")
+	check(screen._opponent_name(screen._preview_enemy(room), room) == "乌龟", "坏缓存应安全回退")
 	var button = screen.room_buttons[room.id]
 	button.art = {}
 	button.queue_redraw()

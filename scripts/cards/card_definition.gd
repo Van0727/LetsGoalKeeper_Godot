@@ -42,4 +42,6 @@ enum Rarity {
 @export_range(0.0, 16.0, 0.0001, "or_greater") var attack_delay_beats := 1.0
 @export_range(0.0, 16.0, 0.0001, "or_greater") var multi_hit_interval_beats := 0.5
 @export var rarity := Rarity.COMMON
+# 实装状态只控制新奖励与正常游戏入口；资源仍保留，供旧存档和GM诊断安全读取。
+@export var enabled := true
 @export var effects: Array[Resource] = []

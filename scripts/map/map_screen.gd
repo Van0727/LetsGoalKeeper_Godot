@@ -9,6 +9,7 @@ extends Control
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const MAP_STATE := preload("res://scripts/map/map_state.gd")
 const ENEMY_CATALOG := preload("res://data/enemies/enemy_catalog.tres")
+const ENCOUNTER_PLANNER := preload("res://scripts/enemies/encounter_planner.gd")
 const ROOM_BUTTON := preload("res://scripts/map/map_room_button.gd")
 const ART_PATHS := {
 "base":"res://assets/ui/map/enemy_node_base_v2.png",
@@ -16,7 +17,6 @@ const ART_PATHS := {
 "name":"res://assets/ui/map/enemy_nameplate_v2.png",
 "boss_name":"res://assets/ui/map/boss_nameplate_v2.png",
 "boss":"res://assets/ui/map/boss_icon_v2.png",
-"ball":"res://assets/ui/game_ball.png",
 "shield":"res://assets/placeholders/icon_shield.png",
 "heart":"res://assets/placeholders/icon_health.png",
 }
@@ -30,6 +30,7 @@ var room_buttons := {}
 var artwork: Dictionary = {}
 var run_state: Node
 var _is_scene_transitioning := false
+var _enemy_plan := {}
 
 # 素材缺失保留空纹理，由按钮安全回退。
 func _ready() -> void:
@@ -68,11 +69,13 @@ func refresh_ui() -> void:
 		rows_container.remove_child(child)
 		child.queue_free()
 	room_buttons.clear()
+	_enemy_plan = _build_enemy_plan()
 	for room in run_state.map_state.rooms:
 		var button := ROOM_BUTTON.new()
 		rows_container.add_child(button)
 		button.disabled = room.state != MAP_STATE.RoomState.ATTAINABLE
-		button.configure(room, _opponent_name(room), artwork)
+		var enemy := _preview_enemy(room)
+		button.configure(room, _opponent_name(enemy, room), _room_artwork(room, enemy))
 		button.tooltip_text = button.title_label.text
 		button.pressed.connect(_on_room_button_pressed.bind(room.id))
 		button.pulse_transform_changed.connect(connections_layer.queue_redraw)
@@ -116,22 +119,53 @@ func _refresh_connections() -> void:
 	if run_state.map_state != null:
 		connections_layer.configure(room_buttons, run_state.map_state)
 
-# 名称预览沿用战斗派生种子，不消费全局随机数或提前写 enemy_id。
-func _opponent_name(room: Dictionary) -> String:
+# 名称和头像共用同一个预览定义，避免同一房间出现名称与怪物图像错配。
+func _preview_enemy(room: Dictionary) -> Resource:
 	if room.type == MAP_STATE.RoomType.REST:
-		return "休息"
+		return null
 	var cached: String = room.get("enemy_id", "")
 	if not cached.is_empty():
-		var cached_enemy: Resource = ENEMY_CATALOG.resolve_cached_id(cached)
-		return str(cached_enemy.display_name) if cached_enemy != null else "乌龟"
+		return ENEMY_CATALOG.resolve_cached_id(cached)
 	var pool_path := "res://data/encounters/chapter_%d.tres" % run_state.chapter
 	if not ResourceLoader.exists(pool_path):
-		return "乌龟"
+		return null
 	var pool: Resource = load(pool_path)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = run_state.seed + room.layer * 1000 + room.index * 100 + 17
-	var enemy: Resource = pool.pick_enemy(room.type, rng)
+	var enemy: Resource = _enemy_plan.get(room.id)
+	if enemy == null:
+		# 遭遇池数量不足或旧缓存互相冲突时才单房间降级，保证地图仍可进入。
+		var rng := RandomNumberGenerator.new()
+		rng.seed = run_state.seed + room.layer * 1000 + room.index * 100 + 17
+		enemy = pool.pick_enemy(room.type, rng)
+	return enemy
+
+
+# 房间名称只读已解析的怪物；缺失资源时保留乌龟文案作为明确降级。
+func _opponent_name(enemy: Resource, room: Dictionary) -> String:
+	if room.type == MAP_STATE.RoomType.REST:
+		return "休息"
 	return str(enemy.display_name) if enemy != null else "乌龟"
+
+
+# 每个战斗房间拥有独立表现字典，按实际怪物 image_id 注入头像；鸡使用已确认的地图专用图标。
+func _room_artwork(room: Dictionary, enemy: Resource) -> Dictionary:
+	var room_artwork := artwork.duplicate()
+	if room.type in [MAP_STATE.RoomType.REST, MAP_STATE.RoomType.BOSS]:
+		return room_artwork
+	var image_path := ""
+	if enemy != null and enemy.image_id == 7001:
+		image_path = "res://assets/ui/map/chicken_map_icon_v1.png"
+	elif enemy != null and enemy.image_id > 0:
+		image_path = "res://assets/ui/enemies/%d.png" % enemy.image_id
+	room_artwork["monster"] = load(image_path) if not image_path.is_empty() and ResourceLoader.exists(image_path) else null
+	return room_artwork
+
+
+# 预览与战斗入口共用同一规划器，避免地图显示与实际遇敌不一致。
+func _build_enemy_plan() -> Dictionary:
+	var pool_path := "res://data/encounters/chapter_%d.tres" % run_state.chapter
+	if not ResourceLoader.exists(pool_path):
+		return {}
+	return ENCOUNTER_PLANNER.plan(run_state.map_state, load(pool_path), ENEMY_CATALOG, run_state.seed)
 
 # 返回按钮仅在地图实例内调整外观；暂停按钮保留通用图片样式。
 func _style_header() -> void:

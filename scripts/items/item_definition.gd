@@ -14,6 +14,7 @@ enum ModifierType { ALL_SHOTS, STRAIGHT, BANANA, LOB, DISABLED }
 @export_range(0, 999, 1) var amount := 0
 # 游戏历程级最大能量加成由 RunState 汇总并存档；普通战斗触发效果仍放在 effects。
 @export_range(0, 99, 1) var run_max_energy_bonus := 0
+# 实装状态只控制正常奖励与GM勾选；定义仍保留，供旧存档按数字ID恢复。
 @export var enabled := true
 # 新奖励品使用效果数组配置；旧奖励品继续走 modifier_type，迁移期间两套数据可以并存。
 @export var effects: Array[Resource] = []

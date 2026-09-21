@@ -71,10 +71,14 @@ func _draw() -> void:
 	var boss := kind == 2
 	var tint := Color(0.72, 0.78, 0.87) if disabled else Color.WHITE
 	_paint("boss_base" if boss else "base", side, tint)
-	if kind == 1:
-		_draw_shield(side * 0.27)
+	# 普通与精英房都显示本房间的实际怪物头像；休息和Boss保留独立图标语义。
+	if boss:
+		_paint("boss", side * 0.78, tint)
+	elif kind == 3:
+		_paint("heart", side * 1.2, tint)
 	else:
-		_paint("boss" if boss else ("heart" if kind == 3 else "ball"), side * (0.78 if boss else 0.56), tint)
+		# 保留用户已调整的1.2倍怪物头像尺寸。
+		_paint("monster", side * 1.2, tint)
 	var plate: Texture2D = art.get("boss_name" if boss else "name")
 	if plate != null:
 		draw_texture_rect(plate, Rect2(0, size.y * 0.75, size.x, size.y * 0.25), false)
@@ -92,17 +96,9 @@ func _paint(key: String, side: float, tint: Color) -> void:
 		return
 	var factor := side / maxf(texture.get_width(), texture.get_height())
 	var fitted := Vector2(texture.get_size()) * factor
-	if key == "ball":
-		# 现有封面足球附带外围光效，只在圆形 UV 区域显示，避免方形背景露出。
-		var points := PackedVector2Array()
-		var uv := PackedVector2Array()
-		for i in range(64):
-			var unit := Vector2.from_angle(TAU * i / 64)
-			points.append(node_center() + unit * side * 0.5)
-			uv.append(Vector2(0.5, 0.5) + unit * 0.43)
-		draw_polygon(points, PackedColorArray([tint]), uv, texture)
-		return
-	draw_texture_rect(texture, Rect2(node_center() - fitted * 0.5, fitted), false, tint)
+	# 怪物图标单独上移10像素，让鸡的视觉重心对齐底座，不改变连线中心和其他房型图标。
+	var icon_offset := Vector2(0, -10) if key == "monster" else Vector2.ZERO
+	draw_texture_rect(texture, Rect2(node_center() + icon_offset - fitted * 0.5, fitted), false, tint)
 
 # 项目盾牌占位图仅为菱形，因此由 UI 绘制紫色盾牌和五角星，不新增或覆盖美术图片。
 func _draw_shield(radius: float) -> void:

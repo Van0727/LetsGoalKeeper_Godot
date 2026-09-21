@@ -1,22 +1,10 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene format=3 uid="uid://nqt2382q2og2"]
 
-[ext_resource type="Script" path="res://scripts/map/map_screen.gd" id="1_screen"]
-[ext_resource type="Script" path="res://scripts/map/map_connections.gd" id="2_connections"]
-[ext_resource type="PackedScene" path="res://scenes/pause_overlay.tscn" id="3_pause"]
-[ext_resource type="Texture2D" path="res://assets/ui/map/map_background_v2.png" id="4_background"]
-[ext_resource type="Texture2D" path="res://assets/ui/game_ball.png" id="5_ball"]
-
-[sub_resource type="StyleBoxFlat" id="Style_top"]
-bg_color = Color(0.05, 0.12, 0.15, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.45, 0.75, 0.8, 0.5)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+[ext_resource type="Script" uid="uid://bk0snrv3c2bxt" path="res://scripts/map/map_screen.gd" id="1_screen"]
+[ext_resource type="Script" uid="uid://cc0fclmdkre0b" path="res://scripts/map/map_connections.gd" id="2_connections"]
+[ext_resource type="PackedScene" uid="uid://cul2ho1d7dah5" path="res://scenes/pause_overlay.tscn" id="3_pause"]
+[ext_resource type="Texture2D" uid="uid://bjn1s0glqni5k" path="res://assets/ui/map/map_background_v2.png" id="4_background"]
+[ext_resource type="Texture2D" uid="uid://ck648js84io5i" path="res://assets/ui/game_ball.png" id="5_ball"]
 
 [sub_resource type="StyleBoxFlat" id="Style_result"]
 bg_color = Color(0.06, 0.09, 0.12, 0.97)
@@ -42,7 +30,7 @@ corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
-[node name="MapScreen" type="Control"]
+[node name="MapScreen" type="Control" unique_id=914250961]
 texture_filter = 2
 layout_mode = 3
 anchors_preset = 15
@@ -52,28 +40,29 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_screen")
 
-[node name="PauseOverlay" parent="." instance=ExtResource("3_pause")]
+[node name="PauseOverlay" parent="." unique_id=2014867449 instance=ExtResource("3_pause")]
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=1007705863]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.025, 0.07, 0.08, 1)
 mouse_filter = 2
+color = Color(0.025, 0.07, 0.08, 1)
 
-[node name="Stadium" type="TextureRect" parent="Background"]
+[node name="Stadium" type="TextureRect" parent="Background" unique_id=1288586852]
 layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
 texture = ExtResource("4_background")
 expand_mode = 1
 stretch_mode = 6
-mouse_filter = 2
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="Header" type="HBoxContainer" parent="." unique_id=278643771]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -84,12 +73,12 @@ offset_bottom = 46.0
 grow_horizontal = 2
 theme_override_constants/separation = 8
 
-[node name="BackButton" type="Button" parent="Header"]
+[node name="BackButton" type="Button" parent="Header" unique_id=1973649]
 custom_minimum_size = Vector2(82, 40)
 layout_mode = 2
 text = "返回菜单"
 
-[node name="TitleLabel" type="Label" parent="Header"]
+[node name="TitleLabel" type="Label" parent="Header" unique_id=484559145]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -99,85 +88,90 @@ text = "第 1 章 · 路线地图"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HintLabel" type="Label" parent="Header"]
-visible = true
+[node name="HintLabel" type="Label" parent="Header" unique_id=1745063012]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.9, 0.7, 1)
 theme_override_font_sizes/font_size = 12
-text = ""
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ChapterDivider" type="TextureRect" parent="."]
+[node name="ChapterDivider" type="TextureRect" parent="." unique_id=79878631]
+layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -9.0
 offset_top = 40.0
 offset_right = 9.0
 offset_bottom = 58.0
+mouse_filter = 2
 texture = ExtResource("5_ball")
 expand_mode = 1
 stretch_mode = 5
-mouse_filter = 2
 
-[node name="LeftBeatLine" type="ColorRect" parent="."]
+[node name="LeftBeatLine" type="ColorRect" parent="." unique_id=210291635]
+layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -55.0
 offset_top = 49.0
 offset_right = -16.0
 offset_bottom = 50.0
-color = Color(0.15, 0.95, 1, 1)
 mouse_filter = 2
+color = Color(0.15, 0.95, 1, 1)
 
-[node name="RightBeatLine" type="ColorRect" parent="."]
+[node name="RightBeatLine" type="ColorRect" parent="." unique_id=1806488930]
+layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = 16.0
 offset_top = 49.0
 offset_right = 55.0
 offset_bottom = 50.0
-color = Color(0.15, 0.95, 1, 1)
 mouse_filter = 2
+color = Color(0.15, 0.95, 1, 1)
 
-[node name="MapBody" type="Control" parent="."]
+[node name="MapBody" type="Control" parent="." unique_id=152491509]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = 8.0
 anchor_bottom = 1.0
+offset_left = 8.0
 offset_top = 110.0
 offset_right = -8.0
 offset_bottom = -70.0
 grow_horizontal = 2
 
-[node name="ConnectionsLayer" type="Control" parent="MapBody"]
+[node name="ConnectionsLayer" type="Control" parent="MapBody" unique_id=49834997]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("2_connections")
 
-[node name="Margin" type="Control" parent="MapBody"]
+[node name="Margin" type="Control" parent="MapBody" unique_id=839505305]
 layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="RowsContainer" type="Control" parent="MapBody/Margin"]
+[node name="RowsContainer" type="Control" parent="MapBody/Margin" unique_id=784563884]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="InfoLabel" type="Label" parent="."]
+[node name="InfoLabel" type="Label" parent="." unique_id=535622707]
+unique_name_in_owner = true
 visible = false
-unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 8.0
@@ -192,7 +186,7 @@ text = "生命 100/100　牌库 8　可进 2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="CompletedOverlay" type="ColorRect" parent="."]
+[node name="CompletedOverlay" type="ColorRect" parent="." unique_id=1107932969]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -202,9 +196,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.7)
-mouse_filter = 0
 
-[node name="CenterContainer" type="CenterContainer" parent="CompletedOverlay"]
+[node name="CenterContainer" type="CenterContainer" parent="CompletedOverlay" unique_id=1358621309]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -212,17 +205,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="CompletedOverlay/CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="CompletedOverlay/CenterContainer" unique_id=898812139]
 custom_minimum_size = Vector2(300, 220)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_result")
 
-[node name="Content" type="VBoxContainer" parent="CompletedOverlay/CenterContainer/Panel"]
+[node name="Content" type="VBoxContainer" parent="CompletedOverlay/CenterContainer/Panel" unique_id=1044093342]
 layout_mode = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="CompletedTitle" type="Label" parent="CompletedOverlay/CenterContainer/Panel/Content"]
+[node name="CompletedTitle" type="Label" parent="CompletedOverlay/CenterContainer/Panel/Content" unique_id=1744875596]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.86, 0.27, 1)
@@ -230,7 +223,7 @@ theme_override_font_sizes/font_size = 26
 text = "本章完成"
 horizontal_alignment = 1
 
-[node name="CompletedDetail" type="Label" parent="CompletedOverlay/CenterContainer/Panel/Content"]
+[node name="CompletedDetail" type="Label" parent="CompletedOverlay/CenterContainer/Panel/Content" unique_id=714874622]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.9, 0.92, 1)
@@ -239,14 +232,14 @@ text = "演示版完成：正式章节推进将在后续版本接入"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="MenuButton" type="Button" parent="CompletedOverlay/CenterContainer/Panel/Content"]
+[node name="MenuButton" type="Button" parent="CompletedOverlay/CenterContainer/Panel/Content" unique_id=1640109316]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 text = "返回主菜单"
 
-[node name="MissingOverlay" type="ColorRect" parent="."]
+[node name="MissingOverlay" type="ColorRect" parent="." unique_id=1595024032]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -256,9 +249,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.78)
-mouse_filter = 0
 
-[node name="CenterContainer" type="CenterContainer" parent="MissingOverlay"]
+[node name="CenterContainer" type="CenterContainer" parent="MissingOverlay" unique_id=1483576358]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -266,24 +258,24 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="MissingOverlay/CenterContainer"]
+[node name="Panel" type="PanelContainer" parent="MissingOverlay/CenterContainer" unique_id=148497978]
 custom_minimum_size = Vector2(300, 200)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_missing")
 
-[node name="Content" type="VBoxContainer" parent="MissingOverlay/CenterContainer/Panel"]
+[node name="Content" type="VBoxContainer" parent="MissingOverlay/CenterContainer/Panel" unique_id=1292356766]
 layout_mode = 2
 theme_override_constants/separation = 14
 alignment = 1
 
-[node name="MissingTitle" type="Label" parent="MissingOverlay/CenterContainer/Panel/Content"]
+[node name="MissingTitle" type="Label" parent="MissingOverlay/CenterContainer/Panel/Content" unique_id=1099693989]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.6, 0.55, 1)
 theme_override_font_sizes/font_size = 24
 text = "地图未配置"
 horizontal_alignment = 1
 
-[node name="MissingDetail" type="Label" parent="MissingOverlay/CenterContainer/Panel/Content"]
+[node name="MissingDetail" type="Label" parent="MissingOverlay/CenterContainer/Panel/Content" unique_id=801149546]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.9, 0.92, 1)
 theme_override_font_sizes/font_size = 15
@@ -291,7 +283,7 @@ text = "当前章节缺少地图配置，请返回主菜单检查内容。"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="BackToMenuButton" type="Button" parent="MissingOverlay/CenterContainer/Panel/Content"]
+[node name="BackToMenuButton" type="Button" parent="MissingOverlay/CenterContainer/Panel/Content" unique_id=251260858]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2

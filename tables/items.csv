@@ -1,4 +1,4 @@
-唯一运行时ID（普通战利品从4001起，Boss战利品从5001起）,英文迁移键（仅旧存档与资源关联使用）,显示名称,战利品描述,品级（0普通，1Boss）,旧式加成类型（0全射门，1直球，2香蕉球，3挑射，4无）,旧式加成数值,游戏历程能量上限加成,是否进入奖励池（0否1是）,来源资源文件（不含.tres后缀）
+﻿唯一运行时ID（普通战利品从4001起，Boss战利品从5001起）,英文迁移键（仅旧存档与资源关联使用）,显示名称,战利品描述,品级（0普通，1Boss）,旧式加成类型（0全射门，1直球，2香蕉球，3挑射，4无）,旧式加成数值,游戏历程能量上限加成,实装状态（0不在正常游戏中出现，1正常出现；资源仍保留用于旧存档与调试）,来源资源文件（不含.tres后缀）
 id,item_id,display_name,description,rarity,modifier_type,amount,run_max_energy_bonus,enabled,source_file
 uint16,string,string,string,uint8,uint8,uint16,uint8,uint8,string
 4001,item_banana_scarf,弧线围巾,香蕉球伤害+1,0,2,1,0,1,item_banana_scarf

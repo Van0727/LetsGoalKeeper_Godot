@@ -16,7 +16,7 @@ func _run() -> void:
 	var bad_cards := {}
 	var ids := {}
 	var errors: Array[String] = []
-	var card_row := PackedStringArray(["1001", "射门", "测试", "1", "1", "1", "1", "0.5", "0.5", "2", "3|6", "1|1", "0|0", "100|100", "100|100", "0|0", "card_test", "测试流派"])
+	var card_row := PackedStringArray(["1001", "射门", "测试", "1", "1", "1", "1", "0.5", "0.5", "2", "3|6", "1|1", "0|0", "100|100", "100|100", "0|0", "card_test", "测试流派", "1"])
 	importer._parse_card_row(card_row, 4, bad_cards, ids, errors)
 	importer._parse_card_row(card_row, 5, bad_cards, ids, errors)
 	_assert_true(not errors.is_empty(), "重复卡牌 ID 被拒绝")
@@ -40,12 +40,26 @@ func _run() -> void:
 	importer._parse_card_row(reused_row, 6, bad_cards, ids, errors)
 	_assert_true(errors.is_empty(), "新卡仅用主表一行引用相同效果模板")
 	_assert_equal(bad_cards["card_test"].effect_id, bad_cards["card_reused_test"].effect_id, "两张卡复用同一个效果 ID")
+	var disabled_row := reused_row.duplicate()
+	disabled_row[0] = "1022"
+	disabled_row[16] = "card_disabled_test"
+	disabled_row[18] = "0"
+	errors.clear()
+	importer._parse_card_row(disabled_row, 7, bad_cards, ids, errors)
+	_assert_true(errors.is_empty() and not bad_cards["card_disabled_test"].enabled, "实装状态0合法并写入禁用状态")
+	var invalid_enabled_row := reused_row.duplicate()
+	invalid_enabled_row[0] = "1023"
+	invalid_enabled_row[16] = "card_invalid_enabled_test"
+	invalid_enabled_row[18] = "2"
+	errors.clear()
+	importer._parse_card_row(invalid_enabled_row, 8, bad_cards, ids, errors)
+	_assert_true(not errors.is_empty(), "卡牌实装状态只能为0或1")
 	var mismatched_row := reused_row.duplicate()
 	mismatched_row[0] = "1021"
 	mismatched_row[11] = "1"
 	mismatched_row[16] = "card_mismatched_test"
 	errors.clear()
-	importer._parse_card_row(mismatched_row, 7, bad_cards, ids, errors)
+	importer._parse_card_row(mismatched_row, 9, bad_cards, ids, errors)
 	_assert_true(not errors.is_empty(), "多步骤卡牌的参数组数不一致时被拒绝")
 	_assert_true(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_output_directory)), "失败校验未创建输出目录")
 	var missing_template_result: Dictionary = importer.import_cards("res://tables/cards.csv", _output_directory, "res://tables/effects_missing_for_test.csv")

@@ -55,6 +55,11 @@ func _run() -> void:
 	_assert_true("card_pitch_up" in service.COMMON_CARD_IDS, "升调牌进入普通奖励池")
 	_assert_true("card_pitch_down" in service.COMMON_CARD_IDS, "降调牌进入普通奖励池")
 	_assert_true("card_pitch_reset" in service.COMMON_CARD_IDS, "原调牌进入普通奖励池")
+	# 禁用只影响新奖励；稳定ID仍可读取，保证已有旧存档不会因下架卡牌损坏。
+	var disabled_card: Resource = STRAIGHT_SHOT.duplicate(true)
+	disabled_card.enabled = false
+	_assert_true(not service._is_card_available(disabled_card), "实装状态0的卡牌不进入正常奖励")
+	_assert_equal(service.get_card_by_id("card_straight_shot"), STRAIGHT_SHOT, "未实装卡牌仍可供旧存档按稳定ID读取")
 	_run_state.add_card(first_cards[0].card_id)
 	_assert_equal(_run_state.deck_card_ids.size(), 13, "奖励卡加入本局牌库")
 

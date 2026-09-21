@@ -5,6 +5,7 @@ signal run_changed
 
 const MAP_GENERATOR := preload("res://scripts/map/map_generator.gd")
 const MAP_STATE := preload("res://scripts/map/map_state.gd")
+const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 
 const DEFAULT_MAX_HEALTH := 100
 const FINAL_CHAPTER := 3
@@ -87,7 +88,8 @@ func start_new_run(seed_value: int) -> void:
 	run_status = RunStatus.ACTIVE
 	max_hp = DEFAULT_MAX_HEALTH
 	player_hp = max_hp
-	deck_card_ids.assign(DEFAULT_DECK)
+	# 新局只装入已实装的初始牌；读档路径仍保留原ID，避免下架内容破坏旧存档。
+	deck_card_ids.assign(_enabled_default_deck())
 	owned_item_ids.clear()
 	damage_modifiers = {"all": 0, "straight": 0, "banana": 0, "lob": 0}
 	run_max_energy_bonus = 0
@@ -96,6 +98,16 @@ func start_new_run(seed_value: int) -> void:
 	resume_point = ResumePoint.MAP
 	_regenerate_map()
 	run_changed.emit()
+
+
+func _enabled_default_deck() -> Array[String]:
+	var result: Array[String] = []
+	var service = REWARD_SERVICE.new()
+	for card_id in DEFAULT_DECK:
+		var card: Resource = service.get_card_by_id(card_id)
+		if service._is_card_available(card):
+			result.append(card_id)
+	return result
 
 
 # 测试玩法沿用牌库与战利品运行数据，但不创建可继续的正式路线，也绝不由 SaveService 持久化。
