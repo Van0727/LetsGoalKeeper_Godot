@@ -1,40 +1,40 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_vtdrh"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_evrt8"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_sp3dw"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_pwhai"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_4d51j"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_hh618"]
 
-[sub_resource type="Resource" id="Resource_uahsv"]
-script = ExtResource("1_vtdrh")
+[sub_resource type="Resource" id="Resource_f7qiv"]
+script = ExtResource("1_pwhai")
 effect_type = 1
 target = 1
 amount = 16
 
-[sub_resource type="Resource" id="Resource_63rs8"]
-script = ExtResource("2_evrt8")
+[sub_resource type="Resource" id="Resource_hvunw"]
+script = ExtResource("2_4d51j")
 id = 26
 category = 1
 description = "获得16点护盾"
-effects = Array[Resource]([SubResource("Resource_uahsv")])
+effects = Array[Resource]([SubResource("Resource_f7qiv")])
 display_name = "河马坚守"
 
-[sub_resource type="Resource" id="Resource_hlqpy"]
-script = ExtResource("1_vtdrh")
+[sub_resource type="Resource" id="Resource_cmeen"]
+script = ExtResource("1_pwhai")
 amount = 11
 
-[sub_resource type="Resource" id="Resource_gvvto"]
-script = ExtResource("2_evrt8")
+[sub_resource type="Resource" id="Resource_fhogr"]
+script = ExtResource("2_4d51j")
 id = 27
 description = "造成11点伤害"
-effects = Array[Resource]([SubResource("Resource_hlqpy")])
+effects = Array[Resource]([SubResource("Resource_cmeen")])
 display_name = "河马重踢"
 
 [resource]
-script = ExtResource("3_sp3dw")
+script = ExtResource("3_hh618")
 enemy_id = "enemy_hippo"
 id = 6010
 chapter = 3
 action_ids = Array[int]([26, 27])
 display_name = "河马"
 max_health = 62
-actions = Array[Resource]([SubResource("Resource_63rs8"), SubResource("Resource_gvvto")])
+actions = Array[Resource]([SubResource("Resource_hvunw"), SubResource("Resource_fhogr")])

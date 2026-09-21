@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://cg4es6pumq8jw"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_l4f2v"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_mt32e"]
-[ext_resource type="Texture2D" uid="uid://bafqrq6q4ev87" path="res://assets/ui/cards/card_layered_defense_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_l4f2v"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_mt32e"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_layered_defense_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_yicny"]
+[sub_resource type="Resource" id="Resource_mt32e"]
 script = ExtResource("1_l4f2v")
 effect_type = 1
 target = 0
@@ -19,4 +19,4 @@ description = "获得4点护盾；若出牌前已有护盾，额外获得3点护
 archetype_hint = "钢铁门神·连续叠盾"
 illustration = ExtResource("3_illustration")
 card_type = 1
-effects = Array[Resource]([SubResource("Resource_yicny")])
+effects = Array[Resource]([SubResource("Resource_mt32e")])

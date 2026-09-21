@@ -180,14 +180,14 @@ func remove_item(item: Resource) -> bool:
 	return true
 
 
-# 完成卡牌和战利品两步奖励后推进房间计数，下一战据此选择敌人。
+# 完成当前战斗的全部奖励后推进房间计数；小怪为卡牌，Boss 还包含战利品。
 func complete_reward() -> void:
 	battles_won += 1
 	pending_reward_is_boss = false
 	run_changed.emit()
 
 
-# 两步奖励完成后原子提交房间；Boss 房再按章节进入下一地图或整局通关。
+# 当前奖励完成后原子提交房间；Boss 房再按章节进入下一地图或整局通关。
 # 结算顺序固定为：奖励入账 → 胜场增加 → 房间完成 → 章节推进，防止中途状态被误判为可继续。
 func complete_reward_and_advance() -> int:
 	battles_won += 1

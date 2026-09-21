@@ -126,6 +126,13 @@ func _test_damage_shield_and_healing() -> void:
 	_assert_equal(combatant.heal(20), 4, "治疗返回实际恢复量")
 	_assert_equal(combatant.health, 10, "治疗不超过最大生命")
 
+	# 溢出伤害只能扣除剩余生命，死亡快照与后续显示均必须归零。
+	combatant.health = 3
+	var lethal_hit: Dictionary = combatant.take_damage(99)
+	_assert_equal(lethal_hit.health_damage, 3, "溢出伤害只记录实际损失的剩余生命")
+	_assert_equal(combatant.health, 0, "溢出伤害后生命归零")
+	_assert_true(combatant.is_dead(), "生命归零后判定死亡")
+
 
 # 验证玩家/敌人回合推进及击杀后的胜利状态。
 func _test_turn_flow_and_victory() -> void:

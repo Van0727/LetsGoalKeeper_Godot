@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://jk16kfbm6osu"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_wh80j"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_hboli"]
-[ext_resource type="Texture2D" uid="uid://djxqxhpn8kq17" path="res://assets/ui/cards/card_tempo_acceleration_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_wh80j"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_hboli"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_tempo_acceleration_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_yyhaa"]
+[sub_resource type="Resource" id="Resource_hboli"]
 script = ExtResource("1_wh80j")
 effect_type = 11
 target = 0
@@ -18,4 +18,4 @@ description = "下一张攻击牌额外攻击1次，追加段使用原牌的基�
 archetype_hint = "爆裂鼓手·段数强化"
 illustration = ExtResource("3_illustration")
 card_type = 2
-effects = Array[Resource]([SubResource("Resource_yyhaa")])
+effects = Array[Resource]([SubResource("Resource_hboli")])

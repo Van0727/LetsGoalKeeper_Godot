@@ -20,7 +20,7 @@ func _run() -> void:
 		_check(texture.get_size() == Vector2(512, 512), "游戏用图片缩至512方形")
 		_check(texture.get_image().get_pixel(0, 0).a < 0.01, "图片背景已透明")
 	var screen := SCENE.instantiate()
-	var preview: TextureRect = screen.get_node("EnemyDisplay/Margin/Content/Portrait")
+	var preview: TextureRect = screen.get_node("EnemyDisplay/Margin/Content/PortraitSlot/Portrait")
 	_check(preview.texture.resource_path.ends_with("/7001.png"), "战斗场景编辑器预览使用真实图片")
 	_check(preview.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS, "怪物头像使用线性mipmap过滤")
 	_check(preview.custom_minimum_size == Vector2.ZERO and preview.expand_mode == TextureRect.EXPAND_IGNORE_SIZE, "编辑器预览头像不锁定尺寸")

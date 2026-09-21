@@ -25,6 +25,8 @@ enum PassiveType {
 @export var id := 0
 # 图片 ID 对应 assets/ui/enemies 下的同名 PNG；0 表示沿用通用占位图。
 @export var image_id := 0
+# 战斗头像的基础视觉倍率；只影响战斗表现，不改变地图图标、数值或存档。
+@export var battle_image_scale := 1.0
 @export var chapter := 1
 @export var action_ids: Array[int] = []
 @export var action_weights: Array[int] = []

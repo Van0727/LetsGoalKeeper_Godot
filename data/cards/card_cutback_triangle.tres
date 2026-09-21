@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://ruaymv3ct4xu"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_dempw"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_fhdkm"]
-[ext_resource type="Texture2D" uid="uid://d4fsaspaky21w" path="res://assets/ui/cards/card_cutback_triangle_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_dempw"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_fhdkm"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_cutback_triangle_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_vbpva"]
+[sub_resource type="Resource" id="Resource_fhdkm"]
 script = ExtResource("1_dempw")
 amount = 4
 
@@ -17,4 +17,4 @@ description = "造成4点香蕉球伤害；若与上一颗香蕉球方向相同�
 archetype_hint = "桑巴精灵·同向香蕉"
 illustration = ExtResource("3_illustration")
 shot_type = 2
-effects = Array[Resource]([SubResource("Resource_vbpva")])
+effects = Array[Resource]([SubResource("Resource_fhdkm")])

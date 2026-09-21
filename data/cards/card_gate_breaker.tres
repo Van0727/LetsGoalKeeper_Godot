@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://b2prj3ypu4gfc"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_akt03"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_0dybe"]
-[ext_resource type="Texture2D" uid="uid://dx22qaeif37ak" path="res://assets/ui/cards/card_gate_breaker_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_akt03"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_0dybe"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_gate_breaker_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_ubtt7"]
+[sub_resource type="Resource" id="Resource_0dybe"]
 script = ExtResource("1_akt03")
 amount = 6
 
@@ -19,4 +19,4 @@ cost = 2
 illustration = ExtResource("3_illustration")
 shot_type = 1
 rarity = 1
-effects = Array[Resource]([SubResource("Resource_ubtt7")])
+effects = Array[Resource]([SubResource("Resource_0dybe")])

@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://bh4wfgflwdjk"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_6fgre"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_lxp7d"]
-[ext_resource type="Texture2D" uid="uid://dk254mjjotcqx" path="res://assets/ui/cards/card_carnival_finale_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_6fgre"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_lxp7d"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_carnival_finale_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_0tjig"]
+[sub_resource type="Resource" id="Resource_lxp7d"]
 script = ExtResource("1_6fgre")
 amount = 4
 
@@ -20,4 +20,4 @@ illustration = ExtResource("3_illustration")
 shot_type = 2
 multi_hit_interval_beats = 0.25
 rarity = 1
-effects = Array[Resource]([SubResource("Resource_0tjig")])
+effects = Array[Resource]([SubResource("Resource_lxp7d")])

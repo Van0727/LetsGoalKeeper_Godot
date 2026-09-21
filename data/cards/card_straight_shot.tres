@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://cxwvb83g2s4v8"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="1_card"]
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
-[ext_resource type="Texture2D" uid="uid://2lguu4iwrnpn" path="res://assets/ui/cards/card_illustration_01_refined_v2.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="1_card"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="2_effect"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_illustration_01_refined_v2.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_bce7s"]
+[sub_resource type="Resource" id="Resource_puiek"]
 script = ExtResource("2_effect")
 amount = 6
 
@@ -17,4 +17,5 @@ description = "造成6点伤害"
 archetype_hint = "通用·直球"
 illustration = ExtResource("3_illustration")
 shot_type = 1
-effects = Array[Resource]([SubResource("Resource_bce7s")])
+enabled = false
+effects = Array[Resource]([SubResource("Resource_puiek")])

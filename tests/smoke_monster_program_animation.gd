@@ -72,6 +72,14 @@ func _run() -> void:
 
 	display.set_enemy_image_id(0)
 	_check(display.portrait.material == null, "未配置眼睛区域的怪物安全关闭眨眼")
+	var baseline_bottom_y: float = (display.portrait.get_global_transform() * Vector2(0.0, display.portrait.size.y)).y
+	display.set_enemy_image_id(7001, 2.5)
+	var enlarged_bottom_y: float = (display.portrait.get_global_transform() * Vector2(0.0, display.portrait.size.y)).y
+	_check(is_equal_approx(enlarged_bottom_y, baseline_bottom_y), "不同配表倍率保持怪物底边位置")
+	_check(display.portrait.scale.is_equal_approx(Vector2.ONE * 2.5), "配表倍率应用于独立基础缩放")
+	display.play_enemy_attack()
+	await create_timer(0.45).timeout
+	_check(display.portrait.scale.is_equal_approx(Vector2.ONE * 2.5) and display.portrait.offset_transform_scale.is_equal_approx(Vector2.ONE), "大体型怪物行动结束恢复配表倍率")
 	display.queue_free()
 	await process_frame
 	print("smoke_monster_program_animation: %s" % ("FAIL" if _failed else "PASS"))

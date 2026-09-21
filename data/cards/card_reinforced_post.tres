@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://56u06ewpt5f"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_vm5sn"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_86it7"]
-[ext_resource type="Texture2D" uid="uid://dg7gjndm3l1yp" path="res://assets/ui/cards/card_reinforced_post_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_vm5sn"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_86it7"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_reinforced_post_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_15cc0"]
+[sub_resource type="Resource" id="Resource_86it7"]
 script = ExtResource("1_vm5sn")
 effect_type = 1
 target = 0
@@ -19,4 +19,4 @@ description = "获得7点护盾"
 archetype_hint = "钢铁门神·基础叠盾"
 illustration = ExtResource("3_illustration")
 card_type = 1
-effects = Array[Resource]([SubResource("Resource_15cc0")])
+effects = Array[Resource]([SubResource("Resource_86it7")])

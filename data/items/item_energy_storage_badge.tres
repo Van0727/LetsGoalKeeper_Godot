@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://6h7g8me804h0"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_ckxfj"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_q6wkr"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_ckxfj"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_q6wkr"]
 
-[sub_resource type="Resource" id="Resource_47q1w"]
+[sub_resource type="Resource" id="Resource_ckxfj"]
 script = ExtResource("1_ckxfj")
 trigger = 8
 operation = 5
@@ -16,4 +16,4 @@ item_id = "item_energy_storage_badge"
 display_name = "蓄能徽章"
 description = "回合结束时未用完的能量延续到下一回合并作为临时额外能量"
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_47q1w")])
+effects = Array[Resource]([SubResource("Resource_ckxfj")])

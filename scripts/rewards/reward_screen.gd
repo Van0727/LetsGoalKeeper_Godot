@@ -1,4 +1,4 @@
-# 两步奖励界面：按原尺寸复用战斗卡面，以局部 MSDF 字体保持放大清晰；确认后离屏再发放。
+# 战斗奖励界面：普通怪只发放卡牌，Boss 继续发放卡牌与战利品；确认后离屏再入账。
 extends Control
 
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
@@ -108,6 +108,9 @@ func _copy_reward_font(source: Font) -> Font:
 # 展示当前战斗级别对应的三张候选卡。
 func _show_card_choices() -> void:
 	phase = Phase.CARD
+	# 普通怪只有一步卡牌奖励，隐藏会误导玩家的战利品进度。
+	card_step.get_parent().get_node("Arrow").visible = run_state.pending_reward_is_boss
+	item_step.visible = run_state.pending_reward_is_boss
 	_refresh_phase_progress()
 	title_label.text = "选择卡牌奖励"
 	subtitle_label.text = "选择1张加入本局牌库"
@@ -275,11 +278,20 @@ func _on_confirm_pressed() -> void:
 	if phase == Phase.CARD:
 		run_state.add_card(choices[_selected_index].card_id)
 		_is_reward_animating = false
-		_show_item_choices()
+		# 只有 Boss 胜利才继续战利品步骤；小怪在卡牌入账后立即原子提交房间。
+		if run_state.pending_reward_is_boss:
+			_show_item_choices()
+			return
+		await _complete_reward_flow()
 		return
 
 	if not choices.is_empty():
 		run_state.add_item(choices[_selected_index])
+	await _complete_reward_flow()
+
+
+# 卡牌单步或 Boss 两步奖励完成后共用同一原子提交出口，避免房间、存档与切曲顺序分叉。
+func _complete_reward_flow() -> void:
 	# 最后一项奖励提交后禁止重复点击，等待音频过场期间不能再次推进房间。
 	_is_reward_animating = false
 	_is_scene_transitioning = true

@@ -331,8 +331,8 @@ func _run() -> void:
 	_assert_equal(battle_screen.result_kicker.text, "STAGE CLEAR  •  LIVE COMPLETE", "胜利层展示舞台通关提示")
 	_assert_equal(battle_screen.victory_mark.text, "✦  V  ✦", "胜利层展示独立胜利徽记")
 	_assert_true("1 / 100" in battle_screen.health_stat_label.text, "胜利层回读并展示本场剩余生命")
-	_assert_equal(battle_screen.reward_stat_label.text, "✦  2 项奖励", "胜利层明确后续两步奖励")
-	_assert_equal(battle_screen.result_action_button.text, "领取战利品  →", "胜利主按钮使用奖励行动文案")
+	_assert_equal(battle_screen.reward_stat_label.text, "✦  1 项卡牌奖励", "小怪胜利层只预告卡牌奖励")
+	_assert_equal(battle_screen.result_action_button.text, "领取奖励  →", "胜利主按钮不误报战利品")
 	_assert_true(battle_screen.result_panel.custom_minimum_size.y >= 350.0, "胜利面板为结算摘要预留完整高度")
 	await _capture_battle_result(battle_screen)
 

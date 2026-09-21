@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://c12v5bf6cot8q"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_30pci"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_pav7x"]
-[ext_resource type="Texture2D" uid="uid://mjiqp6qdgk4r" path="res://assets/ui/cards/card_agile_switch_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_30pci"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_pav7x"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_agile_switch_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_dfled"]
+[sub_resource type="Resource" id="Resource_pav7x"]
 script = ExtResource("1_30pci")
 effect_type = 11
 target = 0
@@ -19,4 +19,4 @@ archetype_hint = "桑巴精灵·方向控制"
 cost = 0
 illustration = ExtResource("3_illustration")
 card_type = 2
-effects = Array[Resource]([SubResource("Resource_dfled")])
+effects = Array[Resource]([SubResource("Resource_pav7x")])

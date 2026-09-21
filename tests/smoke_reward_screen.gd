@@ -1,4 +1,4 @@
-# 奖励界面冒烟测试：覆盖高清类型标签、MSDF 字体隔离、原卡尺寸及动画后发奖流程。
+# 奖励界面冒烟测试：覆盖 Boss 两步奖励、高清标签、MSDF 字体隔离及动画后发奖。
 extends SceneTree
 
 const REWARD_SCENE := preload("res://scenes/reward_screen.tscn")
@@ -21,10 +21,13 @@ func _run() -> void:
 	var test_save_path := "res://tests/.smoke_reward_save_%d.json" % OS.get_process_id()
 	save_service.save_path = test_save_path
 	root.get_node("RunState").start_new_run(601)
+	# 本测试专门验收 Boss 分支；普通怪只发卡牌由完整流程测试覆盖。
+	root.get_node("RunState").pending_reward_is_boss = true
 	var screen := REWARD_SCENE.instantiate()
 	root.add_child(screen)
 	await process_frame
 	_assert_equal(screen.phase, screen.Phase.CARD, "奖励先进入卡牌步骤")
+	_assert_true(screen.item_step.visible, "Boss 卡牌阶段预告后续战利品步骤")
 	_assert_equal(screen.card_step.modulate, Color.WHITE, "卡牌步骤使用高亮进度胶囊")
 	_assert_true(screen.item_step.modulate != Color.WHITE, "未到达的战利品步骤保持降亮")
 	_assert_equal(screen.choices.size(), 3, "显示三张卡牌候选")
@@ -122,9 +125,9 @@ func _run() -> void:
 	_assert_true(screen.card_step.modulate != Color.WHITE, "已完成的卡牌步骤降亮")
 	_assert_equal(screen.item_step.modulate, Color.WHITE, "战利品步骤切换为高亮")
 	_assert_equal(screen.confirm_button.self_modulate.a, 1.0, "进入遗物步骤后重新显示确认按钮")
-	_assert_equal(screen.choices.size(), 3, "普通战显示三件战利品候选")
+	_assert_true(not screen.choices.is_empty() and screen.choices.size() <= 3, "Boss 战显示最多三件战利品候选")
 	# 遗物描述必须在固定的三等分槽位内换行，不能因长文本挤宽整个奖励行。
-	for index in range(screen.choice_buttons.size()):
+	for index in range(screen.choices.size()):
 		var button: Button = screen.choice_buttons[index]
 		_assert_equal(button.autowrap_mode, TextServer.AUTOWRAP_WORD_SMART, "遗物按钮启用智能换行")
 		_assert_true(button.clip_text, "遗物按钮限制文本最小宽度")

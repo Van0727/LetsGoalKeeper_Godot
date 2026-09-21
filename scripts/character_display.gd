@@ -33,6 +33,7 @@ const BLINK_HOLD_SECONDS := 0.035
 const BLINK_OPEN_SECONDS := 0.085
 
 @onready var name_label: Label = %NameLabel
+@onready var portrait_slot: Control = %PortraitSlot
 @onready var portrait: TextureRect = %Portrait
 @onready var health_bar: ProgressBar = %HealthBar
 @onready var health_label: Label = %HealthLabel
@@ -52,6 +53,8 @@ var _battle_layout_role := BattleLayoutRole.DEFAULT
 var _action_animation_active := false
 var _portrait_dead := false
 var _rhythm_direction := 1.0
+# 配表基础倍率与动作形变分属两套变换：基础倍率固定底边，动作只叠加临时形变。
+var _portrait_base_scale := Vector2.ONE
 
 
 # 按战斗位置压缩角色信息：敌方数值交给专用信息层，此控件保留头像与受击反馈。
@@ -70,9 +73,10 @@ func set_battle_layout_role(role: BattleLayoutRole) -> void:
 			margin.add_theme_constant_override("margin_right", 4)
 			margin.add_theme_constant_override("margin_bottom", 2)
 			content.add_theme_constant_override("separation", 1)
-			portrait.custom_minimum_size = Vector2.ZERO
+			# 槽位参与 VBox 布局，头像作为普通子节点独立缩放，避免 Container 把配表倍率重置为 1。
+			portrait_slot.custom_minimum_size = Vector2.ZERO
+			portrait_slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			portrait.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			feedback_label.custom_minimum_size = Vector2(0, 20)
 			name_label.hide()
 			health_bar.hide()
@@ -109,8 +113,12 @@ func configure(display_name: String, max_health: int, portrait_tint: Color) -> v
 
 
 # 按配表图片 ID 替换头像；正式图片保持原色，缺图时回退占位图与既有染色。
-func set_enemy_image_id(image_id: int) -> void:
+func set_enemy_image_id(image_id: int, battle_image_scale := 1.0) -> void:
 	reset_portrait_animation()
+	_portrait_base_scale = Vector2.ONE * clampf(battle_image_scale, 0.1, 4.0)
+	# Control 自身缩放以底部中心为轴心，使不同体型怪物始终站在同一条底线上。
+	portrait.pivot_offset_ratio = Vector2(0.5, 1.0)
+	portrait.scale = _portrait_base_scale
 	portrait.texture = ENEMY_PLACEHOLDER
 	portrait.material = null
 	_stop_blink_timer()

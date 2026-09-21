@@ -50,6 +50,9 @@ func _run() -> void:
 		_check(expected_image_id > 0, "%s已配置正式怪物图片ID" % definition.display_name)
 		_check(screen.enemy_display.portrait.texture.resource_path.ends_with("/%d.png" % expected_image_id), "%s读取配表图片" % definition.display_name)
 		_check(screen.enemy_display.portrait.modulate == Color.WHITE, "%s的正式怪物图片保持原色" % definition.display_name)
+		var expected_scale := 2.5 if definition.id == 6021 else 1.0
+		# 节拍动画会临时叠加局部形变，故验证稳定的配表基础倍率而非当前瞬时缩放。
+		_check((screen.enemy_display.get("_portrait_base_scale") as Vector2).is_equal_approx(Vector2.ONE * expected_scale), "%s应用战斗图片缩放倍率" % definition.display_name)
 		_check(screen.monster_rules_label.visible, "新版行为完整意图可见")
 		_check(screen.intent_label.get_global_rect().end.x <= 360.1, "顶栏意图不越界")
 		_check(screen.monster_rules_label.get_global_rect().end.x <= screen.enemy_display.get_global_rect().position.x, "意图详情不覆盖敌方信息")

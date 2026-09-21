@@ -36,7 +36,8 @@ func _init(combatant_name := "角色", maximum_health := 1, maximum_energy := 0)
 	energy = max_energy
 
 
-# 先消费单次格挡，再由护盾吸收、最后扣生命；每段真实受伤后通知核心并返回结算明细。
+# 先消费单次格挡，再由护盾吸收、最后扣生命；致死或溢出伤害必须把生命固定在 0，
+# 以便死亡判定、事件快照和血条显示读取到同一份合法状态。
 func take_damage(raw_damage: int) -> Dictionary:
 	var damage := maxi(raw_damage, 0)
 	var blocked := 0
@@ -46,8 +47,8 @@ func take_damage(raw_damage: int) -> Dictionary:
 		single_block = 0
 	var absorbed := mini(shield, damage)
 	shield -= absorbed
-	var health_damage := mini(health, damage - absorbed)
-	health -= health_damage
+	var health_damage := mini(maxi(health, 0), damage - absorbed)
+	health = maxi(health - health_damage, 0)
 	var result := {
 		"incoming": damage,
 		"blocked": blocked,

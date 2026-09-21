@@ -79,7 +79,7 @@ func _pick_enemy(room: Dictionary, combat_count: int) -> Resource:
 	return enemy
 
 
-# 奖励池不足时允许跳过战利品，但每场仍选取一张合法卡牌并走统一提交顺序。
+# 每场都领取卡牌，只有 Boss 额外领取战利品；两种分支共用统一房间提交顺序。
 func _take_rewards(is_boss: bool, combat_count: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _run_state.seed + combat_count * 1009 + 61
@@ -87,9 +87,14 @@ func _take_rewards(is_boss: bool, combat_count: int) -> void:
 	_assert_true(not cards.is_empty(), "每场战斗都有卡牌奖励")
 	if not cards.is_empty():
 		_run_state.add_card(cards[0].card_id)
-	var items: Array[Resource] = _reward_service.generate_item_choices(is_boss, _run_state.owned_item_ids, rng)
-	if not items.is_empty():
-		_run_state.add_item(items[0])
+	var item_count_before: int = _run_state.owned_item_ids.size()
+	if is_boss:
+		var items: Array[Resource] = _reward_service.generate_item_choices(true, _run_state.owned_item_ids, rng)
+		if not items.is_empty():
+			_run_state.add_item(items[0])
+		_assert_true(_run_state.owned_item_ids.size() >= item_count_before, "Boss 奖励允许增加一件战利品")
+	else:
+		_assert_equal(_run_state.owned_item_ids.size(), item_count_before, "小怪胜利不发放战利品")
 
 
 # 战败不能提交房间；随后新游戏必须覆盖通关、失败和全部成长数据。

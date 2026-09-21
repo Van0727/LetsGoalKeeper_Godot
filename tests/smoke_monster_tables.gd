@@ -21,6 +21,7 @@ func _run() -> void:
 	_check(result.ok, "正式三表校验成功")
 	if result.ok:
 		_check(result.monsters.size() == 13 and result.actions.size() == 44 and result.effect_count == 54, "正式数据数量")
+		_check(is_equal_approx(result.monsters[6021].battle_image_scale, 2.5), "大象战斗图片缩放倍率读取正确")
 	DirAccess.make_dir_recursive_absolute(_directory)
 	var rows := _read_rows("res://tables/monsters.csv")
 	# 夹具只取第一章六只；第三章正式数据由下方目录与章节池回读覆盖。
@@ -50,11 +51,12 @@ func _run() -> void:
 		_check(catalog.enemies.size() == 6 and catalog.actions.size() == 44, "目录收录完整")
 		_check(catalog.find_enemy(6091).action_ids == [1, 2, 3], "列表写入正确")
 		_check(catalog.find_enemy(6091).image_id == 7001, "图片ID生成资源回读正确")
+		_check(is_equal_approx(catalog.find_enemy(6091).battle_image_scale, 1.0), "默认战斗图片缩放倍率生成资源回读正确")
 		_check(catalog.find_action(2).effects[1].amount == 2, "附带流血回读正确")
 	var failing_output := _directory.path_join("must_not_exist")
 	var missing := importer.import_monsters(_directory.path_join("missing.csv"), failing_output)
 	_check(not missing.ok and not DirAccess.dir_exists_absolute(failing_output), "缺失文件不生成部分资源")
-	for scenario in ["header", "types", "comments", "duplicate", "range", "reference", "filename", "weight", "charge_random", "image_duplicate", "image_missing", "image_range"]:
+	for scenario in ["header", "types", "comments", "duplicate", "range", "reference", "filename", "weight", "charge_random", "image_duplicate", "image_missing", "image_range", "image_scale"]:
 		var bad_rows: Array = rows.duplicate(true)
 		match scenario:
 			"header": bad_rows[1][0] = "wrong_id"
@@ -67,6 +69,7 @@ func _run() -> void:
 			"image_duplicate": bad_rows[4][10] = bad_rows[3][10]
 			"image_missing": bad_rows[3][10] = "7002"
 			"image_range": bad_rows[3][10] = "65536"
+			"image_scale": bad_rows[3][11] = "0"
 			"weight":
 				bad_rows[3][5] = "1"
 				bad_rows[3][7] = "1;0"

@@ -8,8 +8,8 @@ const ACTION := preload("res://scripts/enemies/enemy_action_definition.gd")
 const EFFECT := preload("res://scripts/enemies/enemy_action_effect.gd")
 const CATALOG := preload("res://scripts/enemies/enemy_catalog.gd")
 const POOL := preload("res://scripts/enemies/encounter_pool.gd")
-const MONSTER_FIELDS := ["id", "display_name", "tier", "chapter", "max_health", "action_mode", "action_ids", "action_weights", "enabled", "source_file", "image_id"]
-const MONSTER_TYPES := ["uint16", "string", "uint8", "uint8", "uint16", "uint8", "uint16_list", "uint16_list", "uint8", "string", "uint16"]
+const MONSTER_FIELDS := ["id", "display_name", "tier", "chapter", "max_health", "action_mode", "action_ids", "action_weights", "enabled", "source_file", "image_id", "battle_image_scale"]
+const MONSTER_TYPES := ["uint16", "string", "uint8", "uint8", "uint16", "uint8", "uint16_list", "uint16_list", "uint8", "string", "uint16", "float"]
 const ACTION_FIELDS := ["id", "display_name", "category", "description", "interrupted_action_id"]
 const ACTION_TYPES := ["uint16", "string", "uint8", "string", "uint16"]
 # 末列 remark 只供策划阅读；校验其表头与列数，但不写入运行时效果资源。
@@ -96,6 +96,8 @@ func validate_tables(monsters_path := "res://tables/monsters.csv", actions_path 
 		monster.enemy_id = row.source_file
 		# 0 保留旧怪物占位图；非零图片必须唯一且文件存在，防止导出后显示错误怪物。
 		monster.image_id = _integer(row.image_id, 0, 65535, "怪物图片ID", errors)
+		# 图片倍率仅服务战斗头像表现；限制范围以免内容越界后遮挡战斗信息。
+		monster.battle_image_scale = _float(row.battle_image_scale, 0.1, 4.0, "战斗图片缩放倍率", errors)
 		if monster.image_id > 0:
 			_unique(monster.image_id, image_ids, "怪物图片ID", errors)
 			image_ids[monster.image_id] = true
@@ -329,6 +331,14 @@ func _integer(value: String, minimum: int, maximum: int, label: String, errors: 
 		errors.append("%s必须为%d～%d的整数，实际：%s" % [label, minimum, maximum, value])
 		return minimum
 	return value.to_int()
+
+
+# 浮点字段保留小数倍率，且拒绝空值、非数字和超出表现安全范围的输入。
+func _float(value: String, minimum: float, maximum: float, label: String, errors: Array[String]) -> float:
+	if not value.is_valid_float() or value.to_float() < minimum or value.to_float() > maximum:
+		errors.append("%s必须为%.1f～%.1f的数值，实际：%s" % [label, minimum, maximum, value])
+		return minimum
+	return value.to_float()
 
 
 # 分号仅用于单元格内部的整数列表，CSV列解析仍由 get_csv_line 完成。

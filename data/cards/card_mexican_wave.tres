@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://bmjqjfmn4kbd0"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_l3re7"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_k4mb2"]
-[ext_resource type="Texture2D" uid="uid://cdx0metv8rabw" path="res://assets/ui/cards/card_mexican_wave_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_l3re7"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_k4mb2"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_mexican_wave_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_rg03e"]
+[sub_resource type="Resource" id="Resource_k4mb2"]
 script = ExtResource("1_l3re7")
 effect_type = 11
 target = 0
@@ -18,4 +18,4 @@ description = "本回合下一张多段攻击每命中一次，获得1点护盾"
 archetype_hint = "桑巴精灵·多段防御"
 illustration = ExtResource("3_illustration")
 card_type = 2
-effects = Array[Resource]([SubResource("Resource_rg03e")])
+effects = Array[Resource]([SubResource("Resource_k4mb2")])

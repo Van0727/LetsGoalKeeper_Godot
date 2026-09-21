@@ -48,6 +48,17 @@ corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxEmpty" id="Style_pitch_clear"]
 
+[sub_resource type="StyleBoxFlat" id="Style_behavior_panel"]
+content_margin_left = 5.0
+content_margin_top = 2.5
+content_margin_right = 5.0
+content_margin_bottom = 2.5
+bg_color = Color(0.025, 0.065, 0.11, 0.86)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
 [sub_resource type="StyleBoxFlat" id="Style_card_warning"]
 bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 10
@@ -105,6 +116,19 @@ corner_radius_bottom_left = 22
 shadow_color = Color(1, 0.25, 0.08, 0.28)
 shadow_size = 12
 
+[sub_resource type="StyleBoxFlat" id="Style_result_stat"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.07, 0.13, 0.22, 0.92)
+border_width_bottom = 2
+border_color = Color(0.18, 0.75, 0.82, 0.75)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
 [sub_resource type="StyleBoxFlat" id="Style_result_primary"]
 bg_color = Color(1, 0.38, 0.12, 1)
 border_width_left = 2
@@ -131,19 +155,6 @@ corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
-[sub_resource type="StyleBoxFlat" id="Style_result_stat"]
-content_margin_left = 8.0
-content_margin_top = 6.0
-content_margin_right = 8.0
-content_margin_bottom = 6.0
-bg_color = Color(0.07, 0.13, 0.22, 0.92)
-border_width_bottom = 2
-border_color = Color(0.18, 0.75, 0.82, 0.75)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
-
 [node name="Battle" type="Control" unique_id=14672112]
 layout_mode = 3
 anchors_preset = 15
@@ -154,6 +165,7 @@ grow_vertical = 2
 script = ExtResource("1_screen")
 
 [node name="PauseOverlay" parent="." unique_id=631888559 instance=ExtResource("4_pause")]
+visible = false
 
 [node name="Background" type="TextureRect" parent="." unique_id=1341427318]
 texture_filter = 2
@@ -247,6 +259,7 @@ text = "返回"
 
 [node name="PhaseLabel" type="Label" parent="Header" unique_id=483070422]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -267,6 +280,7 @@ text = "GM"
 
 [node name="IntentLabel" type="Label" parent="Header" unique_id=1304130037]
 unique_name_in_owner = true
+visible = false
 custom_minimum_size = Vector2(92, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.66, 0.55, 1)
@@ -332,9 +346,11 @@ theme_override_constants/separation = 1
 [node name="NameLabel" parent="EnemyDisplay/Margin/Content" index="0"]
 visible = false
 
-[node name="Portrait" parent="EnemyDisplay/Margin/Content" index="1"]
+[node name="PortraitSlot" parent="EnemyDisplay/Margin/Content" index="1"]
 custom_minimum_size = Vector2(0, 0)
 size_flags_vertical = 3
+
+[node name="Portrait" parent="EnemyDisplay/Margin/Content/PortraitSlot" index="0"]
 texture_filter = 4
 texture = ExtResource("37_chicken_editor_preview")
 expand_mode = 1
@@ -353,16 +369,17 @@ visible = false
 
 [node name="MonsterInfo" type="Control" parent="." unique_id=1112546801]
 anchors_preset = 0
+offset_top = 16.0
 offset_right = 360.0
-offset_bottom = 145.0
+offset_bottom = 161.0
 mouse_filter = 2
 
 [node name="HealthBarBackground" type="TextureRect" parent="MonsterInfo" unique_id=1727070963]
 layout_mode = 0
-offset_left = 88.0
-offset_top = 47.0
-offset_right = 225.0
-offset_bottom = 68.0
+offset_left = 110.0
+offset_top = 50.0
+offset_right = 247.0
+offset_bottom = 71.0
 mouse_filter = 2
 texture = ExtResource("30_enemy_hpbar")
 expand_mode = 1
@@ -371,10 +388,10 @@ expand_mode = 1
 unique_name_in_owner = true
 clip_contents = true
 anchors_preset = 0
-offset_left = 95.0
-offset_top = 51.0
-offset_right = 218.0
-offset_bottom = 64.0
+offset_left = 117.0
+offset_top = 54.0
+offset_right = 240.0
+offset_bottom = 67.0
 mouse_filter = 2
 
 [node name="Fill" type="TextureRect" parent="MonsterInfo/EnemyHealthFillClip" unique_id=1116430427]
@@ -387,10 +404,10 @@ expand_mode = 1
 
 [node name="HealthIcon" type="TextureRect" parent="MonsterInfo" unique_id=820576592]
 layout_mode = 0
-offset_left = 87.0
-offset_top = 41.0
-offset_right = 118.0
-offset_bottom = 72.0
+offset_left = 109.0
+offset_top = 44.0
+offset_right = 140.0
+offset_bottom = 75.0
 mouse_filter = 2
 texture = ExtResource("32_enemy_hp_icon")
 expand_mode = 1
@@ -398,59 +415,87 @@ expand_mode = 1
 [node name="EnemyHealthText" type="Label" parent="MonsterInfo" unique_id=698835892]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 228.0
-offset_top = 48.0
-offset_right = 340.0
-offset_bottom = 68.0
+offset_left = 149.0
+offset_top = 34.0
+offset_right = 220.0
+offset_bottom = 54.0
 theme_override_colors/font_color = Color(1, 0.94, 0.81, 1)
 theme_override_font_sizes/font_size = 14
 text = "45/60"
+horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="BehaviorPanel" type="PanelContainer" parent="MonsterInfo" unique_id=607048963]
 layout_mode = 0
-offset_left = 120.0
-offset_top = 75.0
-offset_right = 214.0
-offset_bottom = 100.0
+offset_left = 136.0
+offset_top = 74.0
+offset_right = 222.0
+offset_bottom = 95.0
 mouse_filter = 2
-theme_override_styles/panel = SubResource("Style_monster_rules")
+theme_override_styles/panel = SubResource("Style_behavior_panel")
 
-[node name="Row" type="HBoxContainer" parent="MonsterInfo/BehaviorPanel" unique_id=2089718171]
+[node name="Row" type="Control" parent="MonsterInfo/BehaviorPanel" unique_id=2089718171]
 layout_mode = 2
-theme_override_constants/separation = 2
 
 [node name="NextLabel" type="Label" parent="MonsterInfo/BehaviorPanel/Row" unique_id=261494409]
-custom_minimum_size = Vector2(35, 0)
-layout_mode = 2
+layout_mode = 0
+offset_top = -2.5
+offset_right = 35.0
+offset_bottom = 16.5
 theme_override_colors/font_color = Color(1, 0.94, 0.81, 1)
+theme_override_constants/line_spacing = -5
 theme_override_font_sizes/font_size = 8
 text = "NEXT
 ACTION"
 vertical_alignment = 1
 
-[node name="BehaviorAttack" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row" unique_id=841887491]
+[node name="BehaviorIconSlot" type="Control" parent="MonsterInfo/BehaviorPanel/Row" unique_id=1924979817]
+anchors_preset = 0
+offset_left = 37.0
+offset_right = 56.0
+offset_bottom = 20.0
+mouse_filter = 2
+
+[node name="BehaviorAttack" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row/BehaviorIconSlot" unique_id=841887491]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(19, 20)
-layout_mode = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -4.0
+offset_top = 0.5
+offset_right = -4.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("33_behavior_attack")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="BehaviorDefense" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row" unique_id=814443013]
+[node name="BehaviorDefense" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row/BehaviorIconSlot" unique_id=814443013]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(19, 20)
-layout_mode = 2
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("34_behavior_defense")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="BehaviorSkill" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row" unique_id=1954539643]
+[node name="BehaviorSkill" type="TextureRect" parent="MonsterInfo/BehaviorPanel/Row/BehaviorIconSlot" unique_id=1954539643]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(19, 20)
-layout_mode = 2
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("35_behavior_skill")
 expand_mode = 1
@@ -458,20 +503,23 @@ stretch_mode = 5
 
 [node name="BehaviorValue" type="Label" parent="MonsterInfo/BehaviorPanel/Row" unique_id=1238368452]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(24, 0)
-layout_mode = 2
+layout_mode = 0
+offset_left = 53.0
+offset_top = -4.5
+offset_right = 76.0
+offset_bottom = 17.5
 theme_override_colors/font_color = Color(1, 0.94, 0.81, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 15
 text = "8"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="TalkingBubble" type="TextureRect" parent="MonsterInfo" unique_id=1963925052]
 layout_mode = 0
-offset_left = 220.0
-offset_top = 70.0
-offset_right = 279.0
-offset_bottom = 100.0
+offset_left = 233.0
+offset_top = 88.0
+offset_right = 318.0
+offset_bottom = 149.0
 mouse_filter = 2
 texture = ExtResource("36_talking_bubble")
 expand_mode = 1
@@ -481,10 +529,10 @@ unique_name_in_owner = true
 layout_mode = 0
 offset_left = 5.0
 offset_top = 3.0
-offset_right = 55.0
-offset_bottom = 30.0
+offset_right = 79.0
+offset_bottom = 42.0
 theme_override_colors/font_color = Color(0.35, 0.12, 0.12, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 17
 text = "攻击 8"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -661,6 +709,7 @@ script = ExtResource("8_rhythm_feedback")
 
 [node name="BeatLabel" type="Label" parent="RhythmFeedback" unique_id=1784966755]
 unique_name_in_owner = true
+visible = false
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -1107,7 +1156,7 @@ layout_mode = 2
 theme_override_constants/separation = 10
 alignment = 1
 
-[node name="ResultKicker" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+[node name="ResultKicker" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=79148441]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38, 0.86, 0.9, 1)
@@ -1115,7 +1164,7 @@ theme_override_font_sizes/font_size = 12
 text = "STAGE CLEAR  •  LIVE COMPLETE"
 horizontal_alignment = 1
 
-[node name="VictoryMark" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+[node name="VictoryMark" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=826898080]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.66, 0.18, 1)
@@ -1140,17 +1189,17 @@ text = "守住球门，完成本场测试！"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="ResultStats" type="HBoxContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent"]
+[node name="ResultStats" type="HBoxContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent" unique_id=2122372830]
 layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="HealthStat" type="PanelContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats"]
+[node name="HealthStat" type="PanelContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats" unique_id=1188326490]
 custom_minimum_size = Vector2(132, 42)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_result_stat")
 
-[node name="HealthStatLabel" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats/HealthStat"]
+[node name="HealthStatLabel" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats/HealthStat" unique_id=233588804]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.76, 0.72, 1)
@@ -1159,12 +1208,12 @@ text = "♥  100 / 100"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RewardStat" type="PanelContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats"]
+[node name="RewardStat" type="PanelContainer" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats" unique_id=458045884]
 custom_minimum_size = Vector2(132, 42)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_result_stat")
 
-[node name="RewardStatLabel" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats/RewardStat"]
+[node name="RewardStatLabel" type="Label" parent="ResultOverlay/ResultCenter/ResultPanel/ResultContent/ResultStats/RewardStat" unique_id=903368250]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.87, 0.35, 1)

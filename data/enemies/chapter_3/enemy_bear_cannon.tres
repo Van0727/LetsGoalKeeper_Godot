@@ -1,63 +1,63 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_oycen"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_pcrr0"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_r7ow4"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_7hpq0"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_3j0l3"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_rhkt3"]
 
-[sub_resource type="Resource" id="Resource_7mfv8"]
-script = ExtResource("1_oycen")
+[sub_resource type="Resource" id="Resource_tx8xr"]
+script = ExtResource("1_7hpq0")
 amount = 14
 
-[sub_resource type="Resource" id="Resource_hg65d"]
-script = ExtResource("2_pcrr0")
+[sub_resource type="Resource" id="Resource_ubbov"]
+script = ExtResource("2_3j0l3")
 id = 28
 description = "造成14点伤害"
-effects = Array[Resource]([SubResource("Resource_7mfv8")])
+effects = Array[Resource]([SubResource("Resource_tx8xr")])
 display_name = "熊掌重击"
 
-[sub_resource type="Resource" id="Resource_hhe1p"]
-script = ExtResource("1_oycen")
+[sub_resource type="Resource" id="Resource_68xri"]
+script = ExtResource("1_7hpq0")
 effect_type = 1
 target = 1
 amount = 14
 
-[sub_resource type="Resource" id="Resource_qicvb"]
-script = ExtResource("2_pcrr0")
+[sub_resource type="Resource" id="Resource_wxvrs"]
+script = ExtResource("2_3j0l3")
 id = 29
 category = 1
 description = "获得14点护盾"
-effects = Array[Resource]([SubResource("Resource_hhe1p")])
+effects = Array[Resource]([SubResource("Resource_68xri")])
 display_name = "熊式防守"
 
-[sub_resource type="Resource" id="Resource_4ofhd"]
-script = ExtResource("1_oycen")
+[sub_resource type="Resource" id="Resource_ojvuo"]
+script = ExtResource("1_7hpq0")
 effect_type = 9
 target = 1
 break_rule = 2
 threshold = 24
 
-[sub_resource type="Resource" id="Resource_kabya"]
-script = ExtResource("2_pcrr0")
+[sub_resource type="Resource" id="Resource_3566m"]
+script = ExtResource("2_3j0l3")
 id = 30
 category = 2
 description = "蓄力下一次重炮；24点有效伤害可打断"
-effects = Array[Resource]([SubResource("Resource_4ofhd")])
+effects = Array[Resource]([SubResource("Resource_ojvuo")])
 display_name = "重炮蓄力"
 
-[sub_resource type="Resource" id="Resource_ghyk7"]
-script = ExtResource("1_oycen")
+[sub_resource type="Resource" id="Resource_yuq8o"]
+script = ExtResource("1_7hpq0")
 amount = 28
 
-[sub_resource type="Resource" id="Resource_4wdug"]
-script = ExtResource("2_pcrr0")
+[sub_resource type="Resource" id="Resource_amhd3"]
+script = ExtResource("2_3j0l3")
 id = 31
 description = "造成28点伤害"
-effects = Array[Resource]([SubResource("Resource_ghyk7")])
+effects = Array[Resource]([SubResource("Resource_yuq8o")])
 interrupted_action_id = 32
 display_name = "熊式重炮"
 
 [resource]
-script = ExtResource("3_r7ow4")
+script = ExtResource("3_rhkt3")
 enemy_id = "enemy_bear_cannon"
 id = 6015
 chapter = 3
@@ -65,4 +65,4 @@ action_ids = Array[int]([28, 29, 30, 31])
 display_name = "熊重炮手"
 tier = 1
 max_health = 110
-actions = Array[Resource]([SubResource("Resource_hg65d"), SubResource("Resource_qicvb"), SubResource("Resource_kabya"), SubResource("Resource_4wdug")])
+actions = Array[Resource]([SubResource("Resource_ubbov"), SubResource("Resource_wxvrs"), SubResource("Resource_3566m"), SubResource("Resource_amhd3")])

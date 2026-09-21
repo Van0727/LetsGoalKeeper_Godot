@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://ctub88advogff"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_quma8"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_ebi8r"]
-[ext_resource type="Texture2D" uid="uid://66pgexouuu3t" path="res://assets/ui/cards/card_shield_bash_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_quma8"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_ebi8r"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_shield_bash_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_8geiv"]
+[sub_resource type="Resource" id="Resource_ebi8r"]
 script = ExtResource("1_quma8")
 amount = 5
 
@@ -17,4 +17,4 @@ description = "造成5点伤害，并追加当前护盾值一半的伤害，护�
 archetype_hint = "钢铁门神·稳定爆发"
 illustration = ExtResource("3_illustration")
 shot_type = 1
-effects = Array[Resource]([SubResource("Resource_8geiv")])
+effects = Array[Resource]([SubResource("Resource_ebi8r")])

@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://ckpvi67hog2k1"]
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_msk2r"]
-[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_tv7es"]
-[ext_resource type="Texture2D" uid="uid://bggnm5ygxthg4" path="res://assets/ui/cards/card_aftershock_armor_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_msk2r"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_tv7es"]
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_aftershock_armor_rounded_v1.png" id="3_illustration"]
 
-[sub_resource type="Resource" id="Resource_ab47y"]
+[sub_resource type="Resource" id="Resource_tv7es"]
 script = ExtResource("1_msk2r")
 effect_type = 11
 target = 0
@@ -18,4 +18,4 @@ description = "本回合下一张多段攻击每命中一次，获得2点护盾"
 archetype_hint = "钢铁门神·多段叠盾"
 illustration = ExtResource("3_illustration")
 card_type = 2
-effects = Array[Resource]([SubResource("Resource_ab47y")])
+effects = Array[Resource]([SubResource("Resource_tv7es")])

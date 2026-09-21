@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cxytehyrp2l7k"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_k71pt"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_uyn1w"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_k71pt"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_uyn1w"]
 
-[sub_resource type="Resource" id="Resource_ecrw5"]
+[sub_resource type="Resource" id="Resource_k71pt"]
 script = ExtResource("1_k71pt")
 trigger = 3
 operation = 5
@@ -18,4 +18,4 @@ item_id = "item_energy_saving_bracelet"
 display_name = "节能手环"
 description = "每回合打出的第一张牌结算后恢复1点能量"
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_ecrw5")])
+effects = Array[Resource]([SubResource("Resource_k71pt")])
