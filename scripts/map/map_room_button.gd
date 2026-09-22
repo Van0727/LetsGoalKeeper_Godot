@@ -2,6 +2,7 @@
 extends Button
 
 signal pulse_transform_changed
+const MAP_STATE := preload("res://scripts/map/map_state.gd")
 var _pulse_tween: Tween
 
 var kind := 0
@@ -71,14 +72,15 @@ func _draw() -> void:
 	var boss := kind == 2
 	var tint := Color(0.72, 0.78, 0.87) if disabled else Color.WHITE
 	_paint("boss_base" if boss else "base", side, tint)
-	# 普通与精英房都显示本房间的实际怪物头像；休息和Boss保留独立图标语义。
+	# 普通与精英房使用各自的通用剪影；实际怪物身份仍由名称和遭遇规划器表达。
 	if boss:
 		_paint("boss", side * 0.78, tint)
 	elif kind == 3:
 		_paint("heart", side * 1.2, tint)
 	else:
-		# 保留用户已调整的1.2倍怪物头像尺寸。
-		_paint("monster", side * 1.2, tint)
+		# 保留用户已调整的1.2倍怪物图标尺寸。
+		var monster_key := "elite" if kind == MAP_STATE.RoomType.ELITE else "monster"
+		_paint(monster_key, side * 1.2, tint)
 	var plate: Texture2D = art.get("boss_name" if boss else "name")
 	if plate != null:
 		draw_texture_rect(plate, Rect2(0, size.y * 0.75, size.x, size.y * 0.25), false)
@@ -96,8 +98,8 @@ func _paint(key: String, side: float, tint: Color) -> void:
 		return
 	var factor := side / maxf(texture.get_width(), texture.get_height())
 	var fitted := Vector2(texture.get_size()) * factor
-	# 怪物图标单独上移10像素，让鸡的视觉重心对齐底座，不改变连线中心和其他房型图标。
-	var icon_offset := Vector2(0, -10) if key == "monster" else Vector2.ZERO
+	# 两类怪物剪影统一上移10像素，对齐底座视觉重心，不改变连线中心和其他房型图标。
+	var icon_offset := Vector2(0, -10) if key in ["monster", "elite"] else Vector2.ZERO
 	draw_texture_rect(texture, Rect2(node_center() + icon_offset - fitted * 0.5, fitted), false, tint)
 
 # 项目盾牌占位图仅为菱形，因此由 UI 绘制紫色盾牌和五角星，不新增或覆盖美术图片。

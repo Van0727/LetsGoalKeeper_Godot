@@ -17,6 +17,8 @@ const ART_PATHS := {
 "name":"res://assets/ui/map/enemy_nameplate_v2.png",
 "boss_name":"res://assets/ui/map/boss_nameplate_v2.png",
 "boss":"res://assets/ui/map/boss_icon_v2.png",
+"monster":"res://assets/ui/map/monster_normal_map_icon_v4.png",
+"elite":"res://assets/ui/map/monster_elite_map_icon_v4.png",
 "shield":"res://assets/placeholders/icon_shield.png",
 "heart":"res://assets/placeholders/icon_health.png",
 }
@@ -75,7 +77,7 @@ func refresh_ui() -> void:
 		rows_container.add_child(button)
 		button.disabled = room.state != MAP_STATE.RoomState.ATTAINABLE
 		var enemy := _preview_enemy(room)
-		button.configure(room, _opponent_name(enemy, room), _room_artwork(room, enemy))
+		button.configure(room, _opponent_name(enemy, room), artwork)
 		button.tooltip_text = button.title_label.text
 		button.pressed.connect(_on_room_button_pressed.bind(room.id))
 		button.pulse_transform_changed.connect(connections_layer.queue_redraw)
@@ -144,20 +146,6 @@ func _opponent_name(enemy: Resource, room: Dictionary) -> String:
 	if room.type == MAP_STATE.RoomType.REST:
 		return "休息"
 	return str(enemy.display_name) if enemy != null else "乌龟"
-
-
-# 每个战斗房间拥有独立表现字典，按实际怪物 image_id 注入头像；鸡使用已确认的地图专用图标。
-func _room_artwork(room: Dictionary, enemy: Resource) -> Dictionary:
-	var room_artwork := artwork.duplicate()
-	if room.type in [MAP_STATE.RoomType.REST, MAP_STATE.RoomType.BOSS]:
-		return room_artwork
-	var image_path := ""
-	if enemy != null and enemy.image_id == 7001:
-		image_path = "res://assets/ui/map/chicken_map_icon_v1.png"
-	elif enemy != null and enemy.image_id > 0:
-		image_path = "res://assets/ui/enemies/%d.png" % enemy.image_id
-	room_artwork["monster"] = load(image_path) if not image_path.is_empty() and ResourceLoader.exists(image_path) else null
-	return room_artwork
 
 
 # 预览与战斗入口共用同一规划器，避免地图显示与实际遇敌不一致。
