@@ -233,7 +233,7 @@ func judge_lane(lane: int, music_time_override: float = -1.0) -> String:
 		_show_judgement("Miss")
 		_play_miss_audio()
 		return ""
-	var grade := "Perfect" if closest_error <= _get_source_window_seconds(_perfect_window_seconds) else "Good"
+	var grade := "Great" if closest_error <= _get_source_window_seconds(_perfect_window_seconds) else "Good"
 	_apply_judgement(candidate, grade)
 	return grade
 
@@ -247,7 +247,7 @@ func _apply_judgement(note: Dictionary, grade: String) -> void:
 	note.judged = true
 	note.grade = grade
 	match grade:
-		"Perfect":
+		"Great":
 			_counts.perfect += 1
 		"Good":
 			_counts.good += 1
@@ -342,13 +342,13 @@ func _get_target_pulse_scale(lane: int) -> float:
 	return lerpf(1.28, 1.0, clampf(release_progress, 0.0, 1.0))
 
 
-# Perfect、Good、Miss由Label短暂悬浮在目标线上方，避免把动态文字烘焙进图片。
+# Great、Good、Miss由Label短暂悬浮在目标线上方，避免把动态文字烘焙进图片。
 func _refresh_judgement_label(target_y: float) -> void:
 	if _judgement_text.is_empty() or _judgement_age >= JUDGEMENT_VISIBLE_SECONDS:
 		_judgement_label.hide()
 		return
 	var color := Color(1.0, 0.4, 0.42)
-	if _judgement_text == "Perfect":
+	if _judgement_text == "Great":
 		color = Color(1.0, 0.86, 0.3)
 	elif _judgement_text == "Good":
 		color = Color(0.35, 0.82, 1.0)

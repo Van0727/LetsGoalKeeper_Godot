@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bk0snrv3c2bxt" path="res://scripts/map/map_screen.gd" id="1_screen"]
 [ext_resource type="Script" uid="uid://cc0fclmdkre0b" path="res://scripts/map/map_connections.gd" id="2_connections"]
 [ext_resource type="PackedScene" uid="uid://cul2ho1d7dah5" path="res://scenes/pause_overlay.tscn" id="3_pause"]
-[ext_resource type="Texture2D" uid="uid://bjn1s0glqni5k" path="res://assets/ui/map/map_background_v2.png" id="4_background"]
+[ext_resource type="Texture2D" path="res://assets/ui/map/map_background_v3.png" id="4_background"]
 [ext_resource type="Texture2D" uid="uid://ck648js84io5i" path="res://assets/ui/game_ball.png" id="5_ball"]
 
 [sub_resource type="StyleBoxFlat" id="Style_result"]
@@ -30,6 +30,20 @@ corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 
+[sub_resource type="StyleBoxFlat" id="Style_header"]
+bg_color = Color(0.025, 0.035, 0.08, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.36, 0.2, 0.85)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 4
+
 [node name="MapScreen" type="Control" unique_id=914250961]
 texture_filter = 2
 layout_mode = 3
@@ -50,7 +64,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.025, 0.07, 0.08, 1)
+color = Color(0.015, 0.02, 0.05, 1)
 
 [node name="Stadium" type="TextureRect" parent="Background" unique_id=1288586852]
 layout_mode = 1
@@ -62,14 +76,26 @@ texture = ExtResource("4_background")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Header" type="HBoxContainer" parent="." unique_id=278643771]
+[node name="HeaderBackdrop" type="Panel" parent="." unique_id=1758205318]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 8.0
 offset_top = 6.0
 offset_right = -8.0
-offset_bottom = 46.0
+offset_bottom = 52.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_header")
+
+[node name="Header" type="HBoxContainer" parent="." unique_id=278643771]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 50.0
 grow_horizontal = 2
 theme_override_constants/separation = 8
 
@@ -82,7 +108,7 @@ text = "返回菜单"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.4, 0.95, 1, 1)
+theme_override_colors/font_color = Color(1, 0.93, 0.78, 1)
 theme_override_font_sizes/font_size = 14
 text = "第 1 章 · 路线地图"
 horizontal_alignment = 1
@@ -91,12 +117,13 @@ vertical_alignment = 1
 [node name="HintLabel" type="Label" parent="Header" unique_id=1745063012]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.6, 0.9, 0.7, 1)
+theme_override_colors/font_color = Color(1, 0.55, 0.3, 1)
 theme_override_font_sizes/font_size = 12
 horizontal_alignment = 2
 vertical_alignment = 1
 
 [node name="ChapterDivider" type="TextureRect" parent="." unique_id=79878631]
+visible = false
 layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
@@ -110,6 +137,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="LeftBeatLine" type="ColorRect" parent="." unique_id=210291635]
+visible = false
 layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
@@ -121,6 +149,7 @@ mouse_filter = 2
 color = Color(0.15, 0.95, 1, 1)
 
 [node name="RightBeatLine" type="ColorRect" parent="." unique_id=1806488930]
+visible = false
 layout_mode = 0
 anchor_left = 0.5
 anchor_right = 0.5
@@ -137,9 +166,9 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = 110.0
+offset_top = 62.0
 offset_right = -8.0
-offset_bottom = -70.0
+offset_bottom = -22.0
 grow_horizontal = 2
 
 [node name="ConnectionsLayer" type="Control" parent="MapBody" unique_id=49834997]

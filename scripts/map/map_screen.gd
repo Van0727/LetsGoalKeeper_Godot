@@ -1,25 +1,21 @@
-# 球场地图界面：使用素材表现真实路线，不改变地图生成规则或存档。
+# 节奏舞台地图界面：以演出场馆背景和动态节点表现真实路线，不改变地图生成规则或存档。
 extends Control
 # 可选关卡每拍最大倍率：1.0 不放大，1.10 表示放大 10%；基础透视尺寸保持不变。
 @export_range(1.0, 1.3, 0.01) var selectable_pulse_scale := 1.06
-# 各房间整套界面相对原透视尺寸的倍率，Boss 保留原有强调系数后再放大。
-@export_range(0.5, 3.0, 0.05) var monster_ui_scale := 1.2
-@export_range(0.5, 3.0, 0.05) var boss_ui_scale := 2.0
-@export_range(0.5, 3.0, 0.05) var rest_ui_scale := 1.2
+# 普通与精英怪整套节点放大到1.5倍，头像、圆台、光圈和点击范围保持同步。
+@export_range(0.5, 3.0, 0.05) var monster_ui_scale := 1.5
+# Boss 在现有1.45倍基础上再放大1.2倍，最终倍率为1.74。
+@export_range(0.5, 3.0, 0.05) var boss_ui_scale := 1.74
+@export_range(0.5, 3.0, 0.05) var rest_ui_scale := 1.0
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
 const MAP_STATE := preload("res://scripts/map/map_state.gd")
 const ENEMY_CATALOG := preload("res://data/enemies/enemy_catalog.tres")
 const ENCOUNTER_PLANNER := preload("res://scripts/enemies/encounter_planner.gd")
 const ROOM_BUTTON := preload("res://scripts/map/map_room_button.gd")
 const ART_PATHS := {
-"base":"res://assets/ui/map/enemy_node_base_v2.png",
-"boss_base":"res://assets/ui/map/boss_node_base_v2.png",
-"name":"res://assets/ui/map/enemy_nameplate_v2.png",
-"boss_name":"res://assets/ui/map/boss_nameplate_v2.png",
 "boss":"res://assets/ui/map/boss_icon_v2.png",
 "monster":"res://assets/ui/map/monster_normal_map_icon_v4.png",
 "elite":"res://assets/ui/map/monster_elite_map_icon_v4.png",
-"shield":"res://assets/placeholders/icon_shield.png",
 "heart":"res://assets/placeholders/icon_health.png",
 }
 @onready var title_label: Label = %TitleLabel
@@ -107,11 +103,9 @@ func _layout_rooms() -> void:
 			var ui_scale: float = boss_ui_scale if rooms[i].type == MAP_STATE.RoomType.BOSS else (rest_ui_scale if rooms[i].type == MAP_STATE.RoomType.REST else monster_ui_scale)
 			side *= ui_scale
 			button.size = Vector2(side, side)
-			# 名称字号同步放大，避免仅扩大名字底板而文字仍停留在旧尺寸。
-			button.title_label.add_theme_font_size_override("font_size", roundi(10 * ui_scale))
 			var x := rows_container.size.x * (0.5 if rooms.size() == 1 else (0.5 - half_spread + 2 * half_spread * i / maxf(rooms.size() - 1, 1)))
 			var y := rows_container.size.y * 0.92 - (layer - 1) * spacing
-			# 放大的 Boss 向球门上移，名字不压住下一层；底部节点完整点击范围收在容器内。
+			# 放大的 Boss 向舞台上方移动，避免头像压住下一层；底部节点完整点击范围收在容器内。
 			if rooms[i].type == MAP_STATE.RoomType.BOSS:
 				y -= side * 0.2
 			button.position = Vector2(x - side * 0.5, clampf(y - side * 0.43, 0.0, maxf(rows_container.size.y - side, 0.0)))
@@ -155,19 +149,34 @@ func _build_enemy_plan() -> Dictionary:
 		return {}
 	return ENCOUNTER_PLANNER.plan(run_state.map_state, load(pool_path), ENEMY_CATALOG, run_state.seed)
 
-# 返回按钮仅在地图实例内调整外观；暂停按钮保留通用图片样式。
+# 返回按钮使用参考界面的深色舞台面板与暖橙描边；暂停按钮继续沿用通用图片样式。
 func _style_header() -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.01, 0.04, 0.12, 0.95)
-	style.border_color = Color(0.05, 0.55, 0.95)
+	style.bg_color = Color(0.035, 0.045, 0.09, 0.98)
+	style.border_color = Color(1.0, 0.36, 0.2, 0.95)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(10)
+	style.shadow_color = Color(0, 0, 0, 0.4)
+	style.shadow_size = 3
 	var back: Button = $Header/BackButton
 	back.text = "❮ 返回"
 	back.add_theme_font_size_override("font_size", 13)
-	for key in ["normal", "hover", "pressed"]:
-		back.add_theme_stylebox_override(key, style)
-	# 暂停按钮沿用通用场景的 pause 图片，避免地图初始化覆盖统一外观。
+	back.add_theme_color_override("font_color", Color(1.0, 0.93, 0.8))
+	back.add_theme_stylebox_override("normal", style)
+	var hover_style := style.duplicate() as StyleBoxFlat
+	hover_style.bg_color = Color(0.12, 0.07, 0.1, 0.98)
+	hover_style.border_color = Color(1.0, 0.62, 0.28)
+	back.add_theme_stylebox_override("hover", hover_style)
+	back.add_theme_stylebox_override("pressed", hover_style)
+	# 地图实例把通用暂停图片替换成同系列文字按钮，只影响本场景，不改变其他界面的暂停样式。
+	var pause: Button = $PauseOverlay/PauseButton
+	pause.text = "❚❚"
+	pause.add_theme_font_size_override("font_size", 23)
+	pause.add_theme_color_override("font_color", Color(1.0, 0.93, 0.8))
+	for key in ["normal", "disabled"]:
+		pause.add_theme_stylebox_override(key, style)
+	pause.add_theme_stylebox_override("hover", hover_style)
+	pause.add_theme_stylebox_override("pressed", hover_style)
 
 # 开始所选房间：只登记进行中房间，完成状态由奖励或休息结算提交。
 func _on_room_button_pressed(room_id: String) -> void:

@@ -282,7 +282,7 @@ func play_card(
 	var effective_rhythm_result: Dictionary = rhythm_result.duplicate(true)
 	if item_runtime.has_item(ITEM_IN_EAR_MONITOR):
 		effective_rhythm_result["grade"] = 0
-		effective_rhythm_result["grade_name"] = "Perfect"
+		effective_rhythm_result["grade_name"] = "Great"
 		effective_rhythm_result["effect_multiplier"] = 1.0
 		effective_rhythm_result["error_ms"] = 0.0
 	current_action_context = BATTLE_ACTION_CONTEXT.new()
@@ -878,6 +878,7 @@ func get_enemy_intent_text() -> String:
 		return "攻击 %d" % get_enemy_intent_damage()
 	if not current_enemy_action.effects.is_empty():
 		var descriptions: Array[String] = []
+		var action_description := _to_player_grade_terms(current_enemy_action.description)
 		for effect in current_enemy_action.effects:
 			if effect.effect_type in [ENEMY_ACTION_EFFECT.Type.DAMAGE, ENEMY_ACTION_EFFECT.Type.DRAIN]:
 				var damage := maxi(roundi(effect.amount * enemy.strength_multiplier), 0)
@@ -892,10 +893,10 @@ func get_enemy_intent_text() -> String:
 				descriptions.append("反伤%d（最多%d次）" % [effect.amount, effect.hits])
 			elif effect.effect_type == ENEMY_ACTION_EFFECT.Type.CHARGE:
 				# 多条蓄力效果共享同一行为文案，避免意图面板重复挤占空间。
-				if not descriptions.has(current_enemy_action.description):
-					descriptions.append(current_enemy_action.description)
+				if not descriptions.has(action_description):
+					descriptions.append(action_description)
 			else:
-				descriptions.append(current_enemy_action.description)
+				descriptions.append(action_description)
 		var text := "%s·%s：%s" % [["攻击", "防御", "技能"][current_enemy_action.category], current_enemy_action.display_name, "；".join(descriptions)]
 		if not enemy_charge_conditions.is_empty():
 			var conditions: Array[String] = []
@@ -903,7 +904,12 @@ func get_enemy_intent_text() -> String:
 				conditions.append("%s %d/%d" % [_charge_rule_name(int(condition.rule)), int(condition.progress), int(condition.threshold)])
 			text += "\n%s%s" % [" 或 ".join(conditions), "，已打断" if enemy_charge_interrupted else "可打断"]
 		return text
-	return current_enemy_action.get_intent_text(get_enemy_intent_damage())
+	return _to_player_grade_terms(current_enemy_action.get_intent_text(get_enemy_intent_damage()))
+
+
+# 配表和规则枚举继续保留内部 Perfect 契约，所有战斗玩家文案统一显示新等级名 Great。
+func _to_player_grade_terms(text: String) -> String:
+	return text.replace("Perfect", "Great")
 
 
 # 回合刷新时供真实界面持续显示状态，不能仅依赖会被出牌提示覆盖的日志。
@@ -1127,9 +1133,9 @@ func _charge_rule_name(rule: int) -> String:
 	match rule:
 		ENEMY_ACTION_EFFECT.BreakRule.HITS: return "有效命中"
 		ENEMY_ACTION_EFFECT.BreakRule.DAMAGE: return "有效伤害"
-		ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ATTACK: return "Perfect攻击牌"
+		ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ATTACK: return "Great攻击牌"
 		ENEMY_ACTION_EFFECT.BreakRule.DISTINCT_SHOT_TYPES: return "不同球型攻击牌"
-		ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ANY: return "Perfect卡牌"
+		ENEMY_ACTION_EFFECT.BreakRule.PERFECT_ANY: return "Great卡牌"
 	return "未知条件"
 
 

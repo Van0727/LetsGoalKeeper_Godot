@@ -152,8 +152,8 @@ func _run() -> void:
 	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.14) - 0.28) < 0.0001, "二倍速下140ms窗口对应280ms音源时间")
 	_assert_equal(
 		battle.qte_popup.judge_lane(int(first_note.lane), float(first_note.target_time) + 0.10),
-		"Perfect",
-		"二倍速下音源晚100ms仍为现实50ms的Perfect"
+		"Great",
+		"二倍速下音源晚100ms仍为现实50ms的Great"
 	)
 	battle.rhythm_clock._audio_player.pitch_scale = 0.5
 	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.14) - 0.07) < 0.0001, "半速下140ms窗口对应70ms音源时间")
@@ -173,12 +173,12 @@ func _run() -> void:
 	for note_index in range(3, battle.qte_popup._notes.size() - 1):
 		var note: Dictionary = battle.qte_popup._notes[note_index]
 		var grade: String = battle.qte_popup.judge_lane(int(note.lane), float(note.target_time))
-		_assert_equal(grade, "Perfect", "其余目标拍点命中判定为Perfect")
+		_assert_equal(grade, "Great", "其余目标拍点命中判定为Great")
 	var final_note: Dictionary = battle.qte_popup._notes[-1]
 	_assert_equal(
 		battle.qte_popup._activate_lane(int(final_note.lane), float(final_note.target_time)),
-		"Perfect",
-		"最后一个目标音符通过点击完成Perfect判定"
+		"Great",
+		"最后一个目标音符通过点击完成Great判定"
 	)
 	_assert_true(not battle.qte_popup.visible, "最后一拍完成时立即关闭QTE弹窗")
 	_assert_equal(launched_results.size(), 1, "关闭QTE同帧发射超级足球")
@@ -188,6 +188,8 @@ func _run() -> void:
 	var beat_seconds: float = battle.rhythm_clock.get_beat_duration()
 	await create_timer(beat_seconds + battle.PARTIAL_SHAKE_SECONDS + 0.25).timeout
 	_assert_true(battle.controller.enemy.health < health_before, "足球飞行一拍后才结算主动技伤害")
+	_assert_true("Great" in battle.status_label.text, "QTE结算使用Great完整名称")
+	_assert_true("Perfect" not in battle.status_label.text, "QTE结算不再显示旧Perfect等级名")
 	_assert_equal(committed_times.size(), 1, "主动技效果只提交一次")
 	_assert_true(committed_times[0] + 0.001 >= beat_seconds, "主动技效果等待完整一拍音乐时间")
 	_assert_equal(battle.controller.combo_state.count, 0, "QTE完成后主动技消耗连击")

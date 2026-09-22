@@ -153,7 +153,7 @@ func judge_at(music_time: float) -> Dictionary:
 	var relative_time := music_time - first_beat_offset
 	var beat_index := maxi(roundi(relative_time / beat_duration), 0)
 	var target_time := first_beat_offset + beat_index * beat_duration
-	# 判定窗口按玩家实际听到的毫秒数计算；升降调不能悄悄改变 Perfect/Good 的手感。
+	# 判定窗口按玩家实际听到的毫秒数计算；升降调不能悄悄改变 Great/Good 的手感。
 	var signed_error_ms := (music_time - target_time) * 1000.0 / get_playback_rate()
 	var absolute_error_ms := absf(signed_error_ms)
 	var grade := JudgementGrade.MISS
@@ -268,7 +268,7 @@ func get_beat_progress(music_time: float = -1.0) -> float:
 func get_grade_name(grade: int) -> String:
 	match grade:
 		JudgementGrade.PERFECT:
-			return "Perfect"
+			return "Great"
 		JudgementGrade.GOOD:
 			return "Good"
 		_:

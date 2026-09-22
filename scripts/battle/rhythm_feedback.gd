@@ -2,9 +2,13 @@
 class_name RhythmFeedback
 extends Control
 
-const PERFECT_COLOR := Color(1.0, 0.82, 0.25, 1.0)
-const GOOD_COLOR := Color(0.3, 0.9, 0.82, 1.0)
-const MISS_COLOR := Color(1.0, 0.42, 0.42, 1.0)
+const GREAT_COLOR := Color(1.0, 0.79, 0.25, 1.0)
+const GOOD_COLOR := Color(0.31, 0.88, 0.42, 1.0)
+const MISS_COLOR := Color(1.0, 0.35, 0.34, 1.0)
+const JUDGEMENT_OUTLINE_COLOR := Color(0.055, 0.07, 0.16, 0.96)
+const JUDGEMENT_SHADOW_COLOR := Color(0.0, 0.0, 0.0, 0.55)
+const JUDGEMENT_FONT_SIZE := 18
+const JUDGEMENT_OUTLINE_SIZE := 4
 const BEAT_LINE := preload("res://assets/ui/battle/beatline.png")
 const FIRST_BEAT := preload("res://assets/ui/battle/bigbeat.png")
 const OTHER_BEAT := preload("res://assets/ui/battle/beat.png")
@@ -32,6 +36,13 @@ var _circle_enabled := true
 # 初始判定文字留空；图片线性过滤，绘制区域裁切只作用于音符，不裁掉独立的判定文字。
 func _ready() -> void:
 	judgement_label.text = ""
+	# 三种判定共享字号、描边和阴影，只切换主色，保证视觉层级完全一致。
+	judgement_label.add_theme_font_size_override("font_size", JUDGEMENT_FONT_SIZE)
+	judgement_label.add_theme_constant_override("outline_size", JUDGEMENT_OUTLINE_SIZE)
+	judgement_label.add_theme_constant_override("shadow_offset_x", 1)
+	judgement_label.add_theme_constant_override("shadow_offset_y", 2)
+	judgement_label.add_theme_color_override("font_outline_color", JUDGEMENT_OUTLINE_COLOR)
+	judgement_label.add_theme_color_override("font_shadow_color", JUDGEMENT_SHADOW_COLOR)
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	queue_redraw()
 
@@ -59,20 +70,26 @@ func pulse_beat(beat_index: int, beats_per_bar: int) -> void:
 
 # 松手后显示等级与偏差方向；动画只负责反馈，不推迟或更改已经完成的结算。
 func show_judgement(result: Dictionary) -> void:
-	var grade_name: String = result.get("grade_name", "Miss")
+	var internal_grade_name: String = result.get("grade_name", "Miss")
+	# 核心规则继续兼容内部Perfect键；玩家可见的三个平级结果统一为全大写文案。
+	var grade_name := "MISS"
+	match internal_grade_name.to_lower():
+		"perfect", "great": grade_name = "GREAT"
+		"good": grade_name = "GOOD"
 	var error_ms: float = result.get("error_ms", 0.0)
 	var timing_text := "准拍"
 	if absf(error_ms) >= 0.5:
 		timing_text = "%s %.0fms" % ["晚" if error_ms > 0.0 else "早", absf(error_ms)]
 	judgement_label.text = "%s · %s" % [grade_name, timing_text]
 	match grade_name:
-		"Perfect": judgement_label.modulate = PERFECT_COLOR
-		"Good": judgement_label.modulate = GOOD_COLOR
-		_: judgement_label.modulate = MISS_COLOR
+		"GREAT": judgement_label.add_theme_color_override("font_color", GREAT_COLOR)
+		"GOOD": judgement_label.add_theme_color_override("font_color", GOOD_COLOR)
+		_: judgement_label.add_theme_color_override("font_color", MISS_COLOR)
 	if _feedback_tween != null and _feedback_tween.is_running():
 		_feedback_tween.kill()
+	# 主色由字体主题控制，CanvasItem 调制只负责统一透明度，避免描边跟随主色染色。
+	judgement_label.modulate = Color.WHITE
 	judgement_label.scale = Vector2(1.18, 1.18)
-	judgement_label.modulate.a = 1.0
 	_feedback_tween = create_tween()
 	_feedback_tween.set_parallel(true)
 	_feedback_tween.tween_property(judgement_label, "scale", Vector2.ONE, 0.16)

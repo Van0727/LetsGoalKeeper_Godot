@@ -205,10 +205,12 @@ func _test_rhythm_judgement_and_damage() -> void:
 	)
 	clock.perfect_window_ms = 60.0
 	clock.good_window_ms = 140.0
-	_assert_equal(clock.judge_at(0.05).grade, clock.JudgementGrade.PERFECT, "节拍后50ms为Perfect")
+	_assert_equal(clock.judge_at(0.05).grade, clock.JudgementGrade.PERFECT, "节拍后50ms为最佳判定")
+	_assert_equal(clock.judge_at(0.05).grade_name, "Great", "最佳判定对玩家显示为Great")
 	_assert_equal(clock.judge_at(0.10).grade, clock.JudgementGrade.GOOD, "节拍后100ms为Good")
+	_assert_equal(clock.judge_at(0.10).grade_name, "Good", "次级判定对玩家保持Good")
 	_assert_equal(clock.judge_at(0.20).grade, clock.JudgementGrade.MISS, "节拍后200ms为Miss")
-	_assert_equal(clock.judge_at(0.55).grade, clock.JudgementGrade.PERFECT, "下一拍前50ms为Perfect")
+	_assert_equal(clock.judge_at(0.55).grade, clock.JudgementGrade.PERFECT, "下一拍前50ms为最佳判定")
 	_assert_equal(roundi(clock.judge_at(0.55).error_ms), -50, "提前判定保留负误差")
 	_assert_equal(clock.judge_at(0.55).target_time, 0.6, "判定结果保留最近拍点供命中同步")
 	# 音源时间随 pitch_scale 加速或减速，但玩家按键窗口应维持相同的现实毫秒宽度。

@@ -5,7 +5,7 @@ signal main_beat_reached(beat_index: int)
 
 const MAIN_BGM := preload("res://sound/bgm/bg_main_bpm110.mp3")
 const CHANGE_BGM_SFX := preload("res://sound/sounds/changeBgm.mp3")
-const WIN_SFX := preload("res://sound/sounds/win.mp3")
+const BACK_MAP_SFX := preload("res://sound/sounds/backmap.mp3")
 const BATTLE_SCENE_PATH := "res://scenes/battle.tscn"
 const MAIN_BGM_BPM := 110.0
 
@@ -183,13 +183,13 @@ func transition_to_main_bgm() -> void:
 	play_main_bgm()
 
 
-# 战斗胜利的奖励结算完成后使用专属胜利音效，再恢复地图主曲；其余切曲仍保留 changeBgm。
+# 战斗胜利的奖励结算完成后播放返回地图音效，再恢复地图主曲；战斗胜利本身由战斗场景播放 gamewin。
 func transition_after_victory_to_main_bgm() -> void:
 	if _main_player != null and _main_player.playing:
 		_main_player.stream_paused = true
 	if _battle_player != null and _battle_player.playing:
 		_battle_player.stream_paused = true
-	await _play_transition_sfx(WIN_SFX)
+	await _play_transition_sfx(BACK_MAP_SFX)
 	_stop_main_bgm()
 	_stop_battle_bgm()
 	play_main_bgm()

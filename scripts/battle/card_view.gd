@@ -90,8 +90,10 @@ func configure(definition: Resource, index: int) -> void:
 	category_badge.texture = _get_card_type_badge(definition.card_type)
 	# 射门表现仍用于结算与后续动画，但不再挤占卡牌底部的类别信息区。
 	shot_label.text = _get_shot_type_text(definition.shot_type)
-	description_label.text = definition.description
-	tooltip_text = definition.description
+	# 配表内部仍沿用 Perfect 规则键，战斗卡面只转换玩家可见的等级名称。
+	var display_description: String = definition.description.replace("Perfect", "Great")
+	description_label.text = display_description
+	tooltip_text = display_description
 
 
 # 专属插画只覆盖卡牌上方的固定画框；留空时隐藏节点，继续显示通用卡牌底板。
