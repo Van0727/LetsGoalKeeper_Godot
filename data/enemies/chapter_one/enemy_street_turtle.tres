@@ -1,46 +1,46 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_my6u0"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_wxafs"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_owjbe"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_lf6ij"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_yj8uf"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_sfnmy"]
 
-[sub_resource type="Resource" id="Resource_xqtmj"]
-script = ExtResource("1_my6u0")
+[sub_resource type="Resource" id="Resource_kncp6"]
+script = ExtResource("1_lf6ij")
 effect_type = 1
 target = 1
 amount = 8
 
-[sub_resource type="Resource" id="Resource_8iplk"]
-script = ExtResource("1_my6u0")
+[sub_resource type="Resource" id="Resource_6e22f"]
+script = ExtResource("1_lf6ij")
 effect_type = 7
 target = 1
 amount = 4
 
-[sub_resource type="Resource" id="Resource_mr6l4"]
-script = ExtResource("2_wxafs")
+[sub_resource type="Resource" id="Resource_mb6re"]
+script = ExtResource("2_yj8uf")
 id = 5
 category = 1
 description = "获得8点护盾并格挡下一次伤害4点"
-effects = Array[Resource]([SubResource("Resource_xqtmj"), SubResource("Resource_8iplk")])
+effects = Array[Resource]([SubResource("Resource_kncp6"), SubResource("Resource_6e22f")])
 display_name = "缩壳"
 
-[sub_resource type="Resource" id="Resource_sgy8v"]
-script = ExtResource("1_my6u0")
+[sub_resource type="Resource" id="Resource_4d773"]
+script = ExtResource("1_lf6ij")
 amount = 6
 
-[sub_resource type="Resource" id="Resource_8qgqf"]
-script = ExtResource("2_wxafs")
+[sub_resource type="Resource" id="Resource_yapm4"]
+script = ExtResource("2_yj8uf")
 id = 4
 description = "造成6点伤害"
-effects = Array[Resource]([SubResource("Resource_sgy8v")])
+effects = Array[Resource]([SubResource("Resource_4d773")])
 display_name = "慢速射门"
 
 [resource]
-script = ExtResource("3_owjbe")
+script = ExtResource("3_sfnmy")
 enemy_id = "enemy_street_turtle"
 id = 6002
 image_id = 7002
 action_ids = Array[int]([5, 4])
 display_name = "乌龟"
 max_health = 36
-actions = Array[Resource]([SubResource("Resource_mr6l4"), SubResource("Resource_8qgqf")])
+actions = Array[Resource]([SubResource("Resource_mb6re"), SubResource("Resource_yapm4")])

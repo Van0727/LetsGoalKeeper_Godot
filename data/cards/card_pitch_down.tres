@@ -18,4 +18,5 @@ description = "BGM降低1个半音"
 archetype_hint = "鼓手·音调"
 illustration = ExtResource("3_illustration")
 card_type = 2
+enabled = false
 effects = Array[Resource]([SubResource("Resource_1nll5")])

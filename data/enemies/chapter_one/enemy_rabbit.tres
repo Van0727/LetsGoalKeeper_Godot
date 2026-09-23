@@ -1,38 +1,38 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_43mjg"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_3pyi0"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_bomsd"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_j6vh0"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_36l1s"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_qs4p2"]
 
-[sub_resource type="Resource" id="Resource_b76jd"]
-script = ExtResource("1_43mjg")
+[sub_resource type="Resource" id="Resource_dl64w"]
+script = ExtResource("1_j6vh0")
 amount = 4
 
-[sub_resource type="Resource" id="Resource_olet8"]
-script = ExtResource("2_3pyi0")
+[sub_resource type="Resource" id="Resource_jerac"]
+script = ExtResource("2_36l1s")
 id = 6
 description = "造成4点伤害"
-effects = Array[Resource]([SubResource("Resource_b76jd")])
+effects = Array[Resource]([SubResource("Resource_dl64w")])
 display_name = "快踢"
 
-[sub_resource type="Resource" id="Resource_6p0b6"]
-script = ExtResource("1_43mjg")
+[sub_resource type="Resource" id="Resource_yb82x"]
+script = ExtResource("1_j6vh0")
 amount = 3
 hits = 2
 
-[sub_resource type="Resource" id="Resource_7j062"]
-script = ExtResource("2_3pyi0")
+[sub_resource type="Resource" id="Resource_71mcv"]
+script = ExtResource("2_36l1s")
 id = 7
 description = "连续造成2次3点伤害"
-effects = Array[Resource]([SubResource("Resource_6p0b6")])
+effects = Array[Resource]([SubResource("Resource_yb82x")])
 display_name = "双连踢"
 
 [resource]
-script = ExtResource("3_bomsd")
+script = ExtResource("3_qs4p2")
 enemy_id = "enemy_rabbit"
 id = 6003
 image_id = 7003
 action_ids = Array[int]([6, 6, 7])
 display_name = "兔子"
 max_health = 24
-actions = Array[Resource]([SubResource("Resource_olet8"), SubResource("Resource_olet8"), SubResource("Resource_7j062")])
+actions = Array[Resource]([SubResource("Resource_jerac"), SubResource("Resource_jerac"), SubResource("Resource_71mcv")])

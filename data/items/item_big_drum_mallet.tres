@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://ckeasxj285fjc"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_qslhm"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_buvji"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_qslhm"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_big_drum_mallet.png" id="2_27gpc"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_buvji"]
 
-[sub_resource type="Resource" id="Resource_qslhm"]
+[sub_resource type="Resource" id="Resource_caxp7"]
 script = ExtResource("1_qslhm")
 trigger = 2
 operation = 1
@@ -18,5 +19,6 @@ id = 4004
 item_id = "item_big_drum_mallet"
 display_name = "大鼓槌"
 description = "当前BGM小节第一拍打出的卡牌数值效果翻倍，每回合生效一次"
+icon = ExtResource("2_27gpc")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_qslhm")])
+effects = Array[Resource]([SubResource("Resource_caxp7")])

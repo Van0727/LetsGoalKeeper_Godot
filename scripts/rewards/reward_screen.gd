@@ -181,6 +181,7 @@ func _refresh_buttons() -> void:
 			card_views[index].hide()
 			item_contents[index].show()
 			item_icons[index].texture = _get_item_icon(definition)
+			item_icons[index].stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 			item_name_labels[index].text = definition.display_name
 			item_description_labels[index].text = definition.description
 

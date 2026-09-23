@@ -1,43 +1,43 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_kvdln"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_gbdf4"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_dxo52"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_nhmma"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_cosoo"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_ndi12"]
 
-[sub_resource type="Resource" id="Resource_o60hp"]
-script = ExtResource("1_kvdln")
+[sub_resource type="Resource" id="Resource_ku1my"]
+script = ExtResource("1_nhmma")
 effect_type = 1
 target = 1
 amount = 10
 
-[sub_resource type="Resource" id="Resource_a81t0"]
-script = ExtResource("1_kvdln")
+[sub_resource type="Resource" id="Resource_ie8y5"]
+script = ExtResource("1_nhmma")
 effect_type = 8
 target = 1
 amount = 2
 hits = 2
 
-[sub_resource type="Resource" id="Resource_8sbdt"]
-script = ExtResource("2_gbdf4")
+[sub_resource type="Resource" id="Resource_k0ewe"]
+script = ExtResource("2_cosoo")
 id = 13
 category = 1
 description = "获得10点护盾；下回合前2次受伤各反伤2点"
-effects = Array[Resource]([SubResource("Resource_o60hp"), SubResource("Resource_a81t0")])
+effects = Array[Resource]([SubResource("Resource_ku1my"), SubResource("Resource_ie8y5")])
 display_name = "尖甲架势"
 
-[sub_resource type="Resource" id="Resource_5o0nd"]
-script = ExtResource("1_kvdln")
+[sub_resource type="Resource" id="Resource_pvo65"]
+script = ExtResource("1_nhmma")
 amount = 8
 
-[sub_resource type="Resource" id="Resource_hbmms"]
-script = ExtResource("2_gbdf4")
+[sub_resource type="Resource" id="Resource_fbv7c"]
+script = ExtResource("2_cosoo")
 id = 12
 description = "造成8点伤害"
-effects = Array[Resource]([SubResource("Resource_5o0nd")])
+effects = Array[Resource]([SubResource("Resource_pvo65")])
 display_name = "滚动撞击"
 
 [resource]
-script = ExtResource("3_dxo52")
+script = ExtResource("3_ndi12")
 enemy_id = "enemy_armadillo"
 id = 6012
 image_id = 7012
@@ -45,4 +45,4 @@ action_ids = Array[int]([13, 12])
 display_name = "犰狳铁卫"
 tier = 1
 max_health = 72
-actions = Array[Resource]([SubResource("Resource_8sbdt"), SubResource("Resource_hbmms")])
+actions = Array[Resource]([SubResource("Resource_k0ewe"), SubResource("Resource_fbv7c")])

@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_golden_boot.png" id="1_sqd75"]
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_u2q6r"]
 
 [resource]
@@ -8,4 +9,5 @@ id = 4011
 item_id = "item_golden_boot"
 display_name = "金靴"
 description = "所有射门伤害+1"
+icon = ExtResource("1_sqd75")
 amount = 1

@@ -18,4 +18,5 @@ description = "BGM恢复原始音调"
 archetype_hint = "鼓手·音调"
 illustration = ExtResource("3_illustration")
 card_type = 2
+enabled = false
 effects = Array[Resource]([SubResource("Resource_pxc5x")])

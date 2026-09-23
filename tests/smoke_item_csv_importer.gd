@@ -5,6 +5,7 @@ const TABLE_IMPORTER := preload("res://scripts/cards/card_csv_importer.gd")
 
 var _failed := false
 var _output_directory := "res://tests/smoke_item_csv_import_%d" % OS.get_process_id()
+var _invalid_icon_table := "res://tests/.smoke_items_invalid_icon_%d.csv" % OS.get_process_id()
 
 
 func _initialize() -> void:
@@ -16,6 +17,19 @@ func _run() -> void:
 	var missing := importer.import_items("res://tables/items_missing_for_test.csv", "res://tables/item_effects.csv", _output_directory)
 	_assert_true(not missing.ok, "缺失战利品主表明确失败")
 	_assert_true(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_output_directory)), "校验失败前不创建战利品输出目录")
+	# 图片外键失败必须在生成任何资源前终止，避免正式目录留下部分写入。
+	var source_csv := FileAccess.get_file_as_string("res://tables/items.csv")
+	var invalid_csv := source_csv.replace(
+		"item_banana_scarf,item_banana_scarf",
+		"item_banana_scarf,item_missing_icon_for_test"
+	)
+	var invalid_file := FileAccess.open(_invalid_icon_table, FileAccess.WRITE)
+	invalid_file.store_string(invalid_csv)
+	invalid_file.close()
+	var invalid_icon := importer.import_items(_invalid_icon_table, "res://tables/item_effects.csv", _output_directory)
+	_assert_true(not invalid_icon.ok, "不存在的战利品图片明确拒绝导入")
+	_assert_true(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_output_directory)), "图片校验失败不留下部分生成目录")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(_invalid_icon_table))
 	var result := importer.import_items("res://tables/items.csv", "res://tables/item_effects.csv", _output_directory, "%s/item_catalog.tres" % _output_directory)
 	_assert_true(result.ok, "真实战利品配表可完成导入")
 	if result.ok:

@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_be4ru"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_blank_score.png" id="1_cbcsw"]
 
 [resource]
 script = ExtResource("1_be4ru")
@@ -8,4 +9,5 @@ id = 4005
 item_id = "item_blank_score"
 display_name = "无字乐谱"
 description = "回合结束时未出过牌，下一回合第一张牌的数值效果×4"
+icon = ExtResource("1_cbcsw")
 modifier_type = 4
