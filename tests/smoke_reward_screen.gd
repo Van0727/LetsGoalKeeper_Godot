@@ -133,7 +133,9 @@ func _run() -> void:
 		_assert_true(button.clip_text, "遗物按钮限制文本最小宽度")
 		_assert_equal(button.size_flags_horizontal, Control.SIZE_EXPAND_FILL, "遗物按钮均分奖励行宽度")
 		_assert_true(screen.item_contents[index].visible, "遗物阶段显示图标与文字容器")
-		_assert_true(screen.item_icons[index].texture != null, "遗物阶段分配纯色占位图片")
+		_assert_true(screen.item_icons[index].texture != null, "遗物阶段分配正式图片或安全占位图")
+		if screen.choices[index].icon != null:
+			_assert_equal(screen.item_icons[index].texture, screen.choices[index].icon, "奖励槽读取战利品定义中的正式图片")
 		# 占位图和长文字必须受卡片槽位约束，不能按源图尺寸或内容高度撑破三选一布局。
 		_assert_equal(screen.item_icons[index].expand_mode, TextureRect.EXPAND_IGNORE_SIZE, "遗物图标忽略原图尺寸")
 		_assert_equal(screen.item_icons[index].custom_minimum_size, Vector2(80, 48), "遗物图标使用固定小尺寸")

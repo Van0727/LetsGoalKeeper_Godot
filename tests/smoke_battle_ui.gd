@@ -35,21 +35,66 @@ func _run() -> void:
 
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")
+	# 球路仍由足球飞行动画表达，界面不再额外叠加“直球/香蕉球”等文字提示。
+	_assert_true(battle_screen.get_node_or_null("ShotFeedback") == null, "出牌后不显示球路名称文字")
 	# 底部牌堆是玩家直接观察的公开界面：抽牌与弃牌必须拆分显示，不能继续合并成一段文字。
 	var draw_pile_count := battle_screen.get_node_or_null("%DrawPileCount") as Label
 	var discard_pile_count := battle_screen.get_node_or_null("%DiscardPileCount") as Label
 	_assert_true(draw_pile_count != null, "战斗界面提供独立抽牌堆计数")
 	_assert_true(discard_pile_count != null, "战斗界面提供独立弃牌堆计数")
+	var footer := battle_screen.get_node("Footer") as Control
+	var draw_pile_panel := battle_screen.get_node("Footer/DrawPilePanel") as Panel
+	var discard_pile_panel := battle_screen.get_node("Footer/DiscardPilePanel") as Panel
+	_assert_true(not footer is Container, "底部工具栏使用普通 Control，不再自动排列直接子节点")
+	_assert_equal(draw_pile_panel.get_parent(), footer, "抽牌堆是可自由定位的 Footer 直接子节点")
+	_assert_equal(discard_pile_panel.get_parent(), footer, "弃牌堆是可自由定位的 Footer 直接子节点")
+	_assert_equal(battle_screen.skill_button.get_parent(), footer, "超级攻击按钮可在 Footer 内自由定位")
+	_assert_equal(battle_screen.end_turn_button.get_parent(), footer, "结束回合按钮可在 Footer 内自由定位")
 	if draw_pile_count != null and discard_pile_count != null:
 		_assert_equal(draw_pile_count.text, "8", "抽牌堆显示当前十一张初始牌库抽取三张后的余量")
 		_assert_equal(discard_pile_count.text, "0", "弃牌堆开局显示为空")
 	# 四个高频入口必须拥有独立矢量图标，并由真实战斗场景完成资源加载。
 	var draw_pile_icon := battle_screen.get_node_or_null("%DrawPileIcon") as TextureRect
 	var discard_pile_icon := battle_screen.get_node_or_null("%DiscardPileIcon") as TextureRect
-	_assert_true(battle_screen.skill_button.icon != null, "超级攻击按钮加载专属图标")
-	_assert_true(battle_screen.end_turn_button.icon != null, "结束回合按钮加载专属图标")
+	var skill_icon := battle_screen.get_node_or_null("%SkillIcon") as TextureRect
+	var skill_count_label := battle_screen.get_node_or_null("%SkillCountLabel") as Label
+	var skill_pulse_ring := battle_screen.get_node_or_null("%SkillPulseRing") as Control
+	var end_turn_icon := battle_screen.get_node_or_null("%EndTurnIcon") as TextureRect
+	var end_turn_label := battle_screen.get_node_or_null("%EndTurnLabel") as Label
+	_assert_true(skill_icon != null and skill_icon.texture != null, "超级攻击图标作为独立节点加载")
+	_assert_true(end_turn_icon != null and end_turn_icon.texture != null, "结束回合图标作为独立节点加载")
+	_assert_equal(skill_count_label.text, "0/3", "连击数字使用独立标签显示")
+	_assert_equal(end_turn_label.text, "结束", "结束回合按钮显示结束文字")
+	_assert_true(skill_pulse_ring != null, "连击技能提供独立可调整的节拍波形环")
+	_assert_equal(skill_pulse_ring.get_parent(), battle_screen.skill_button, "节拍波形环跟随连击按钮但保留独立布局节点")
+	var skill_button_style := battle_screen.skill_button.get_theme_stylebox("normal") as StyleBoxFlat
+	var end_turn_style := battle_screen.end_turn_button.get_theme_stylebox("normal") as StyleBoxFlat
+	_assert_true(skill_button_style != null and skill_button_style.corner_radius_top_left == 27, "连击技能使用圆形图标底板")
+	_assert_true(end_turn_style != null and end_turn_style.corner_radius_top_left == 27, "结束回合保留深蓝圆形底板")
+	_assert_equal(end_turn_style.shadow_size, skill_button_style.shadow_size, "结束回合不再保留额外高亮外发光")
+	_assert_true(skill_button_style.bg_color.get_luminance() > end_turn_style.bg_color.get_luminance(), "连击可释放底板比结束按钮更明亮")
+	_assert_true(not skill_pulse_ring.visible, "未满足连击条件时不显示技能波形环")
+	battle_screen.controller.combo_state.card_type = 0
+	battle_screen.controller.combo_state.count = 3
+	battle_screen._update_input_state()
+	_assert_true(not battle_screen.skill_button.disabled, "满三点连击后技能按钮可激活")
+	_assert_true(skill_pulse_ring.visible, "技能可激活时显示节拍波形环")
+	battle_screen._on_rhythm_beat_reached(0, 0)
+	_assert_equal(skill_pulse_ring.get("_visual_amplitude"), 0.0, "技能波形环从拍点零振幅开始起峰")
+	await process_frame
+	_assert_true(battle_screen.skill_button.scale.x > 1.0, "技能可激活时跟随拍点进行缩放反馈")
+	await _capture_battle_footer(battle_screen)
+	battle_screen.controller.combo_state.clear()
+	battle_screen._update_input_state()
+	_assert_true(not skill_pulse_ring.visible, "连击清空后立即隐藏技能波形环")
 	_assert_true(draw_pile_icon != null and draw_pile_icon.texture != null, "抽牌堆加载专属图标")
 	_assert_true(discard_pile_icon != null and discard_pile_icon.texture != null, "弃牌堆加载专属图标")
+	if draw_pile_icon != null and discard_pile_icon != null:
+		_assert_equal(draw_pile_icon.get_parent(), draw_pile_panel, "抽牌图标可在抽牌面板内自由定位")
+		_assert_equal(discard_pile_icon.get_parent(), discard_pile_panel, "弃牌图标可在弃牌面板内自由定位")
+	if draw_pile_count != null and discard_pile_count != null:
+		_assert_equal(draw_pile_count.get_parent(), draw_pile_panel, "抽牌数字可在抽牌面板内自由定位")
+		_assert_equal(discard_pile_count.get_parent(), discard_pile_panel, "弃牌数字可在弃牌面板内自由定位")
 	if draw_pile_count != null and discard_pile_count != null:
 		# 空牌堆仍显示明确的 0；测试后恢复真实数组，避免影响后续出牌与胜负流程。
 		var saved_draw_pile: Array[Resource] = battle_screen.deck_state.draw_pile.duplicate()
@@ -62,7 +107,6 @@ func _run() -> void:
 		battle_screen.deck_state.draw_pile = saved_draw_pile
 		battle_screen.deck_state.discard_pile = saved_discard_pile
 		battle_screen._refresh_all()
-	await _capture_battle_footer(battle_screen)
 	_assert_true(
 		not battle_screen.get_node("Pitch").get_theme_stylebox("panel") is StyleBoxTexture,
 		"敌人区域不再使用遮挡球门的图片底图"
@@ -163,10 +207,17 @@ func _run() -> void:
 	_assert_true(battle_screen._great_audio.stream.resource_path.ends_with("sound/sounds/great.mp3"), "Great播放器绑定指定音效")
 	_assert_equal(battle_screen._good_audio.bus, &"SFX", "Good音效进入SFX总线")
 	_assert_equal(battle_screen._great_audio.bus, &"SFX", "Great音效进入SFX总线")
-	_assert_true(battle_screen._game_win_audio.stream.resource_path.ends_with("sound/sounds/gamewin.mp3"), "怪物死亡播放器绑定gamewin音效")
-	_assert_equal(battle_screen._game_win_audio.bus, &"SFX", "怪物死亡音效进入SFX总线")
+	_assert_true(battle_screen._take_damage_audio.stream.resource_path.ends_with("sound/sounds/takedamage.mp3"), "玩家受伤播放器绑定takedamage音效")
+	_assert_true(battle_screen._hit_shield_audio.stream.resource_path.ends_with("sound/sounds/hitshield.mp3"), "护甲命中播放器绑定hitshield音效")
+	_assert_equal(battle_screen._take_damage_audio.bus, &"SFX", "玩家受伤音效进入SFX总线")
+	_assert_equal(battle_screen._hit_shield_audio.bus, &"SFX", "护甲命中音效进入SFX总线")
+	_assert_true(battle_screen._shield_audio.stream.resource_path.ends_with("sound/sounds/shield.mp3"), "获得护盾播放器绑定shield音效")
+	_assert_equal(battle_screen._shield_audio.bus, &"SFX", "获得护盾音效进入SFX总线")
 	var bgm_service := root.get_node("BgmService")
+	_assert_true(bgm_service.GAME_WIN_SFX.resource_path.ends_with("sound/sounds/gamewin.mp3"), "全局服务绑定gamewin音效")
+	_assert_equal(bgm_service._game_win_player.bus, &"SFX", "全局胜利音效进入SFX总线")
 	_assert_true(bgm_service.BACK_MAP_SFX.resource_path.ends_with("sound/sounds/backmap.mp3"), "胜利奖励完成后使用backmap返回地图音效")
+	_assert_equal(bgm_service.process_mode, Node.PROCESS_MODE_ALWAYS, "胜利音效后的BGM渐显不受暂停层影响")
 	battle_screen._on_discipline_card_issued("yellow", 10)
 	_assert_true(battle_screen.card_warning_overlay.visible, "黄牌触发可见警告UI")
 	_assert_true("10" in battle_screen.card_warning_label.text, "黄牌警告显示本回合出牌数")
@@ -222,20 +273,16 @@ func _run() -> void:
 		"target_time": battle_screen.rhythm_clock.get_music_time(),
 	})
 	_assert_true(played, "第一张手牌可以结算")
+	_assert_equal(judgement_audio_events.size(), 1, "Great卡牌成功提交时立即播放评级音")
 	_assert_true(not battle_screen.try_play_hand_card(0), "结算帧内拦截重复出牌")
 	await _wait_for_resolution(battle_screen)
-	_assert_equal(battle_screen.controller.player.energy, 2, "评级音等待期间已恢复战斗输入，不额外阻塞结算")
-	await _wait_for_judgement_audio(judgement_audio_events)
-	_assert_equal(judgement_audio_events.size(), 1, "卡牌全部效果完成后只播放一次评级音")
+	_assert_equal(battle_screen.controller.player.energy, 2, "即时评级音不额外阻塞结算")
+	_assert_equal(judgement_audio_events.size(), 1, "整张牌结算后不重复播放Great评级音")
 	if not judgement_audio_events.is_empty():
 		var audio_event: Array = judgement_audio_events[0]
 		_assert_equal(audio_event[0], "Great", "最佳判定播放Great音效")
-		_assert_true(audio_event[2] > audio_event[1], "评级音目标拍严格晚于全部效果完成时间")
-		_assert_true(
-			absf(audio_event[2] - battle_screen.rhythm_clock.get_next_beat_time(audio_event[1])) < 0.001,
-			"评级音目标是全部效果完成后的下一拍"
-		)
-		_assert_true(audio_event[3] + 0.02 >= audio_event[2], "评级音不早于目标拍播放")
+		_assert_equal(audio_event[1], audio_event[2], "评级音不再等待下一拍，目标时间就是出牌时刻")
+		_assert_equal(audio_event[2], audio_event[3], "评级音与卡牌提交同帧播放")
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "出牌后补回三张")
 	_assert_equal(battle_screen.controller.player.energy, 2, "出牌支付一点能量")
 	judgement_audio_events.clear()
@@ -246,16 +293,16 @@ func _run() -> void:
 		"target_time": battle_screen.rhythm_clock.get_music_time(),
 	})
 	_assert_true(good_played, "第二张手牌可以用Good判定结算")
+	_assert_equal(judgement_audio_events.size(), 1, "Good卡牌成功提交时立即播放评级音")
 	await _wait_for_resolution(battle_screen)
-	await _wait_for_judgement_audio(judgement_audio_events)
-	_assert_equal(judgement_audio_events.size(), 1, "Good卡牌只播放一次评级音")
+	_assert_equal(judgement_audio_events.size(), 1, "Good卡牌结算后不重复播放评级音")
 	if not judgement_audio_events.is_empty():
 		_assert_equal(judgement_audio_events[0][0], "Good", "次级判定播放Good音效")
 	_assert_equal(battle_screen.controller.player.energy, 1, "第二次出牌继续正常支付能量")
 
 	var previous_turn: int = battle_screen.controller.turn_number
 	battle_screen._on_end_turn_pressed()
-	await process_frame
+	_assert_true(await _wait_until_turn(battle_screen, previous_turn + 1, 2.0), "敌方飞球命中后推进回合")
 	_assert_equal(battle_screen.controller.turn_number, previous_turn + 1, "结束回合后推进回合")
 	# 数字与阶段拆开显示后，仍须跟随真实回合推进，不出现写死的总回合数。
 	_assert_equal(battle_screen.turn_label.text, str(previous_turn + 1), "回合底板同步新回合数字")
@@ -288,12 +335,16 @@ func _run() -> void:
 		item_press.button_index = MOUSE_BUTTON_LEFT
 		item_press.pressed = true
 		var held_item_icon := battle_screen.owned_item_icons.get_child(0) as TextureRect
+		var golden_boot_item := REWARD_SERVICE.new().get_item_by_id(4011)
+		_assert_equal(held_item_icon.texture, golden_boot_item.icon, "底部持有栏读取金靴正式图片")
+		_assert_equal(held_item_icon.stretch_mode, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "底部正方形图标保持原比例")
 		battle_screen._on_owned_item_icon_gui_input(item_press, held_item_icon, REWARD_SERVICE.new().get_item_by_id(4011))
 		_assert_true(battle_screen.item_detail_popup.visible, "按住战利品图标显示详情")
 		await create_timer(battle_screen.ITEM_ICON_SCALE_DURATION + 0.05).timeout
 		_assert_equal(held_item_icon.scale, Vector2(1.2, 1.2), "按住战利品图标线性放大至1.2倍")
 		_assert_equal(battle_screen.item_detail_name.text, "金靴", "详情显示战利品名称")
 		_assert_equal(battle_screen.item_detail_description.text, "所有射门伤害+1", "详情显示战利品描述")
+		_assert_equal(battle_screen.item_detail_icon.texture, golden_boot_item.icon, "详情弹窗复用同一张金靴图片")
 		var item_release := InputEventMouseButton.new()
 		item_release.button_index = MOUSE_BUTTON_LEFT
 		item_release.pressed = false
@@ -401,7 +452,13 @@ func _run() -> void:
 	var game_win_audio_events: Array[Array] = []
 	battle_screen.game_win_audio_triggered.connect(
 		func(death_time: float, target_beat_time: float, played_time: float) -> void:
-			game_win_audio_events.append([death_time, target_beat_time, played_time])
+			game_win_audio_events.append([
+				death_time,
+				target_beat_time,
+				played_time,
+				bgm_service._battle_player.volume_db,
+				bgm_service._battle_player.playing,
+			])
 	)
 	battle_screen._on_gm_menu_pressed()
 	battle_screen._on_gm_skip_pressed()
@@ -422,6 +479,8 @@ func _run() -> void:
 			"胜利音效安排在怪物死亡后的下一拍"
 		)
 		_assert_true(game_win_event[2] + 0.02 >= game_win_event[1], "胜利音效不早于目标拍播放")
+		_assert_true(game_win_event[3] <= -70.0, "胜利音效播放期间战斗BGM保持静音但未停播")
+		_assert_true(game_win_event[4], "胜利音效播放期间战斗BGM持续运行")
 	_assert_equal(battle_screen.result_kicker.text, "STAGE CLEAR  •  LIVE COMPLETE", "胜利层展示舞台通关提示")
 	_assert_equal(battle_screen.victory_mark.text, "✦  V  ✦", "胜利层展示独立胜利徽记")
 	_assert_true("1 / 100" in battle_screen.health_stat_label.text, "胜利层回读并展示本场剩余生命")
@@ -434,7 +493,7 @@ func _run() -> void:
 	battle_screen.start_new_battle()
 	battle_screen.controller.player.health = 1
 	battle_screen._on_end_turn_pressed()
-	await process_frame
+	_assert_true(await _wait_until_phase(battle_screen, battle_screen.controller.Phase.FINISHED, 2.0), "致命敌方飞球命中后结束战斗")
 	_assert_equal(battle_screen.controller.phase, battle_screen.controller.Phase.FINISHED, "致命敌方攻击结束战斗")
 	_assert_equal(battle_screen.result_title.text, "战斗失败", "失败结果标题")
 	_assert_equal(battle_screen.result_kicker.text, "RUN ENDED  •  GOAL LOST", "失败层切换为本局结束提示")
@@ -545,6 +604,22 @@ func _wait_until_next_battle(battle_screen: Control, previous_generation: int, t
 	while battle_screen._battle_generation <= previous_generation and Time.get_ticks_msec() < deadline:
 		await process_frame
 	return battle_screen._battle_generation > previous_generation
+
+
+# 敌人直接攻击现在等待足球命中，回合推进断言必须观察真实异步结算完成，而不是固定等一帧。
+func _wait_until_turn(battle_screen: Control, expected_turn: int, timeout_seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + roundi(timeout_seconds * 1000.0)
+	while battle_screen.controller.turn_number != expected_turn and Time.get_ticks_msec() < deadline:
+		await process_frame
+	return battle_screen.controller.turn_number == expected_turn
+
+
+# 致命伤害同样在敌方足球命中后才改变阶段；有限超时防止弹道异常令测试永久等待。
+func _wait_until_phase(battle_screen: Control, expected_phase: int, timeout_seconds: float) -> bool:
+	var deadline := Time.get_ticks_msec() + roundi(timeout_seconds * 1000.0)
+	while battle_screen.controller.phase != expected_phase and Time.get_ticks_msec() < deadline:
+		await process_frame
+	return battle_screen.controller.phase == expected_phase
 
 
 # 显式截图模式保存胜利层真实渲染，供 360×640 基准视口的遮挡与层级验收。

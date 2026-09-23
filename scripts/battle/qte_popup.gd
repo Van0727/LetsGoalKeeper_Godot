@@ -30,8 +30,9 @@ var _rng := RandomNumberGenerator.new()
 var _notes: Array[Dictionary] = []
 var _running := false
 var _first_target_time := 0.0
-var _perfect_window_seconds := 0.06
-var _good_window_seconds := 0.14
+# 未初始化时也与常规出牌一致：GREAT 为75ms，GOOD 为150ms，避免独立预览出现旧窗口。
+var _perfect_window_seconds := 0.075
+var _good_window_seconds := 0.15
 var _counts := {"perfect": 0, "good": 0, "miss": 0}
 var _target_line_y := 278.0
 var _target_pulse_ages := PackedFloat32Array([-1.0, -1.0, -1.0])

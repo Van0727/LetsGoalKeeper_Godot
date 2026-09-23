@@ -149,14 +149,14 @@ func _run() -> void:
 	var second_note: Dictionary = battle.qte_popup._notes[1]
 	var third_note: Dictionary = battle.qte_popup._notes[2]
 	battle.rhythm_clock._audio_player.pitch_scale = 2.0
-	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.14) - 0.28) < 0.0001, "二倍速下140ms窗口对应280ms音源时间")
+	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.15) - 0.30) < 0.0001, "二倍速下150ms窗口对应300ms音源时间")
 	_assert_equal(
 		battle.qte_popup.judge_lane(int(first_note.lane), float(first_note.target_time) + 0.10),
 		"Great",
 		"二倍速下音源晚100ms仍为现实50ms的Great"
 	)
 	battle.rhythm_clock._audio_player.pitch_scale = 0.5
-	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.14) - 0.07) < 0.0001, "半速下140ms窗口对应70ms音源时间")
+	_assert_true(absf(battle.qte_popup._get_source_window_seconds(0.15) - 0.075) < 0.0001, "半速下150ms窗口对应75ms音源时间")
 	_assert_equal(
 		battle.qte_popup.judge_lane(int(second_note.lane), float(second_note.target_time) + 0.05),
 		"Good",

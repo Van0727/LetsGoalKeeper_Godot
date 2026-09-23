@@ -28,8 +28,8 @@ const EFFECT_FIELD_TYPES := [
 ]
 const STEP_FIELD_NAMES := ["effect_id", "effect_index", "effect_type", "target", "description"]
 const STEP_FIELD_TYPES := ["uint16", "uint8", "uint8", "uint8", "string"]
-const ITEM_FIELD_NAMES := ["id", "item_id", "display_name", "description", "rarity", "modifier_type", "amount", "run_max_energy_bonus", "enabled", "source_file"]
-const ITEM_FIELD_TYPES := ["uint16", "string", "string", "string", "uint8", "uint8", "uint16", "uint8", "uint8", "string"]
+const ITEM_FIELD_NAMES := ["id", "item_id", "display_name", "description", "rarity", "modifier_type", "amount", "run_max_energy_bonus", "enabled", "source_file", "icon_file"]
+const ITEM_FIELD_TYPES := ["uint16", "string", "string", "string", "uint8", "uint8", "uint16", "uint8", "uint8", "string", "string"]
 const ITEM_EFFECT_FIELD_NAMES := ["item_id", "effect_index", "trigger", "operation", "target_key", "amount", "chance_percent", "card_filter", "shot_filter", "direction_filter", "rhythm_filter", "target_filter", "requires_shot", "counter_key", "counter_minimum", "counter_maximum", "once_per_turn", "beat_in_bar_filter", "requires_last_beat", "minimum_subdivision", "maximum_turn", "requires_rapid_hits", "source_health_below_percent", "turn_interval"]
 const ITEM_EFFECT_FIELD_TYPES := ["uint16", "uint8", "uint8", "uint8", "string", "float32", "uint8", "uint8", "uint8", "uint8", "uint8", "uint8", "uint8", "string", "uint16", "uint16", "uint8", "int8", "uint8", "uint8", "uint16", "uint8", "uint8", "uint8"]
 
@@ -510,11 +510,26 @@ func _parse_item_row(row: PackedStringArray, line_number: int, items: Dictionary
 	var run_max_energy_bonus := _parse_uint(row[7], 0, 99, "游戏历程能量上限加成", line_number, errors)
 	var enabled := _parse_uint(row[8], 0, 1, "实装状态", line_number, errors)
 	var source_file := row[9].strip_edges()
+	var icon_file := row[10].strip_edges()
 	if numeric_id < 0 or rarity < 0 or modifier_type < 0 or amount < 0 or run_max_energy_bonus < 0 or enabled < 0:
 		return -1
 	if not _is_safe_resource_name(item_id) or not _is_safe_resource_name(source_file):
 		errors.append("战利品主表第%d行稳定ID或资源文件名无效" % line_number)
 		return -1
+	# 图片字段允许暂时留空；填写时只能使用安全文件名，并且必须指向可加载的 PNG 纹理。
+	var icon: Texture2D
+	if not icon_file.is_empty():
+		if not _is_safe_resource_name(icon_file):
+			errors.append("战利品主表第%d行图片文件名无效：%s" % [line_number, icon_file])
+			return -1
+		var icon_path := "res://assets/ui/items/%s.png" % icon_file
+		if not ResourceLoader.exists(icon_path, "Texture2D"):
+			errors.append("战利品主表第%d行图片不存在：%s" % [line_number, icon_path])
+			return -1
+		icon = ResourceLoader.load(icon_path, "Texture2D") as Texture2D
+		if icon == null:
+			errors.append("战利品主表第%d行图片无法加载：%s" % [line_number, icon_path])
+			return -1
 	if row[2].strip_edges().is_empty() or items.has(numeric_id) or legacy_keys.has(item_id):
 		errors.append("战利品主表第%d行名称为空或ID重复" % line_number)
 		return -1
@@ -524,7 +539,7 @@ func _parse_item_row(row: PackedStringArray, line_number: int, items: Dictionary
 	if rarity == ITEM_DEFINITION.Rarity.BOSS and numeric_id < 5000:
 		errors.append("战利品主表第%d行Boss品级必须使用5001-5999号段" % line_number)
 		return -1
-	items[numeric_id] = {"id": numeric_id, "item_id": item_id, "source_file": source_file, "display_name": row[2], "description": row[3], "rarity": rarity, "modifier_type": modifier_type, "amount": amount, "run_max_energy_bonus": run_max_energy_bonus, "enabled": enabled == 1, "effects": []}
+	items[numeric_id] = {"id": numeric_id, "item_id": item_id, "source_file": source_file, "display_name": row[2], "description": row[3], "icon": icon, "rarity": rarity, "modifier_type": modifier_type, "amount": amount, "run_max_energy_bonus": run_max_energy_bonus, "enabled": enabled == 1, "effects": []}
 	legacy_keys[item_id] = numeric_id
 	return numeric_id
 
@@ -607,6 +622,7 @@ func _save_and_verify_item(data: Dictionary, output_directory: String, saved_ite
 	item.item_id = data.item_id
 	item.display_name = data.display_name
 	item.description = data.description
+	item.icon = data.icon
 	item.rarity = data.rarity
 	item.modifier_type = data.modifier_type
 	item.amount = data.amount
@@ -621,7 +637,7 @@ func _save_and_verify_item(data: Dictionary, output_directory: String, saved_ite
 	if save_error != OK:
 		return "保存战利品失败：%s（错误码%d）" % [resource_path, save_error]
 	var saved_item := ResourceLoader.load(resource_path, "", ResourceLoader.CACHE_MODE_REPLACE)
-	if saved_item == null or saved_item.id != item.id or saved_item.item_id != item.item_id or saved_item.run_max_energy_bonus != item.run_max_energy_bonus or saved_item.effects.size() != item.effects.size():
+	if saved_item == null or saved_item.id != item.id or saved_item.item_id != item.item_id or saved_item.icon != item.icon or saved_item.run_max_energy_bonus != item.run_max_energy_bonus or saved_item.effects.size() != item.effects.size():
 		return "战利品导入回读不一致：%s" % resource_path
 	for effect_index in item.effects.size():
 		var saved_effect: Resource = saved_item.effects[effect_index]

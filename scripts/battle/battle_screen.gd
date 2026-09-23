@@ -28,7 +28,9 @@ const HIT_AUDIO_STREAM := preload("res://sound/sounds/hit.mp3")
 const MISS_AUDIO_STREAM := preload("res://sound/sounds/miss.mp3")
 const GOOD_AUDIO_STREAM := preload("res://sound/sounds/good.mp3")
 const GREAT_AUDIO_STREAM := preload("res://sound/sounds/great.mp3")
-const GAME_WIN_AUDIO_STREAM := preload("res://sound/sounds/gamewin.mp3")
+const TAKE_DAMAGE_AUDIO_STREAM := preload("res://sound/sounds/takedamage.mp3")
+const HIT_SHIELD_AUDIO_STREAM := preload("res://sound/sounds/hitshield.mp3")
+const SHIELD_AUDIO_STREAM := preload("res://sound/sounds/shield.mp3")
 const TURTLE := preload("res://data/enemies/enemy_turtle.tres")
 const BEAR := preload("res://data/enemies/enemy_bear.tres")
 const TRAINING_BOSS := preload("res://data/enemies/enemy_training_raccoon_boss.tres")
@@ -85,7 +87,6 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 # 中央波形只响应拍点信号，避免拍内进度形成持续呼吸动画。
 @onready var rhythm_waveform: Control = %RhythmWaveform
 @onready var rhythm_accent_waveform: Control = %RhythmAccentWaveform
-@onready var shot_type_label: Label = %ShotTypeLabel
 @onready var turn_label: Label = %TurnLabel
 @onready var phase_label: Label = %PhaseLabel
 @onready var intent_label: Label = %IntentLabel
@@ -101,6 +102,8 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var draw_pile_count: Label = %DrawPileCount
 @onready var discard_pile_count: Label = %DiscardPileCount
 @onready var skill_button: Button = %SkillButton
+@onready var skill_count_label: Label = %SkillCountLabel
+@onready var skill_pulse_ring: Node = %SkillPulseRing
 @onready var qte_popup: Control = %QTEPopup
 @onready var end_turn_button: Button = %EndTurnButton
 @onready var gm_menu_button: Button = %GMMenuButton
@@ -153,14 +156,16 @@ var _visual_rng := RandomNumberGenerator.new()
 var _attack_hit_audio: AudioStreamPlayer
 # Miss 提示使用独立播放器，避免与足球命中音共用播放头而相互截断。
 var _miss_audio: AudioStreamPlayer
-# Good 与 Great 在整张牌的表现完成后等待下一拍播放，分别持有播放头以保留清晰等级语义。
+# Good 与 Great 在卡牌成功提交时立刻播放，分别持有播放头以与评级文字同步。
 var _good_audio: AudioStreamPlayer
 var _great_audio: AudioStreamPlayer
-# 怪物死亡提示使用独立播放头，严格锚定死亡后的下一拍且不阻塞胜利结算。
-var _game_win_audio: AudioStreamPlayer
+# 受伤与命中护甲按结算结果区分；多段攻击允许短间隔叠音，避免后一次覆盖前一次反馈。
+var _take_damage_audio: AudioStreamPlayer
+var _hit_shield_audio: AudioStreamPlayer
+# 玩家和怪物共用获得护盾音；只在护盾数值实际增加时触发。
+var _shield_audio: AudioStreamPlayer
+# 怪物死亡提示由全局 BGM 服务跨场景播放；这里只保留防重调度标记。
 var _game_win_audio_scheduled := false
-# 当前卡牌待播的判定等级；负值表示 Miss、无节奏上下文或尚未成功提交的卡牌。
-var _pending_judgement_grade := -1
 var _skills_by_type := {
 	0: SUPER_ATTACK,
 	1: SUPER_DEFENSE,
@@ -168,10 +173,14 @@ var _skills_by_type := {
 }
 var _pending_active_skill: Resource
 var _card_warning_tween: Tween
+# 连击按钮保留场景中可编辑的基础缩放；每拍只围绕该基准做短促回弹。
+var _skill_button_base_scale := Vector2.ONE
+var _skill_button_pulse_tween: Tween
 
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
 func _ready() -> void:
+	_skill_button_base_scale = skill_button.scale
 	_attack_hit_audio = AudioStreamPlayer.new()
 	_attack_hit_audio.name = "AttackHitAudio"
 	_attack_hit_audio.stream = HIT_AUDIO_STREAM
@@ -196,11 +205,24 @@ func _ready() -> void:
 	_great_audio.bus = &"SFX"
 	_great_audio.max_polyphony = 2
 	add_child(_great_audio)
-	_game_win_audio = AudioStreamPlayer.new()
-	_game_win_audio.name = "GameWinAudio"
-	_game_win_audio.stream = GAME_WIN_AUDIO_STREAM
-	_game_win_audio.bus = &"SFX"
-	add_child(_game_win_audio)
+	_take_damage_audio = AudioStreamPlayer.new()
+	_take_damage_audio.name = "TakeDamageAudio"
+	_take_damage_audio.stream = TAKE_DAMAGE_AUDIO_STREAM
+	_take_damage_audio.bus = &"SFX"
+	_take_damage_audio.max_polyphony = 4
+	add_child(_take_damage_audio)
+	_hit_shield_audio = AudioStreamPlayer.new()
+	_hit_shield_audio.name = "HitShieldAudio"
+	_hit_shield_audio.stream = HIT_SHIELD_AUDIO_STREAM
+	_hit_shield_audio.bus = &"SFX"
+	_hit_shield_audio.max_polyphony = 4
+	add_child(_hit_shield_audio)
+	_shield_audio = AudioStreamPlayer.new()
+	_shield_audio.name = "ShieldAudio"
+	_shield_audio.stream = SHIELD_AUDIO_STREAM
+	_shield_audio.bus = &"SFX"
+	_shield_audio.max_polyphony = 4
+	add_child(_shield_audio)
 	run_state = get_node_or_null("/root/RunState")
 	# 独立场景测试没有 Autoload 时创建局部状态，正式游戏始终使用全局实例。
 	if run_state == null:
@@ -216,7 +238,6 @@ func _ready() -> void:
 	controller.effect_resolved.connect(_on_effect_resolved)
 	controller.discipline_card_issued.connect(_on_discipline_card_issued)
 	controller.battle_finished.connect(_on_battle_finished)
-	ball_flight.shot_started.connect(_on_shot_started)
 	rhythm_clock.beat_reached.connect(_on_rhythm_beat_reached)
 	qte_popup.qte_finished.connect(_on_qte_finished)
 	# 参考布局把敌人作为上方视觉焦点，玩家状态则压缩到底部生命栏。
@@ -248,8 +269,6 @@ func _apply_metronome_style() -> void:
 	rhythm_feedback.set_circle_enabled(use_circle)
 	rhythm_waveform.visible = not use_circle
 	rhythm_accent_waveform.visible = use_circle
-	# 波形保留原底图；圆圈模式只显示新节奏线，避免旧图片叠在新音符后面。
-	$RhythmLaneArt.visible = not use_circle
 
 
 # 战斗背景直接使用完整图片；保持白色调制可避免运行时染色破坏原始美术。
@@ -272,10 +291,8 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_gm_menu_open = false
 	_show_gm_tools_page()
 	ball_flight.hide()
-	shot_type_label.hide()
 	_pending_effect_events.clear()
 	_pending_battle_result = null
-	_pending_judgement_grade = -1
 	_is_presenting_resolution = false
 	card_warning_overlay.hide()
 	_setup_bgm_calibration()
@@ -426,7 +443,6 @@ func try_play_hand_card(hand_index: int, rhythm_result: Dictionary = {}) -> bool
 	_is_presenting_resolution = true
 	_pending_effect_events.clear()
 	_pending_battle_result = null
-	_pending_judgement_grade = -1
 	var timing_result := rhythm_result
 	if timing_result.is_empty():
 		timing_result = rhythm_clock.judge_at(rhythm_clock.get_music_time())
@@ -441,13 +457,13 @@ func try_play_hand_card(hand_index: int, rhythm_result: Dictionary = {}) -> bool
 		_update_input_state()
 		return false
 
-	_pending_judgement_grade = int(timing_result.get("grade", -1))
+	_show_successful_card_judgement(timing_result)
 	status_label.text = "正在结算卡牌效果"
 	call_deferred("_play_pending_resolution")
 	return true
 
 
-# 有效松手时立即采样音频播放头；判定结果先反馈给玩家，再作为只读上下文提交结算。
+# 有效松手时立即采样音频播放头；评级只在卡牌成功提交后反馈，避免无效操作误触发 GOOD/GREAT。
 func _on_card_played(card_view: DraggableCard) -> void:
 	if card_view is BattleCardView:
 		var rhythm_result: Dictionary = rhythm_clock.judge_now()
@@ -457,7 +473,6 @@ func _on_card_played(card_view: DraggableCard) -> void:
 			rhythm_result["grade_name"] = "Great"
 			rhythm_result["effect_multiplier"] = 1.0
 			rhythm_result["error_ms"] = 0.0
-		rhythm_feedback.show_judgement(rhythm_result)
 		var played := try_play_hand_card(card_view.hand_index, rhythm_result)
 		_play_miss_audio_if_needed(rhythm_result, played)
 
@@ -469,6 +484,21 @@ func _play_miss_audio_if_needed(rhythm_result: Dictionary, played: bool) -> bool
 	_miss_audio.play()
 	miss_audio_triggered.emit()
 	return true
+
+
+# 成功打出时同步显示评级并播放 GOOD/GREAT 音效；不再等待飞球命中或下一拍，数值结算仍走原队列。
+func _show_successful_card_judgement(timing_result: Dictionary) -> void:
+	rhythm_feedback.show_judgement(timing_result)
+	var grade := int(timing_result.get("grade", -1))
+	if grade not in [rhythm_clock.JudgementGrade.PERFECT, rhythm_clock.JudgementGrade.GOOD]:
+		return
+	var grade_name := "Great" if grade == rhythm_clock.JudgementGrade.PERFECT else "Good"
+	var player := _great_audio if grade == rhythm_clock.JudgementGrade.PERFECT else _good_audio
+	# 节拍时钟以基础 Node 声明，显式标注音频时间类型以兼容 GDScript 静态推断。
+	var card_played_time: float = rhythm_clock.get_music_time()
+	player.play()
+	# 保留既有信号参数数量以兼容监听方；三个时间均表示本次成功出牌的即时触发时刻。
+	judgement_audio_triggered.emit(grade_name, card_played_time, card_played_time, card_played_time)
 
 
 # 拖拽开始时只显示横向虚线；尚未越线前不显示释放提示。
@@ -499,6 +529,21 @@ func _on_rhythm_beat_reached(beat_index: int, _bar_index: int) -> void:
 	enemy_display.play_rhythm_beat(beat_index, rhythm_clock.beats_per_bar)
 	if rhythm_waveform != null:
 		rhythm_waveform.pulse_beat()
+	if not skill_button.disabled:
+		skill_pulse_ring.call("pulse_beat")
+		_pulse_skill_button()
+
+
+# 连击可释放时按真实拍点做一次缩放回弹；Tween 被下一拍替换，避免快节奏下叠加成永久放大。
+func _pulse_skill_button() -> void:
+	if _skill_button_pulse_tween != null and _skill_button_pulse_tween.is_valid():
+		_skill_button_pulse_tween.kill()
+	skill_button.scale = _skill_button_base_scale
+	_skill_button_pulse_tween = create_tween().bind_node(skill_button)
+	_skill_button_pulse_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_skill_button_pulse_tween.tween_property(skill_button, "scale", _skill_button_base_scale * 1.11, 0.07)
+	_skill_button_pulse_tween.set_ease(Tween.EASE_IN)
+	_skill_button_pulse_tween.tween_property(skill_button, "scale", _skill_button_base_scale, 0.18)
 
 
 # 结束回合先弃掉剩余手牌，再执行敌人行动；存活时进入新回合并重新抽三张。
@@ -512,12 +557,76 @@ func _on_end_turn_pressed() -> void:
 	# 结束回合按钮即时采样 BGM 拍位，回转鼓组不依赖上一次出牌时的拍位。
 	var end_timing: Dictionary = rhythm_clock.judge_now()
 	end_timing["is_last_beat"] = int(end_timing.get("beat_in_bar", -1)) == rhythm_clock.beats_per_bar - 1
-	# 攻击表现与核心同步启动但不阻塞结算，避免视觉时长改变伤害顺序。
-	enemy_display.play_enemy_attack()
-	controller.end_player_turn(end_timing)
+	_resolve_enemy_turn_with_ball(end_timing, false, discarded)
+
+
+# 先完成回合末流血等前置结算；直接攻击意图等待足球命中玩家后才真正执行伤害与附带效果。
+func _resolve_enemy_turn_with_ball(end_timing: Dictionary, forced_by_red_card: bool, discarded: int) -> void:
+	var started := (
+		controller.force_end_turn_for_red_card(true)
+		if forced_by_red_card
+		else controller.end_player_turn(end_timing, true)
+	)
+	if not started:
+		_finish_resolution()
+		return
+	if controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_END:
+		if controller.enemy_intent_has_direct_attack():
+			enemy_display.play_enemy_attack()
+			await _play_enemy_attack_ball()
+		controller.continue_deferred_enemy_turn()
 	if controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN:
 		deck_state.draw_cards(STARTING_HAND_SIZE)
+	if forced_by_red_card:
+		status_label.text = "红牌：弃掉 %d 张手牌并强制结束回合" % discarded
+		_fade_card_warning(0.65)
 	call_deferred("_finish_resolution")
+
+
+# 敌方统一使用直球表现；球抵达玩家生命栏中心后才返回，调用方随后提交敌人行动。
+func _play_enemy_attack_ball() -> void:
+	var launch_music_time: float = rhythm_clock.get_music_time()
+	var flight_seconds: float = rhythm_clock.beats_to_seconds(1.0)
+	var hit_music_time: float = launch_music_time + flight_seconds
+	var player_target := player_display.get_global_rect().get_center()
+	var visual_state := {"finished": false}
+	_play_enemy_attack_ball_visual(
+		enemy_display.get_portrait_global_center(),
+		player_target,
+		flight_seconds,
+		launch_music_time,
+		hit_music_time,
+		visual_state
+	)
+	await _wait_for_shot_launch(hit_music_time)
+	_play_attack_impact_audio()
+	ball_flight.notify_impact()
+	while not bool(visual_state.finished):
+		await get_tree().process_frame
+
+
+# 敌人飞球只负责表现，关闭组件自动命中音，伤害提交由命中等待结束后的统一入口负责。
+func _play_enemy_attack_ball_visual(
+		start_position: Vector2,
+		end_position: Vector2,
+		flight_seconds: float,
+		launch_music_time: float,
+		hit_music_time: float,
+		visual_state: Dictionary
+) -> void:
+	await ball_flight.play_shot(
+		CARD_DEFINITION.ShotType.STRAIGHT,
+		start_position,
+		end_position,
+		_visual_rng,
+		false,
+		flight_seconds,
+		rhythm_clock,
+		launch_music_time,
+		hit_music_time,
+		false
+	)
+	visual_state.finished = true
 
 
 # 主动技先打开战斗内嵌QTE弹窗；QTE完成前只锁输入，不提前消耗连击点或修改战斗数值。
@@ -967,8 +1076,7 @@ func _refresh_all() -> void:
 func _refresh_monster_info() -> void:
 	var max_health: int = maxi(controller.enemy.max_health, 1)
 	var health: int = clampi(controller.enemy.health, 0, max_health)
-	enemy_health_fill_clip.size.x = 123.0 * float(health) / float(max_health)
-	enemy_health_text.text = "%d/%d" % [health, max_health]
+	_set_monster_health_display(health)
 	var action: Resource = controller.current_enemy_action
 	var category := 0
 	if action != null:
@@ -991,7 +1099,7 @@ func _refresh_monster_info() -> void:
 	talking_text.tooltip_text = full_intent
 
 
-# 底部只显示战利品图片、不显示名称；图标根据品级使用现阶段的纯色占位，容器会按可用宽度自动换行。
+# 底部只显示战利品图片、不显示名称；正式图片缺失时按品级回退，容器按可用宽度自动换行。
 func _refresh_owned_item_icons() -> void:
 	var current_item_ids: Array[int] = []
 	if run_state != null:
@@ -1013,7 +1121,9 @@ func _refresh_owned_item_icons() -> void:
 		icon.custom_minimum_size = Vector2(16.0, 16.0)
 		icon.pivot_offset = icon.custom_minimum_size * 0.5
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.texture = BOSS_ITEM_PLACEHOLDER if item.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
+		icon.texture = _get_item_icon(item)
+		# 正方形素材在固定槽位内保持原比例，避免奖励页、底栏和详情弹窗出现拉伸。
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		# 图标必须接收按住事件；它位于底部空白区，不会遮挡手牌拖拽输入。
 		icon.mouse_filter = Control.MOUSE_FILTER_STOP
 		icon.gui_input.connect(_on_owned_item_icon_gui_input.bind(icon, item))
@@ -1066,10 +1176,18 @@ func _select_owned_item_icon(icon: TextureRect, item: Resource) -> void:
 		_animate_owned_item_icon_scale(_selected_item_icon, ITEM_ICON_NORMAL_SCALE)
 	_selected_item_icon = icon
 	_animate_owned_item_icon_scale(icon, ITEM_ICON_SELECTED_SCALE)
-	item_detail_icon.texture = BOSS_ITEM_PLACEHOLDER if item.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
+	item_detail_icon.texture = _get_item_icon(item)
+	item_detail_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	item_detail_name.text = item.display_name
 	item_detail_description.text = _to_player_grade_terms(item.description)
 	item_detail_popup.show()
+
+
+# 战斗内两个图标入口复用同一纹理选择，缺失图片不会影响旧档恢复或禁用战利品调试。
+func _get_item_icon(item: Resource) -> Texture2D:
+	if item != null and item.icon != null:
+		return item.icon
+	return BOSS_ITEM_PLACEHOLDER if item != null and item.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
 
 
 func _hide_owned_item_detail() -> void:
@@ -1109,14 +1227,20 @@ func _update_input_state() -> void:
 	var current_skill := _get_current_skill()
 	var combo_count: int = controller.combo_state.count
 	if controller.item_runtime.has_item(BLINDFOLD_ID):
-		skill_button.text = "换牌 %d/3" % controller.blindfold_charges
+		# 图标与数字独立排版；按钮本体只保留点击和圆形底板，蒙眼布状态用提示说明语义。
+		skill_count_label.text = "%d/3" % controller.blindfold_charges
+		skill_button.tooltip_text = "换牌 %d/3" % controller.blindfold_charges
 		skill_button.disabled = not can_act or controller.blindfold_charges <= 0
 	elif current_skill == null:
-		skill_button.text = "连击 0/3"
+		skill_count_label.text = "0/3"
+		skill_button.tooltip_text = "连击 0/3"
 	else:
-		skill_button.text = "%s %d/3" % [current_skill.display_name, combo_count]
+		skill_count_label.text = "%d/3" % combo_count
+		skill_button.tooltip_text = "%s %d/3" % [current_skill.display_name, combo_count]
 	if not controller.item_runtime.has_item(BLINDFOLD_ID):
 		skill_button.disabled = not can_act or not controller.combo_state.can_activate()
+	# 波形环严格复用最终禁用状态，蒙眼布的换牌入口不会误显示为连击已准备。
+	skill_pulse_ring.call("set_skill_ready", not skill_button.disabled)
 	for child in hand_layer.get_children():
 		if child is BattleCardView:
 			var affordable: bool = controller.player.can_spend_energy(child.card_definition.cost)
@@ -1159,8 +1283,6 @@ func _play_pending_resolution() -> void:
 		event_index += 1
 	_pending_effect_events.clear()
 	_is_presenting_resolution = false
-	# 卡牌的数值、飞球和反馈全部结束后，独立安排评级音；等待拍点不阻塞输入、红牌或胜负流程。
-	_schedule_pending_judgement_audio(_battle_generation)
 	if _pending_battle_result != null:
 		var victory: bool = _pending_battle_result
 		_pending_battle_result = null
@@ -1173,47 +1295,11 @@ func _play_pending_resolution() -> void:
 	_finish_resolution()
 
 
-# 评级音不参与数值结算；BGM 停止、场景退出或开启新战斗时直接放弃旧任务。
-func _schedule_pending_judgement_audio(battle_generation: int) -> void:
-	var grade := _pending_judgement_grade
-	_pending_judgement_grade = -1
-	if grade not in [rhythm_clock.JudgementGrade.PERFECT, rhythm_clock.JudgementGrade.GOOD]:
-		return
-	var effects_finished_time: float = rhythm_clock.get_music_time()
-	var target_beat_time: float = rhythm_clock.get_next_beat_time(effects_finished_time)
-	while (
-		is_inside_tree()
-		and battle_generation == _battle_generation
-		and rhythm_clock.is_music_playing()
-		and rhythm_clock.get_music_time() < target_beat_time
-	):
-		await get_tree().process_frame
-	if not is_inside_tree() or battle_generation != _battle_generation or not rhythm_clock.is_music_playing():
-		return
-	var grade_name := "Great" if grade == rhythm_clock.JudgementGrade.PERFECT else "Good"
-	var player := _great_audio if grade == rhythm_clock.JudgementGrade.PERFECT else _good_audio
-	player.play()
-	judgement_audio_triggered.emit(
-		grade_name,
-		effects_finished_time,
-		target_beat_time,
-		rhythm_clock.get_music_time()
-	)
-
-
 # 红牌等待当前牌的所有飞行与反馈完成后再弃牌、推进敌方行动，避免动画引用过期状态。
 func _force_end_turn_after_red_card() -> void:
 	var discarded := deck_state.discard_hand()
-	# 红牌强制结束回合也会触发敌方行动，保持与手动结束回合相同的攻击表现。
-	enemy_display.play_enemy_attack()
-	if not controller.force_end_turn_for_red_card():
-		_finish_resolution()
-		return
-	if controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN:
-		deck_state.draw_cards(STARTING_HAND_SIZE)
-	status_label.text = "红牌：弃掉 %d 张手牌并强制结束回合" % discarded
-	_fade_card_warning(0.65)
-	call_deferred("_finish_resolution")
+	# 红牌与手动结束回合复用同一敌方飞球和命中结算入口，避免两套时序产生差异。
+	_resolve_enemy_turn_with_ball({}, true, discarded)
 
 
 # 仅把带弹道的对敌伤害纳入飞球队列；自伤和非攻击效果仍保持即时、严格的数组顺序。
@@ -1239,11 +1325,9 @@ func _play_shot_group(events: Array[Dictionary]) -> void:
 		if index > 0:
 			add_child(flight)
 			flight.playback_speed = ball_flight.playback_speed
-			flight.shot_started.connect(_on_shot_started)
 		_play_shot_event(flight, event, launch_music_time, completion, index > 0)
 	while completion.remaining > 0:
 		await get_tree().process_frame
-	shot_type_label.hide()
 
 
 # 正式播放等待音频时间轴到达发射点；高速冒烟测试继续按压缩后的画面时间执行。
@@ -1335,23 +1419,38 @@ func _apply_effect_feedback(event: Dictionary) -> void:
 	var display: CharacterDisplay = player_display if target == controller.player else enemy_display
 	match event.get("type", ""):
 		"damage":
-			display.set_health(event.get("health_after", target.health))
+			var health_after: int = int(event.get("health_after", target.health))
+			var health_damage: int = int(event.get("health_damage", 0))
+			var absorbed: int = int(event.get("absorbed", 0))
+			display.set_health(health_after)
+			# 战斗表现期间全量状态刷新会被抑制；顶部怪物血条必须在每颗球命中时读取该段快照，
+			# 否则虽然核心已经逐段扣血，玩家仍只会在整张牌结束后看到最终生命。
+			if target == controller.enemy:
+				_set_monster_health_display(health_after)
 			display.set_shield(event.get("shield_after", target.shield))
-			if event.get("health_damage", 0) > 0:
+			# 受击类音效只服务玩家：怪物受伤或护甲吸收仍保留画面反馈，但不额外播音。
+			if target == controller.player and absorbed > 0:
+				_hit_shield_audio.play()
+			if target == controller.player and health_damage > 0:
+				_take_damage_audio.play()
+			if health_damage > 0:
 				# 射门事件携带真实弹道和方向，显示层据此选择击退或压扁动作。
 				display.show_damage(
-					event.health_damage,
+					health_damage,
 					int(event.get("shot_type", 0)),
 					int(event.get("shot_direction", 0))
 				)
-			elif event.get("absorbed", 0) > 0:
-				display.show_shield_loss(event.absorbed)
+			elif absorbed > 0:
+				display.show_shield_loss(absorbed)
 		"heal":
 			display.set_health(event.get("health_after", target.health))
 			display.show_heal(event.amount)
 		"shield":
 			display.set_shield(event.get("shield_after", target.shield))
-			display.show_shield_gain(event.amount)
+			var shield_gained: int = int(event.get("amount", 0))
+			if shield_gained > 0:
+				_shield_audio.play()
+				display.show_shield_gain(shield_gained)
 		"shield_spent":
 			# 主动卸甲不是受伤，但仍即时刷新护盾条并复用护盾损失表现。
 			display.set_shield(event.get("shield_after", target.shield))
@@ -1367,12 +1466,12 @@ func _apply_effect_feedback(event: Dictionary) -> void:
 				bgm_service.shift_battle_pitch(int(event.get("semitone_delta", 0)))
 
 
-# 足球组件已解析 RANDOM 的实际弹道，此处仅同步显示本次真实射门类型。
-func _on_shot_started(shot_type: int) -> void:
-	var names := ["射门", "直球", "香蕉球", "挑射", "随机射门"]
-	var safe_index := clampi(shot_type, 0, names.size() - 1)
-	shot_type_label.text = names[safe_index]
-	shot_type_label.show()
+# 只刷新玩家可见的顶部怪物生命，不读取控制器的未来状态，保证并发多段按命中顺序显示。
+func _set_monster_health_display(current_health: int) -> void:
+	var max_health: int = maxi(controller.enemy.max_health, 1)
+	var safe_health := clampi(current_health, 0, max_health)
+	enemy_health_fill_clip.size.x = 123.0 * float(safe_health) / float(max_health)
+	enemy_health_text.text = "%d/%d" % [safe_health, max_health]
 
 
 # 保留最近一条核心日志作为紧凑状态提示，便于解释无效操作与随机分支。
@@ -1437,7 +1536,9 @@ func _schedule_game_win_audio(battle_generation: int) -> void:
 		await get_tree().process_frame
 	if not is_inside_tree() or battle_generation != _battle_generation or not rhythm_clock.is_music_playing():
 		return
-	_game_win_audio.play()
+	var bgm_service := get_node_or_null("/root/BgmService")
+	if bgm_service != null:
+		bgm_service.play_game_win_sfx()
 	game_win_audio_triggered.emit(death_time, target_beat_time, rhythm_clock.get_music_time())
 
 

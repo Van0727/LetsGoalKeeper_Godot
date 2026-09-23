@@ -13,7 +13,6 @@
 [ext_resource type="Script" uid="uid://dp2rjeesedydd" path="res://scripts/battle/qte_popup.gd" id="11_qte"]
 [ext_resource type="Texture2D" uid="uid://dbo1joqxlljb4" path="res://assets/ui/backgrounds/battle_stage_background_v2.png" id="12_background_art"]
 [ext_resource type="Texture2D" uid="uid://cdd7onxysf5gb" path="res://assets/placeholders/top_status.png" id="13_top_status_art"]
-[ext_resource type="Texture2D" uid="uid://0pvr5eh4qvyt" path="res://assets/placeholders/rhythm_lane.png" id="15_rhythm_lane_art"]
 [ext_resource type="Texture2D" uid="uid://dsd3baeberqwu" path="res://assets/placeholders/resource_and_combo.png" id="16_resource_art"]
 [ext_resource type="Texture2D" uid="uid://b0752ypjdjx8n" path="res://assets/placeholders/player_status.png" id="18_player_status_art"]
 [ext_resource type="Texture2D" uid="uid://bwqr7t5tx00jq" path="res://assets/placeholders/action_button.png" id="19_action_button_art"]
@@ -35,6 +34,7 @@
 [ext_resource type="Texture2D" uid="uid://dao53d8pk6scw" path="res://assets/ui/battle/icon_end_turn.svg" id="39_end_turn_icon"]
 [ext_resource type="Texture2D" uid="uid://b1iwals3rs7a3" path="res://assets/ui/battle/icon_draw_pile.svg" id="40_draw_pile_icon"]
 [ext_resource type="Texture2D" uid="uid://yab5h252dg05" path="res://assets/ui/battle/icon_discard_pile.svg" id="41_discard_pile_icon"]
+[ext_resource type="Script" uid="uid://bcu5i4ta6uy1" path="res://scripts/battle/skill_pulse_ring.gd" id="42_skill_pulse_ring"]
 
 [sub_resource type="StyleBoxTexture" id="Style_button"]
 texture = ExtResource("19_action_button_art")
@@ -107,6 +107,46 @@ corner_radius_top_left = 9
 corner_radius_top_right = 9
 corner_radius_bottom_right = 9
 corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="Style_combo_skill_active"]
+bg_color = Color(0.04, 0.58, 0.72, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.72, 1, 0.96, 1)
+corner_radius_top_left = 27
+corner_radius_top_right = 27
+corner_radius_bottom_right = 27
+corner_radius_bottom_left = 27
+shadow_color = Color(0, 0.85, 1, 0.62)
+shadow_size = 5
+
+[sub_resource type="StyleBoxFlat" id="Style_combo_skill_disabled"]
+bg_color = Color(0.035, 0.075, 0.13, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.42, 0.55, 0.85)
+corner_radius_top_left = 27
+corner_radius_top_right = 27
+corner_radius_bottom_right = 27
+corner_radius_bottom_left = 27
+
+[sub_resource type="StyleBoxFlat" id="Style_combo_skill_ready"]
+bg_color = Color(0.045, 0.12, 0.23, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 0.72, 0.22, 1)
+corner_radius_top_left = 27
+corner_radius_top_right = 27
+corner_radius_bottom_right = 27
+corner_radius_bottom_left = 27
+shadow_color = Color(1, 0.31, 0.06, 0.55)
+shadow_size = 5
 
 [sub_resource type="StyleBoxTexture" id="Style_player_status"]
 texture = ExtResource("18_player_status_art")
@@ -597,36 +637,6 @@ grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("28_accent_waveform")
 
-[node name="RhythmLaneArt" type="TextureRect" parent="." unique_id=564343026]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.08
-anchor_right = 0.92
-offset_top = 232.0
-offset_bottom = 324.0
-grow_horizontal = 2
-mouse_filter = 2
-texture = ExtResource("15_rhythm_lane_art")
-expand_mode = 1
-
-[node name="ShotFeedback" type="HBoxContainer" parent="." unique_id=523925528]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.35
-anchor_right = 0.65
-offset_top = 248.0
-offset_bottom = 274.0
-grow_horizontal = 2
-alignment = 1
-
-[node name="ShotTypeLabel" type="Label" parent="ShotFeedback" unique_id=1749729513]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.9, 0.45, 1)
-theme_override_font_sizes/font_size = 14
-text = "直球"
-
 [node name="BallFlight" parent="." unique_id=1103332091 instance=ExtResource("6_ball")]
 
 [node name="CardWarningOverlay" type="PanelContainer" parent="." unique_id=209892383]
@@ -697,9 +707,9 @@ horizontal_alignment = 1
 z_index = 2
 texture_filter = 2
 layout_mode = 0
-offset_left = 4.0
-offset_top = 305.0
-offset_right = 73.0
+offset_left = 3.0
+offset_top = 304.0
+offset_right = 60.0
 offset_bottom = 342.0
 mouse_filter = 2
 texture = ExtResource("27_turn_panel")
@@ -708,10 +718,10 @@ expand_mode = 1
 [node name="LightningIcon" type="TextureRect" parent="EnergyPanel" unique_id=609372865]
 texture_filter = 2
 layout_mode = 0
-offset_left = 8.0
-offset_top = 5.0
-offset_right = 24.0
-offset_bottom = 30.0
+offset_left = 4.0
+offset_top = 6.0
+offset_right = 20.0
+offset_bottom = 31.0
 mouse_filter = 2
 texture = ExtResource("26_energy_icon")
 expand_mode = 1
@@ -720,9 +730,9 @@ stretch_mode = 5
 [node name="EnergyLabel" type="Label" parent="EnergyPanel" unique_id=761422072]
 unique_name_in_owner = true
 layout_mode = 1
-offset_left = 23.0
+offset_left = 19.0
 offset_top = 4.0
-offset_right = 66.0
+offset_right = 56.0
 offset_bottom = 31.0
 theme_override_colors/font_color = Color(0.88, 0.95, 1, 1)
 theme_override_font_sizes/font_size = 19
@@ -762,6 +772,26 @@ text = "BEAT  1/4"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="JudgementGlowLabel" type="Label" parent="RhythmFeedback" unique_id=198415202]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -110.0
+offset_right = 160.0
+offset_bottom = -22.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(160, 36)
+theme_override_font_sizes/font_size = 64
+text = "GREAT"
+horizontal_alignment = 1
+
 [node name="JudgementLabel" type="Label" parent="RhythmFeedback" unique_id=832664186]
 unique_name_in_owner = true
 layout_mode = 1
@@ -770,16 +800,16 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -110.0
-offset_top = 24.0
-offset_right = 110.0
-offset_bottom = 48.0
+offset_left = -160.0
+offset_top = -110.0
+offset_right = 160.0
+offset_bottom = -22.0
 grow_horizontal = 2
 grow_vertical = 2
-pivot_offset = Vector2(110, 12)
+pivot_offset = Vector2(160, 36)
 theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
-theme_override_font_sizes/font_size = 14
-text = "Great · 准拍"
+theme_override_font_sizes/font_size = 64
+text = "GREAT"
 horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="." unique_id=241234075]
@@ -877,93 +907,93 @@ mouse_filter = 2
 texture = ExtResource("19_action_button_art")
 expand_mode = 1
 
-[node name="Footer" type="HBoxContainer" parent="." unique_id=1064590585]
+[node name="Footer" type="Control" parent="." unique_id=1064590585]
 layout_mode = 1
+anchors_preset = 0
 offset_left = 4.0
 offset_top = 344.0
 offset_right = 356.0
 offset_bottom = 398.0
-theme_override_constants/separation = 6
 
-[node name="PileGroup" type="HBoxContainer" parent="Footer" unique_id=26369081]
-custom_minimum_size = Vector2(116, 54)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="DrawPilePanel" type="PanelContainer" parent="Footer/PileGroup" unique_id=571129155]
+[node name="DrawPilePanel" type="Panel" parent="Footer" unique_id=571129155]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 54)
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 0
+offset_top = 5.0
+offset_right = 56.0
+offset_bottom = 47.0
 theme_override_styles/panel = SubResource("Style_draw_pile")
 
-[node name="Content" type="HBoxContainer" parent="Footer/PileGroup/DrawPilePanel" unique_id=842006871]
-layout_mode = 2
-theme_override_constants/separation = 1
-
-[node name="DrawPileIcon" type="TextureRect" parent="Footer/PileGroup/DrawPilePanel/Content" unique_id=1889672769]
+[node name="DrawPileIcon" type="TextureRect" parent="Footer/DrawPilePanel" unique_id=1889672769]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(25, 30)
-layout_mode = 2
+layout_mode = 0
+offset_left = 1.0
+offset_top = 4.0000114
+offset_right = 32.0
+offset_bottom = 41.200012
 texture = ExtResource("40_draw_pile_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Info" type="VBoxContainer" parent="Footer/PileGroup/DrawPilePanel/Content" unique_id=2113325136]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = -3
-
-[node name="Caption" type="Label" parent="Footer/PileGroup/DrawPilePanel/Content/Info" unique_id=1354364967]
-layout_mode = 2
+[node name="Caption" type="Label" parent="Footer/DrawPilePanel" unique_id=1354364967]
+layout_mode = 0
+offset_left = 26.0
+offset_top = 5.0
+offset_right = 52.0
+offset_bottom = 22.0
 theme_override_colors/font_color = Color(0.38, 0.86, 0.95, 1)
 theme_override_font_sizes/font_size = 10
 text = "牌堆"
 horizontal_alignment = 1
 
-[node name="DrawPileCount" type="Label" parent="Footer/PileGroup/DrawPilePanel/Content/Info" unique_id=160254180]
+[node name="DrawPileCount" type="Label" parent="Footer/DrawPilePanel" unique_id=160254180]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 0
+offset_left = 27.0
+offset_top = 13.0
+offset_right = 53.0
+offset_bottom = 39.0
 theme_override_colors/font_color = Color(0.9, 0.98, 1, 1)
 theme_override_font_sizes/font_size = 17
 text = "5"
 horizontal_alignment = 1
 
-[node name="DiscardPilePanel" type="PanelContainer" parent="Footer/PileGroup" unique_id=448799941]
+[node name="DiscardPilePanel" type="Panel" parent="Footer" unique_id=448799941]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 54)
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 0
+offset_left = 60.0
+offset_top = 5.0
+offset_right = 116.0
+offset_bottom = 47.0
 theme_override_styles/panel = SubResource("Style_discard_pile")
 
-[node name="Content" type="HBoxContainer" parent="Footer/PileGroup/DiscardPilePanel" unique_id=1477982242]
-layout_mode = 2
-theme_override_constants/separation = 1
-
-[node name="DiscardPileIcon" type="TextureRect" parent="Footer/PileGroup/DiscardPilePanel/Content" unique_id=1504679291]
+[node name="DiscardPileIcon" type="TextureRect" parent="Footer/DiscardPilePanel" unique_id=1504679291]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(25, 30)
-layout_mode = 2
+layout_mode = 0
+offset_top = 2.0
+offset_right = 30.0
+offset_bottom = 38.0
 texture = ExtResource("41_discard_pile_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Info" type="VBoxContainer" parent="Footer/PileGroup/DiscardPilePanel/Content" unique_id=1882078383]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = -3
-
-[node name="Caption" type="Label" parent="Footer/PileGroup/DiscardPilePanel/Content/Info" unique_id=16312697]
-layout_mode = 2
+[node name="Caption" type="Label" parent="Footer/DiscardPilePanel" unique_id=16312697]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 5.0
+offset_right = 54.0
+offset_bottom = 22.0
 theme_override_colors/font_color = Color(1, 0.55, 0.47, 1)
 theme_override_font_sizes/font_size = 10
 text = "弃牌"
 horizontal_alignment = 1
 
-[node name="DiscardPileCount" type="Label" parent="Footer/PileGroup/DiscardPilePanel/Content/Info" unique_id=2030059048]
+[node name="DiscardPileCount" type="Label" parent="Footer/DiscardPilePanel" unique_id=2030059048]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 0
+offset_left = 28.0
+offset_top = 13.0
+offset_right = 54.0
+offset_bottom = 39.0
 theme_override_colors/font_color = Color(1, 0.92, 0.9, 1)
 theme_override_font_sizes/font_size = 17
 text = "0"
@@ -971,31 +1001,87 @@ horizontal_alignment = 1
 
 [node name="SkillButton" type="Button" parent="Footer" unique_id=421352477]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(114, 54)
-layout_mode = 2
-theme_override_constants/h_separation = 2
-theme_override_constants/icon_max_width = 27
-theme_override_font_sizes/font_size = 11
-theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/pressed = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
-text = "连击 0/3"
-icon = ExtResource("38_super_attack_icon")
-expand_icon = true
+layout_mode = 0
+offset_left = 150.71
+offset_top = -7.0
+offset_right = 204.70973
+offset_bottom = 47.0
+pivot_offset = Vector2(27, 27)
+theme_override_styles/normal = SubResource("Style_combo_skill_active")
+theme_override_styles/pressed = SubResource("Style_combo_skill_active")
+theme_override_styles/hover = SubResource("Style_combo_skill_active")
+theme_override_styles/disabled = SubResource("Style_combo_skill_disabled")
+
+[node name="SkillPulseRing" type="Control" parent="Footer/SkillButton" unique_id=858315102]
+unique_name_in_owner = true
+show_behind_parent = true
+anchors_preset = 0
+offset_left = -7.0
+offset_top = -7.0
+offset_right = 61.0
+offset_bottom = 61.0
+mouse_filter = 2
+script = ExtResource("42_skill_pulse_ring")
+
+[node name="SkillIcon" type="TextureRect" parent="Footer/SkillButton" unique_id=1637576299]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 14.0
+offset_top = 4.0
+offset_right = 40.0
+offset_bottom = 30.0
+mouse_filter = 2
+texture = ExtResource("38_super_attack_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SkillCountLabel" type="Label" parent="Footer/SkillButton" unique_id=186336401]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 2.0
+offset_top = 29.0
+offset_right = 52.0
+offset_bottom = 51.0
+theme_override_colors/font_color = Color(1, 0.94, 0.76, 1)
+theme_override_font_sizes/font_size = 12
+text = "0/3"
+horizontal_alignment = 1
 
 [node name="EndTurnButton" type="Button" parent="Footer" unique_id=1787202799]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(110, 54)
-layout_mode = 2
-theme_override_constants/h_separation = 2
-theme_override_constants/icon_max_width = 27
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("Style_button")
-theme_override_styles/pressed = SubResource("Style_button")
-theme_override_styles/hover = SubResource("Style_button")
-text = "结束回合"
-icon = ExtResource("39_end_turn_icon")
-expand_icon = true
+layout_mode = 0
+offset_left = 299.0
+offset_top = -6.0
+offset_right = 352.0
+offset_bottom = 48.0
+theme_override_styles/normal = SubResource("Style_combo_skill_ready")
+theme_override_styles/pressed = SubResource("Style_combo_skill_ready")
+theme_override_styles/hover = SubResource("Style_combo_skill_ready")
+theme_override_styles/disabled = SubResource("Style_combo_skill_disabled")
+
+[node name="EndTurnIcon" type="TextureRect" parent="Footer/EndTurnButton" unique_id=252009869]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 12.0
+offset_top = 4.0
+offset_right = 38.0
+offset_bottom = 30.0
+mouse_filter = 2
+texture = ExtResource("39_end_turn_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EndTurnLabel" type="Label" parent="Footer/EndTurnButton" unique_id=1692023726]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 2.0
+offset_top = 29.0
+offset_right = 48.0
+offset_bottom = 51.0
+theme_override_colors/font_color = Color(1, 0.98, 0.89, 1)
+theme_override_font_sizes/font_size = 12
+text = "结束"
+horizontal_alignment = 1
 
 [node name="PlayerStatus" type="PanelContainer" parent="." unique_id=283201227]
 layout_mode = 1

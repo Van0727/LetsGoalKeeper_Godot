@@ -181,11 +181,13 @@ func _test_deterministic_seed() -> void:
 	second_explosion.free()
 
 
-# 验证 100 BPM 最近拍判定、变调后的现实毫秒窗口，以及 Miss 只缩放对敌伤害而不削弱自身效果。
+# 验证 100 BPM 的75ms GREAT、150ms GOOD与剩余 MISS，及变调后窗口和 Miss 的伤害规则。
 func _test_rhythm_judgement_and_damage() -> void:
 	var clock = RHYTHM_CLOCK.new()
 	clock.bpm = 100.0
 	clock.first_beat_offset = 0.0
+	_assert_equal(clock.perfect_window_ms, 75.0, "默认Great窗口为正负75ms")
+	_assert_equal(clock.good_window_ms, 150.0, "默认Good窗口为正负150ms")
 	_assert_equal(clock.get_bpm_from_music_path("res://sound/bgm/bg_basicDrum2_bpm100.mp3"), 100.0, "从BGM名称读取整数BPM")
 	_assert_equal(clock.get_bpm_from_music_path("res://sound/bgm/boss_bpm127.5.ogg"), 127.5, "从BGM名称读取小数BPM")
 	_assert_equal(clock.get_bpm_from_music_path("res://sound/bgm/no_bpm.mp3"), -1.0, "无数值BPM名称返回无效值")
@@ -203,13 +205,16 @@ func _test_rhythm_judgement_and_damage() -> void:
 		120.0,
 		"循环十次仍按整数拍累计而不放大尾部误差"
 	)
-	clock.perfect_window_ms = 60.0
-	clock.good_window_ms = 140.0
+	clock.perfect_window_ms = 75.0
+	clock.good_window_ms = 150.0
 	_assert_equal(clock.judge_at(0.05).grade, clock.JudgementGrade.PERFECT, "节拍后50ms为最佳判定")
 	_assert_equal(clock.judge_at(0.05).grade_name, "Great", "最佳判定对玩家显示为Great")
-	_assert_equal(clock.judge_at(0.10).grade, clock.JudgementGrade.GOOD, "节拍后100ms为Good")
-	_assert_equal(clock.judge_at(0.10).grade_name, "Good", "次级判定对玩家保持Good")
-	_assert_equal(clock.judge_at(0.20).grade, clock.JudgementGrade.MISS, "节拍后200ms为Miss")
+	_assert_equal(clock.judge_at(0.075).grade, clock.JudgementGrade.PERFECT, "节拍后75ms仍为Great边界")
+	_assert_equal(clock.judge_at(0.076).grade, clock.JudgementGrade.GOOD, "超过75ms立即进入Good")
+	_assert_equal(clock.judge_at(0.15).grade, clock.JudgementGrade.GOOD, "节拍后150ms为Good边界")
+	_assert_equal(clock.judge_at(0.15).grade_name, "Good", "次级判定对玩家保持Good")
+	_assert_equal(clock.judge_at(0.151).grade, clock.JudgementGrade.MISS, "超过150ms立即判为Miss")
+	_assert_equal(clock.judge_at(0.20).grade, clock.JudgementGrade.MISS, "拍内剩余区间保持Miss")
 	_assert_equal(clock.judge_at(0.55).grade, clock.JudgementGrade.PERFECT, "下一拍前50ms为最佳判定")
 	_assert_equal(roundi(clock.judge_at(0.55).error_ms), -50, "提前判定保留负误差")
 	_assert_equal(clock.judge_at(0.55).target_time, 0.6, "判定结果保留最近拍点供命中同步")

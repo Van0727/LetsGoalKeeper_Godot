@@ -7,6 +7,8 @@ const ATTACK_SECONDS := 0.045
 const RELEASE_SECONDS := 0.48
 const EDGE_COLOR := Color(0.25, 0.36, 0.78, 0.72)
 const CENTER_COLOR := Color(0.28, 0.92, 0.92, 0.94)
+const CENTER_LINE_COLOR := Color(0.3, 0.9, 0.95, 0.72)
+const CENTER_LINE_WIDTH := 2.0
 
 var _pulse_age := -1.0
 var _visual_amplitude := 0.0
@@ -55,6 +57,8 @@ func _draw() -> void:
 	if size.x <= 1.0 or size.y <= 1.0:
 		return
 	var center_y: float = size.y * 0.5
+	# 背景图移除后，这条独立基准线持续可见，波形竖条仍以其为中心上下展开。
+	draw_line(Vector2(0.0, center_y), Vector2(size.x, center_y), CENTER_LINE_COLOR, CENTER_LINE_WIDTH, true)
 	var spacing: float = size.x / float(BAR_COUNT)
 	var bar_width: float = maxf(spacing * 0.42, 1.0)
 	for bar_index in range(BAR_COUNT):

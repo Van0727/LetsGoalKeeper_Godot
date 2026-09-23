@@ -114,6 +114,20 @@ func _run() -> void:
 	first_button.button_down.emit()
 	_assert_equal(click_count[0], 11, "触点按住期间后续帧的非指针按钮仍播放")
 
+	# 卡牌起手进入拖拽，不应被全局空点击策略误判为普通 click。
+	var battle_card := service.BATTLE_CARD_VIEW_SCRIPT.new() as Control
+	battle_card.size = Vector2(100, 160)
+	root.add_child(battle_card)
+	await process_frame
+	var card_press := InputEventMouseButton.new()
+	card_press.button_index = MOUSE_BUTTON_LEFT
+	card_press.pressed = true
+	card_press.position = Vector2(20, 20)
+	Input.parse_input_event(card_press)
+	await process_frame
+	_assert_equal(click_count[0], 11, "点击卡牌不播放全局click音效")
+	battle_card.queue_free()
+
 	_assert_true(service.click_player.stream != null, "全局点击播放器绑定音频资源")
 	_assert_true(
 		service.click_player.stream.resource_path.ends_with("sound/sounds/click.mp3"),
@@ -121,6 +135,23 @@ func _run() -> void:
 	)
 	_assert_equal(service.click_player.bus, &"SFX", "全局点击音进入 SFX 总线")
 	_assert_equal(service.process_mode, Node.PROCESS_MODE_ALWAYS, "暂停期间仍监听按钮和空点击")
+
+	# 点击缩放按场景原始缩放回弹，动态按钮同样通过 SceneTree 自动登记，不依赖页面脚本单独接线。
+	var feedback_button := Button.new()
+	feedback_button.scale = Vector2(1.25, 0.8)
+	root.add_child(feedback_button)
+	await process_frame
+	var feedback_count := [0]
+	service.button_feedback_triggered.connect(func(button: BaseButton) -> void:
+		if button == feedback_button:
+			feedback_count[0] += 1
+	)
+	feedback_button.button_down.emit()
+	_assert_equal(feedback_count[0], 1, "动态按钮按下时触发全局缩放反馈")
+	await process_frame
+	_assert_true(not feedback_button.scale.is_equal_approx(Vector2(1.25, 0.8)), "点击过程会暂时改变按钮缩放")
+	await create_timer(0.3).timeout
+	_assert_true(feedback_button.scale.is_equal_approx(Vector2(1.25, 0.8)), "点击缩放结束后恢复按钮原始尺寸")
 
 	if _failed:
 		quit(1)

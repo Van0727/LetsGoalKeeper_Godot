@@ -756,23 +756,23 @@ func commit_deferred_damage(event: Dictionary) -> bool:
 
 
 # 结束玩家阶段并立即执行当前敌人行动。
-func end_player_turn(rhythm_result: Dictionary = {}) -> bool:
+func end_player_turn(rhythm_result: Dictionary = {}, defer_enemy_action := false) -> bool:
 	if not _can_player_act():
 		return false
-	_end_player_turn(rhythm_result)
+	_end_player_turn(rhythm_result, defer_enemy_action)
 	return true
 
 
 # 红牌只允许在当前阈值牌完整表现后消费；普通调用不能绕过待结算状态重复推进回合。
-func force_end_turn_for_red_card() -> bool:
+func force_end_turn_for_red_card(defer_enemy_action := false) -> bool:
 	if not red_card_pending or phase != Phase.PLAYER_TURN:
 		return false
 	red_card_pending = false
-	_end_player_turn()
+	_end_player_turn({}, defer_enemy_action)
 	return true
 
 
-func _end_player_turn(rhythm_result: Dictionary = {}) -> void:
+func _end_player_turn(rhythm_result: Dictionary = {}, defer_enemy_action := false) -> void:
 	phase = Phase.PLAYER_END
 	# 乐谱按本回合成功出牌数决定下一回合首张牌倍率，不跨多个空回合叠乘。
 	pending_first_card_multiplier = 1.0
@@ -797,7 +797,19 @@ func _end_player_turn(rhythm_result: Dictionary = {}) -> void:
 		_finish_battle(false)
 		return
 	_advance_strength_status(player)
+	# 战斗界面需要先播放敌方向玩家的足球；前置结算完成后停在玩家结算阶段，命中帧再继续敌人行动。
+	if defer_enemy_action:
+		state_changed.emit()
+		return
 	_execute_enemy_turn()
+
+
+# 只允许从已完成前置结算的玩家结束阶段继续，避免动画回调重复造成敌人多次行动。
+func continue_deferred_enemy_turn() -> bool:
+	if phase != Phase.PLAYER_END or player.is_dead() or enemy.is_dead():
+		return false
+	_execute_enemy_turn()
+	return true
 
 
 # 返回供界面显示的中文阶段名称。
@@ -870,6 +882,21 @@ func get_enemy_intent_damage() -> int:
 				return maxi(roundi(effect.amount * enemy.strength_multiplier), 0)
 		return 0
 	return maxi(roundi(enemy_intent_damage * enemy.strength_multiplier), 0)
+
+
+# 供表现层判断是否需要发射敌方足球；吸血同样属于直接攻击，纯状态和防御行动不发球。
+func enemy_intent_has_direct_attack() -> bool:
+	if current_enemy_action == null:
+		return true
+	if not current_enemy_action.effects.is_empty():
+		for effect in current_enemy_action.effects:
+			if effect.effect_type in [ENEMY_ACTION_EFFECT.Type.DAMAGE, ENEMY_ACTION_EFFECT.Type.DRAIN]:
+				return true
+		return false
+	return current_enemy_action.action_type in [
+		ENEMY_ACTION_DEFINITION.ActionType.ATTACK,
+		ENEMY_ACTION_DEFINITION.ActionType.DRAIN,
+	]
 
 
 # 返回当前行动的最终意图文字；非攻击行为直接显示其数据值。

@@ -9,6 +9,8 @@ enum ModifierType { ALL_SHOTS, STRAIGHT, BANANA, LOB, DISABLED }
 @export var item_id := ""
 @export var display_name := "战利品"
 @export_multiline var description := ""
+# 正式图片由配表导入到定义资源；所有界面读取同一纹理，空值时各自使用品级占位图。
+@export var icon: Texture2D
 @export var rarity := Rarity.NORMAL
 @export var modifier_type := ModifierType.ALL_SHOTS
 @export_range(0, 999, 1) var amount := 0

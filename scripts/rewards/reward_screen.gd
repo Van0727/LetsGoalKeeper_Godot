@@ -136,7 +136,7 @@ func _show_item_choices() -> void:
 		confirm_button.disabled = false
 
 
-# 将候选映射到固定三个槽位；卡牌复用战斗卡面，遗物使用纯色图片占位并单独排版名称与描述。
+# 将候选映射到固定三个槽位；战利品优先显示配表图片，缺图时按品级安全回退占位图。
 func _refresh_buttons() -> void:
 	# 切换奖励阶段前清理尚未结束的选择动效，避免旧 Tween 回写新阶段卡面。
 	for tween_value in _choice_scale_tweens.values():
@@ -180,10 +180,16 @@ func _refresh_buttons() -> void:
 			button.text = ""
 			card_views[index].hide()
 			item_contents[index].show()
-			# 当前没有正式插画时，普通与 Boss 遗物用不同纯色图占位，后续可直接替换为专属图片。
-			item_icons[index].texture = BOSS_ITEM_PLACEHOLDER if definition.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
+			item_icons[index].texture = _get_item_icon(definition)
 			item_name_labels[index].text = definition.display_name
 			item_description_labels[index].text = definition.description
+
+
+# 所有战利品入口共享同一回退规则，正式图片缺失时界面仍保持可用且能区分品级。
+func _get_item_icon(definition: Resource) -> Texture2D:
+	if definition != null and definition.icon != null:
+		return definition.icon
+	return BOSS_ITEM_PLACEHOLDER if definition != null and definition.rarity == ITEM_DEFINITION.Rarity.BOSS else NORMAL_ITEM_PLACEHOLDER
 
 
 # 首次点击只切换预选项；围绕中心放大且提高绘制层级，避免被左右卡牌遮挡。

@@ -19,8 +19,9 @@ enum JudgementGrade {
 @export_range(1, 16, 1) var beats_per_bar := 4
 # 节奏细分使用全音符分母表达：4 为四分音符、8 为八分音符，奖励品据此判断“1/8和更快”。
 @export_range(1, 64, 1) var rhythm_subdivision := 4
-@export_range(1.0, 500.0, 1.0) var perfect_window_ms := 60.0
-@export_range(1.0, 500.0, 1.0) var good_window_ms := 140.0
+# GREAT 覆盖拍点前后75ms，GOOD 扩展至前后150ms；100 BPM 的其余半拍区间均明确判为 MISS。
+@export_range(1.0, 500.0, 1.0) var perfect_window_ms := 75.0
+@export_range(1.0, 500.0, 1.0) var good_window_ms := 150.0
 # 正值会把判定时间向后移动，供后续设置页补偿设备与玩家的稳定输入偏移。
 @export_range(-500.0, 500.0, 1.0) var calibration_offset_ms := 0.0
 
