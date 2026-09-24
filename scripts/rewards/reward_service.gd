@@ -94,22 +94,24 @@ func get_item_id_by_legacy_key(legacy_key: String) -> int:
 	return 0
 
 
-# 生成最多三张互不重复的实装卡牌；禁用资源仍可供旧存档和GM按稳定ID读取。
-func generate_card_choices(is_boss: bool, rng: RandomNumberGenerator) -> Array[Resource]:
+# 生成最多三张互不重复且仍有本局库存的卡牌；候选展示不消耗库存。
+func generate_card_choices(is_boss: bool, rng: RandomNumberGenerator, remaining_stock: Dictionary = {}) -> Array[Resource]:
 	var ids: Array[String] = BOSS_CARD_IDS.duplicate() if is_boss else COMMON_CARD_IDS.duplicate()
 	var candidates: Array[Resource] = []
 	for card_id in ids:
 		var card := get_card_by_id(card_id)
-		if _is_card_available(card):
+		if _is_card_available(card, remaining_stock):
 			candidates.append(card)
 	_shuffle(candidates, rng)
 	candidates.resize(mini(3, candidates.size()))
 	return candidates
 
 
-# 奖励入口只接纳实装卡牌；独立函数便于验证禁用资源仍可加载但不会进入候选池。
-func _is_card_available(card: Resource) -> bool:
-	return card != null and card.enabled
+# 奖励入口同时检查配表初始库存与本局剩余值；空字典用于无RunState的工具测试并回退到配表值。
+func _is_card_available(card: Resource, remaining_stock: Dictionary = {}) -> bool:
+	if card == null or not card.enabled or card.reward_stock <= 0:
+		return false
+	return int(remaining_stock.get(card.card_id, card.reward_stock)) > 0
 
 
 # 排除已拥有及禁用战利品后生成最多三个选项；不足时不复制占位奖励。

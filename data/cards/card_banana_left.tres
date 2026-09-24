@@ -18,4 +18,5 @@ description = "本场战斗所有香蕉球改为向左踢出，直到当前怪�
 archetype_hint = "桑巴精灵·方向控制"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_ddih7")])

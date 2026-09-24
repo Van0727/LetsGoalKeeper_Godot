@@ -44,6 +44,7 @@
 - `tables/cards.csv` 每个卡牌 ID 恰好一行并按数字 ID 升序排列。
 - 卡牌通过 `effect_id` 复用 `tables/effects.csv` 中唯一的效果模板；`tables/effect_steps.csv` 按 `effect_id` 和 `effect_index` 升序定义模板步骤。
 - 卡牌行数值列表逐项对应模板步骤，不得为多效果重复卡牌 ID 或复制模板步骤。
+- `reward_stock` 为 `uint8` 单局奖励库存：0不进入奖励池，1～255表示每局最多可被确认领取的次数；展示候选不消耗，新游戏按配表恢复。
 
 ## 导入和修改流程
 

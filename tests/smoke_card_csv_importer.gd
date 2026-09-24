@@ -58,6 +58,7 @@ func _test_imported_values_affect_battle() -> void:
 	_assert_equal(samba_duet.id, 1013, "数字ID写入卡牌资源")
 	_assert_equal(samba_duet.archetype_hint, "桑巴精灵·左右香蕉", "流派倾向写入资源但不参与结算")
 	_assert_true(samba_duet.enabled, "实装状态写入卡牌资源")
+	_assert_equal(samba_duet.reward_stock, 1, "单局奖励库存写入卡牌资源")
 	var source = COMBATANT_STATE.new("导入测试球员", 20, 3)
 	var target = COMBATANT_STATE.new("导入测试目标", 30)
 	var resolver = EFFECT_RESOLVER.new()

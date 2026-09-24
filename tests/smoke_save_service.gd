@@ -18,6 +18,7 @@ func _run() -> void:
 	_test_round_trip_and_map_restore()
 	_test_v1_item_id_migration()
 	_test_v2_energy_bonus_migration()
+	_test_v3_reward_stock_migration()
 	_test_corrupt_save_fallback()
 	_test_new_run_overwrites_old_save()
 	_cleanup()
@@ -93,6 +94,26 @@ func _test_v2_energy_bonus_migration() -> void:
 	service.save_path = _path
 	_assert_true(service.load_game(restored), "v2 存档可迁移游戏历程能量字段")
 	_assert_equal(restored.run_max_energy_bonus, 0, "旧存档迁移后能量上限加成为零")
+	legacy_state.free()
+	restored.free()
+	service.free()
+
+
+# v3尚未保存单局奖励库存；读取时必须按当前配表恢复，且开局专属牌保持不可随出。
+func _test_v3_reward_stock_migration() -> void:
+	var legacy_state = RUN_STATE_SCRIPT.new()
+	legacy_state.start_new_run(819)
+	var state_data: Dictionary = legacy_state.to_dict()
+	state_data.erase("card_reward_stock")
+	var file := FileAccess.open(_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"save_version": 3, "run_state": state_data}))
+	file.close()
+	var restored = RUN_STATE_SCRIPT.new()
+	var service = SAVE_SERVICE_SCRIPT.new()
+	service.save_path = _path
+	_assert_true(service.load_game(restored), "v3存档可迁移单局奖励库存")
+	_assert_equal(restored.card_reward_stock.get("card_straight_shot"), 0, "旧档迁移后射门保持奖励库存0")
+	_assert_equal(restored.card_reward_stock.get("card_banana_shot"), 1, "旧档迁移后普通奖励牌恢复配表库存")
 	legacy_state.free()
 	restored.free()
 	service.free()

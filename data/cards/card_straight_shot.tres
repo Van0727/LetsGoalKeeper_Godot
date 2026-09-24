@@ -17,5 +17,4 @@ description = "造成6点伤害"
 archetype_hint = "通用·直球"
 illustration = ExtResource("3_illustration")
 shot_type = 1
-enabled = false
 effects = Array[Resource]([SubResource("Resource_puiek")])

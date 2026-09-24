@@ -103,16 +103,22 @@ corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="item_card"]
-bg_color = Color(0.055, 0.12, 0.2, 0.98)
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.94, 0.9, 0.78, 0.98)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.2, 0.62, 0.78, 0.9)
+border_color = Color(0.95, 0.55, 0.17, 0.95)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.42)
+shadow_size = 3
 
 [sub_resource type="StyleBoxFlat" id="selection_ring"]
 bg_color = Color(0, 0, 0, 0)
@@ -319,8 +325,8 @@ mouse_filter = 2
 
 [node name="ItemIcon0" type="TextureRect" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 48)
-custom_maximum_size = Vector2(80, 48)
+custom_minimum_size = Vector2(84, 64)
+custom_maximum_size = Vector2(84, 64)
 layout_mode = 2
 size_flags_horizontal = 4
 expand_mode = 1
@@ -329,9 +335,10 @@ mouse_filter = 2
 [node name="ItemName0" type="Label" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(88, 32)
-custom_maximum_size = Vector2(88, 32)
-theme_override_font_sizes/font_size = 13
+custom_minimum_size = Vector2(88, 26)
+custom_maximum_size = Vector2(88, 26)
+theme_override_colors/font_color = Color(0.12, 0.16, 0.24, 1)
+theme_override_font_sizes/font_size = 11
 autowrap_mode = 3
 max_lines_visible = 2
 clip_text = true
@@ -341,9 +348,10 @@ mouse_filter = 2
 [node name="ItemDescription0" type="Label" parent="Margin/Layout/Choices/Choice0/ItemContent0"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(88, 72)
-custom_maximum_size = Vector2(88, 72)
-theme_override_font_sizes/font_size = 11
+custom_minimum_size = Vector2(88, 60)
+custom_maximum_size = Vector2(88, 60)
+theme_override_colors/font_color = Color(0.18, 0.25, 0.34, 1)
+theme_override_font_sizes/font_size = 9
 autowrap_mode = 3
 max_lines_visible = 6
 clip_text = true
@@ -408,8 +416,8 @@ mouse_filter = 2
 
 [node name="ItemIcon1" type="TextureRect" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 48)
-custom_maximum_size = Vector2(80, 48)
+custom_minimum_size = Vector2(84, 64)
+custom_maximum_size = Vector2(84, 64)
 layout_mode = 2
 size_flags_horizontal = 4
 expand_mode = 1
@@ -418,9 +426,10 @@ mouse_filter = 2
 [node name="ItemName1" type="Label" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(88, 32)
-custom_maximum_size = Vector2(88, 32)
-theme_override_font_sizes/font_size = 13
+custom_minimum_size = Vector2(88, 26)
+custom_maximum_size = Vector2(88, 26)
+theme_override_colors/font_color = Color(0.12, 0.16, 0.24, 1)
+theme_override_font_sizes/font_size = 11
 autowrap_mode = 3
 max_lines_visible = 2
 clip_text = true
@@ -430,9 +439,10 @@ mouse_filter = 2
 [node name="ItemDescription1" type="Label" parent="Margin/Layout/Choices/Choice1/ItemContent1"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(88, 72)
-custom_maximum_size = Vector2(88, 72)
-theme_override_font_sizes/font_size = 11
+custom_minimum_size = Vector2(88, 60)
+custom_maximum_size = Vector2(88, 60)
+theme_override_colors/font_color = Color(0.18, 0.25, 0.34, 1)
+theme_override_font_sizes/font_size = 9
 autowrap_mode = 3
 max_lines_visible = 6
 clip_text = true
@@ -497,8 +507,8 @@ mouse_filter = 2
 
 [node name="ItemIcon2" type="TextureRect" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 48)
-custom_maximum_size = Vector2(80, 48)
+custom_minimum_size = Vector2(84, 64)
+custom_maximum_size = Vector2(84, 64)
 layout_mode = 2
 size_flags_horizontal = 4
 expand_mode = 1
@@ -507,9 +517,10 @@ mouse_filter = 2
 [node name="ItemName2" type="Label" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(88, 32)
-custom_maximum_size = Vector2(88, 32)
-theme_override_font_sizes/font_size = 13
+custom_minimum_size = Vector2(88, 26)
+custom_maximum_size = Vector2(88, 26)
+theme_override_colors/font_color = Color(0.12, 0.16, 0.24, 1)
+theme_override_font_sizes/font_size = 11
 autowrap_mode = 3
 max_lines_visible = 2
 clip_text = true
@@ -519,9 +530,10 @@ mouse_filter = 2
 [node name="ItemDescription2" type="Label" parent="Margin/Layout/Choices/Choice2/ItemContent2"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(88, 72)
-custom_maximum_size = Vector2(88, 72)
-theme_override_font_sizes/font_size = 11
+custom_minimum_size = Vector2(88, 60)
+custom_maximum_size = Vector2(88, 60)
+theme_override_colors/font_color = Color(0.18, 0.25, 0.34, 1)
+theme_override_font_sizes/font_size = 9
 autowrap_mode = 3
 max_lines_visible = 6
 clip_text = true
@@ -538,7 +550,7 @@ theme_override_styles/panel = SubResource("detail_panel")
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/default_color = Color(0.86, 0.91, 0.95, 1)
-theme_override_font_sizes/normal_font_size = 13
+theme_override_font_sizes/normal_font_size = 12
 bbcode_enabled = false
 scroll_active = true
 text = "点击奖励查看完整说明"

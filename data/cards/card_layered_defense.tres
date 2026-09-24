@@ -19,4 +19,5 @@ description = "获得4点护盾；若出牌前已有护盾，额外获得3点护
 archetype_hint = "钢铁门神·连续叠盾"
 illustration = ExtResource("3_illustration")
 card_type = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_mt32e")])

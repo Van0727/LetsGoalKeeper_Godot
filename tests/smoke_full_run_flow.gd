@@ -83,10 +83,10 @@ func _pick_enemy(room: Dictionary, combat_count: int) -> Resource:
 func _take_rewards(is_boss: bool, combat_count: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _run_state.seed + combat_count * 1009 + 61
-	var cards: Array[Resource] = _reward_service.generate_card_choices(is_boss, rng)
+	var cards: Array[Resource] = _reward_service.generate_card_choices(is_boss, rng, _run_state.card_reward_stock)
 	_assert_true(not cards.is_empty(), "每场战斗都有卡牌奖励")
 	if not cards.is_empty():
-		_run_state.add_card(cards[0].card_id)
+		_assert_true(_run_state.claim_reward_card(cards[0].card_id), "领取卡牌后原子扣减本局库存")
 	var item_count_before: int = _run_state.owned_item_ids.size()
 	if is_boss:
 		var items: Array[Resource] = _reward_service.generate_item_choices(true, _run_state.owned_item_ids, rng)

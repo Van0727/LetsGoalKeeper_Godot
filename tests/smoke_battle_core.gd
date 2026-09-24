@@ -283,7 +283,7 @@ func _test_rhythm_judgement_and_damage() -> void:
 	var self_damage_target = COMBATANT_STATE.new("自伤测试目标", 20)
 	resolver.resolve_card(SPIKED_BALL, self_damage_source, self_damage_target, null, {}, miss_result)
 	_assert_equal(self_damage_source.health, 19, "Miss不缩放卡牌1点自伤")
-	_assert_equal(self_damage_target.health, 17, "Miss缩放同张卡牌的对敌伤害")
+	_assert_equal(self_damage_target.health, 16, "Miss将尖刺球8点对敌伤害缩放为4点")
 
 	var healing_source = COMBATANT_STATE.new("治疗测试球员", 20, 3)
 	healing_source.health = 10
@@ -341,10 +341,10 @@ func _test_shot_types_multi_hit_and_multi_effect() -> void:
 	_assert_equal(barrage_events[2].health_damage, 3, "第三段伤害作用于生命")
 	_assert_equal(barrage_events[3].health_damage, 3, "第四段伤害作用于生命")
 	# 表现层依赖逐段快照在每球命中时更新血条，不能只读取已变成最终值的目标对象。
-	_assert_equal(barrage_events[0].health_after, 28, "第一段结算后生命快照")
-	_assert_equal(barrage_events[1].health_after, 26, "第二段结算后生命快照")
-	_assert_equal(barrage_events[2].health_after, 23, "第三段结算后生命快照")
-	_assert_equal(barrage_events[3].health_after, 20, "第四段结算后生命快照")
+	_assert_equal(barrage_events[0].health_after, 27, "第一段结算后生命快照")
+	_assert_equal(barrage_events[1].health_after, 25, "第二段结算后生命快照")
+	_assert_equal(barrage_events[2].health_after, 22, "第三段结算后生命快照")
+	_assert_equal(barrage_events[3].health_after, 19, "第四段结算后生命快照")
 	var lethal_target = COMBATANT_STATE.new("低生命目标", 4)
 	var lethal_events: Array[Dictionary] = resolver.resolve_card(BARRAGE_SHOT, source, lethal_target)
 	_assert_equal(lethal_events.size(), 2, "多段攻击在目标死亡后停止后续段数")
@@ -386,7 +386,7 @@ func _test_probability_branch_and_interrupt() -> void:
 	)
 	_assert_true(not failure_events[0].succeeded, "爆炸球失败分支未触发")
 	_assert_equal(failure_source.health, 20, "爆炸球未触发时不造成自伤")
-	_assert_equal(failure_target.health, 8, "爆炸球未触发时造成12点伤害")
+	_assert_equal(failure_target.health, 6, "爆炸球未触发时造成14点伤害")
 	_assert_equal(failure_events.size(), 2, "爆炸球未触发时继续后续效果")
 
 
@@ -510,7 +510,7 @@ func _test_remaining_migrated_cards() -> void:
 	var spike_events: Array[Dictionary] = resolver.resolve_card(SPIKED_BALL, spike_source, spike_target)
 	_assert_equal(spike_events[0].target, spike_source, "尖刺球第一效果目标是自己")
 	_assert_equal(spike_source.health, 19, "尖刺球先造成1点自伤")
-	_assert_equal(spike_target.health, 14, "尖刺球再对敌人造成6点伤害")
+	_assert_equal(spike_target.health, 12, "尖刺球再对敌人造成8点伤害")
 
 	# 生命恰好等于当前自伤1点，验证先自伤致死就停止对敌攻击。
 	var fatal_source = COMBATANT_STATE.new("濒死尖刺球球员", 1, 3)
@@ -523,7 +523,7 @@ func _test_remaining_migrated_cards() -> void:
 	var rugby_target = COMBATANT_STATE.new("橄榄球目标", 20)
 	var rugby_events: Array[Dictionary] = resolver.resolve_card(RUGBY_BALL, rugby_source, rugby_target)
 	_assert_equal(rugby_events[0].shot_type, RUGBY_BALL.ShotType.RANDOM, "橄榄球保留随机射门类型")
-	_assert_equal(rugby_target.health, 14, "橄榄球造成6点伤害")
+	_assert_equal(rugby_target.health, 13, "橄榄球造成7点伤害")
 
 
 # 验证敌人致命攻击进入失败状态且生命不会为负。

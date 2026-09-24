@@ -23,4 +23,5 @@ description = "造成6点伤害，然后恢复3点生命"
 archetype_hint = "通用·续航"
 illustration = ExtResource("3_illustration")
 shot_type = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_5s3t7"), SubResource("Resource_0l6dk")])

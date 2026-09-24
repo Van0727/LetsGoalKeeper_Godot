@@ -1,4 +1,4 @@
-# 阶段 6 本局与奖励冒烟测试：验证彻底重置、确定性三选一、排重和跨战斗伤害生效。
+# 本局与奖励冒烟测试：验证固定基础牌库、单局奖励库存、重置及跨战斗成长。
 extends SceneTree
 
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
@@ -23,11 +23,8 @@ func _initialize() -> void:
 func _run() -> void:
 	var service := REWARD_SERVICE.new()
 	_run_state.start_new_run(301)
-	_assert_equal(_run_state.deck_card_ids.size(), 12, "新游戏包含十二张伤害卡牌")
-	_assert_equal(_unique_string_count(_run_state.deck_card_ids), 12, "初始攻击牌各加入一张")
-	_assert_true(not _run_state.deck_card_ids.has("card_gloves"), "初始牌组移除纯防御牌")
-	_assert_true(not _run_state.deck_card_ids.has("card_sports_drink"), "初始牌组移除治疗牌")
-	_assert_true(not _run_state.deck_card_ids.has("card_towel"), "初始牌组移除回能牌")
+	_assert_equal(_run_state.deck_card_ids, ["card_straight_shot", "card_straight_shot", "card_straight_shot", "card_gloves", "card_gloves", "card_sports_drink"], "新游戏使用指定六张基础牌库")
+	_assert_equal(_run_state.card_reward_stock.get("card_straight_shot"), 0, "开局专属射门不进入奖励池")
 	_assert_equal(_run_state.owned_item_ids.size(), 0, "新游戏清空战利品")
 	_assert_equal(service.get_item_by_id(4011), GOLDEN_BOOT, "数字 ID 可查找金靴")
 	_assert_equal(service.get_item_by_id(4029).item_id, "item_energy_core", "数字 ID 可查找新增能量核心")
@@ -48,20 +45,32 @@ func _run() -> void:
 	var second_rng := RandomNumberGenerator.new()
 	first_rng.seed = 88
 	second_rng.seed = 88
-	var first_cards := service.generate_card_choices(false, first_rng)
-	var second_cards := service.generate_card_choices(false, second_rng)
+	var first_cards := service.generate_card_choices(false, first_rng, _run_state.card_reward_stock)
+	var second_cards := service.generate_card_choices(false, second_rng, _run_state.card_reward_stock)
 	_assert_equal(first_cards.size(), 3, "普通战斗生成三张卡牌")
 	_assert_equal(_definition_ids(first_cards, "card_id"), _definition_ids(second_cards, "card_id"), "相同seed奖励一致")
-	_assert_true("card_pitch_up" in service.COMMON_CARD_IDS, "升调牌进入普通奖励池")
-	_assert_true("card_pitch_down" in service.COMMON_CARD_IDS, "降调牌进入普通奖励池")
-	_assert_true("card_pitch_reset" in service.COMMON_CARD_IDS, "原调牌进入普通奖励池")
-	# 禁用只影响新奖励；稳定ID仍可读取，保证已有旧存档不会因下架卡牌损坏。
+	var exhausted_stock: Dictionary = _run_state.card_reward_stock.duplicate(true)
+	for card_id in exhausted_stock:
+		exhausted_stock[card_id] = 0
+	var exhausted_rng := RandomNumberGenerator.new()
+	_assert_true(service.generate_card_choices(false, exhausted_rng, exhausted_stock).is_empty(), "全部库存为0时奖励池安全返回空候选")
+	_assert_true("card_pitch_up" in service.COMMON_CARD_IDS, "禁用牌仍保留稳定目录键")
+	# 临时禁用只影响新奖励；稳定ID仍可读取，保证已有旧存档不会因下架卡牌损坏。
 	var disabled_card: Resource = STRAIGHT_SHOT.duplicate(true)
 	disabled_card.enabled = false
 	_assert_true(not service._is_card_available(disabled_card), "实装状态0的卡牌不进入正常奖励")
-	_assert_equal(service.get_card_by_id("card_straight_shot"), STRAIGHT_SHOT, "未实装卡牌仍可供旧存档按稳定ID读取")
-	_run_state.add_card(first_cards[0].card_id)
-	_assert_equal(_run_state.deck_card_ids.size(), 13, "奖励卡加入本局牌库")
+	_assert_equal(service.get_card_by_id("card_straight_shot"), STRAIGHT_SHOT, "开局专属牌仍可按稳定ID读取")
+	var selected_card_id: String = first_cards[0].card_id
+	_run_state.card_reward_stock[selected_card_id] = 2
+	_assert_true(_run_state.claim_reward_card(selected_card_id), "确认奖励后卡牌加入本局牌库")
+	_assert_equal(_run_state.card_reward_stock[selected_card_id], 1, "库存2领取一次后减为1")
+	_assert_true(_run_state.claim_reward_card(selected_card_id), "库存仍大于0时允许再次领取")
+	_assert_equal(_run_state.card_reward_stock[selected_card_id], 0, "第二次领取后库存归零")
+	_assert_true(not _run_state.claim_reward_card(selected_card_id), "库存归零后不能重复领取")
+	var post_claim_rng := RandomNumberGenerator.new()
+	post_claim_rng.seed = 88
+	_assert_true(selected_card_id not in _definition_ids(service.generate_card_choices(false, post_claim_rng, _run_state.card_reward_stock), "card_id"), "库存归零的卡牌不再进入候选")
+	_assert_equal(_run_state.deck_card_ids.size(), 8, "两次有效领取各增加一张卡")
 
 	_assert_true(_run_state.add_item(GOLDEN_BOOT), "首次获得金靴")
 	_assert_true(4011 in _run_state.owned_item_ids, "本局仅保存金靴数字 ID")
@@ -88,7 +97,8 @@ func _run() -> void:
 	battle.free()
 
 	_run_state.start_new_run(303)
-	_assert_equal(_run_state.deck_card_ids.size(), 12, "再次新游戏恢复十二张初始攻击牌")
+	_assert_equal(_run_state.deck_card_ids.size(), 6, "再次新游戏恢复六张基础牌库")
+	_assert_equal(_run_state.card_reward_stock[selected_card_id], 1, "再次新游戏恢复配表奖励库存")
 	_assert_equal(_run_state.damage_modifiers.all, 0, "再次新游戏清除伤害加成")
 	_assert_equal(_run_state.run_max_energy_bonus, 0, "再次新游戏清除游戏历程能量上限加成")
 	_assert_equal(_run_state.player_hp, 100, "再次新游戏恢复生命")
@@ -107,14 +117,6 @@ func _definition_ids(definitions: Array[Resource], property_name: String) -> Arr
 	for definition in definitions:
 		ids.append(definition.get(property_name))
 	return ids
-
-
-# 统计稳定卡牌ID数量，确保初始牌组没有用重复牌挤占攻击牌位置。
-func _unique_string_count(values: Array[String]) -> int:
-	var unique_values := {}
-	for value in values:
-		unique_values[value] = true
-	return unique_values.size()
 
 
 # 通用相等断言。

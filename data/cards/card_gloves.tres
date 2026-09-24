@@ -19,4 +19,5 @@ description = "获得6点护盾"
 archetype_hint = "通用·防御"
 illustration = ExtResource("3_illustration")
 card_type = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_uv5uc")])

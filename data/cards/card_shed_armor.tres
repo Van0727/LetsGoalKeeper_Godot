@@ -18,4 +18,5 @@ description = "消耗最多6点护盾；每消耗2点，使下一张多段攻击
 archetype_hint = "钢铁门神·护盾转攻"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_sbgev")])

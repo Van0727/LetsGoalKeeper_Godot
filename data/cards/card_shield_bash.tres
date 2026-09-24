@@ -17,4 +17,5 @@ description = "造成5点伤害，并追加当前护盾值一半的伤害，护�
 archetype_hint = "钢铁门神·稳定爆发"
 illustration = ExtResource("3_illustration")
 shot_type = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_ebi8r")])

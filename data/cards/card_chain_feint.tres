@@ -18,4 +18,5 @@ description = "下一张香蕉球每段伤害+2；若本回合此前已打出技
 archetype_hint = "桑巴精灵·技能连打"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_21k8w")])

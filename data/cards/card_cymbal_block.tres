@@ -19,4 +19,5 @@ description = "获得6点护盾；在小节第一拍打出时，下一张攻击�
 archetype_hint = "爆裂鼓手·强拍反击"
 illustration = ExtResource("3_illustration")
 card_type = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_sh43b")])

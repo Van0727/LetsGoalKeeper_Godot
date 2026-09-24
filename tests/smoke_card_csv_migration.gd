@@ -16,7 +16,7 @@ func _run() -> void:
 	var bad_cards := {}
 	var ids := {}
 	var errors: Array[String] = []
-	var card_row := PackedStringArray(["1001", "射门", "测试", "1", "1", "1", "1", "0.5", "0.5", "2", "3|6", "1|1", "0|0", "100|100", "100|100", "0|0", "card_test", "测试流派", "1"])
+	var card_row := PackedStringArray(["1001", "射门", "测试", "1", "1", "1", "1", "0.5", "0.5", "2", "3|6", "1|1", "0|0", "100|100", "100|100", "0|0", "card_test", "测试流派", "1", "1"])
 	importer._parse_card_row(card_row, 4, bad_cards, ids, errors)
 	importer._parse_card_row(card_row, 5, bad_cards, ids, errors)
 	_assert_true(not errors.is_empty(), "重复卡牌 ID 被拒绝")
@@ -54,12 +54,19 @@ func _run() -> void:
 	errors.clear()
 	importer._parse_card_row(invalid_enabled_row, 8, bad_cards, ids, errors)
 	_assert_true(not errors.is_empty(), "卡牌实装状态只能为0或1")
+	var invalid_stock_row := reused_row.duplicate()
+	invalid_stock_row[0] = "1024"
+	invalid_stock_row[16] = "card_invalid_stock_test"
+	invalid_stock_row[19] = "256"
+	errors.clear()
+	importer._parse_card_row(invalid_stock_row, 9, bad_cards, ids, errors)
+	_assert_true(not errors.is_empty(), "卡牌奖励库存必须在uint8范围内")
 	var mismatched_row := reused_row.duplicate()
 	mismatched_row[0] = "1021"
 	mismatched_row[11] = "1"
 	mismatched_row[16] = "card_mismatched_test"
 	errors.clear()
-	importer._parse_card_row(mismatched_row, 9, bad_cards, ids, errors)
+	importer._parse_card_row(mismatched_row, 10, bad_cards, ids, errors)
 	_assert_true(not errors.is_empty(), "多步骤卡牌的参数组数不一致时被拒绝")
 	_assert_true(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_output_directory)), "失败校验未创建输出目录")
 	var missing_template_result: Dictionary = importer.import_cards("res://tables/cards.csv", _output_directory, "res://tables/effects_missing_for_test.csv")

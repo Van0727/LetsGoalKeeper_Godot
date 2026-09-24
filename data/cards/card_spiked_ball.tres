@@ -11,16 +11,17 @@ amount = 1
 
 [sub_resource type="Resource" id="Resource_6fctp"]
 script = ExtResource("2_effect")
-amount = 6
+amount = 8
 
 [resource]
 script = ExtResource("1_card")
 id = 1010
 card_id = "card_spiked_ball"
 display_name = "尖刺球"
-description = "自身受到1点伤害，然后对敌人造成6点伤害"
+description = "自身受到1点伤害，然后对敌人造成8点伤害"
 archetype_hint = "暴力·自伤"
 illustration = ExtResource("3_illustration")
 shot_type = 2
 rarity = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_etmog"), SubResource("Resource_6fctp")])

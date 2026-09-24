@@ -19,4 +19,5 @@ description = "恢复6点生命"
 archetype_hint = "通用·续航"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_hsi5r")])

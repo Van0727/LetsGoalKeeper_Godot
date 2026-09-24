@@ -1,4 +1,4 @@
-# 阶段8章节内容冒烟测试：验证三章地图主题、敌人池完整性与确定性选择契约。
+# 章节内容冒烟测试：验证三章地图主题、敌人池完整性、确定性选择与Boss生命成长曲线。
 extends SceneTree
 
 const MAP_GENERATOR := preload("res://scripts/map/map_generator.gd")
@@ -17,6 +17,7 @@ func _initialize() -> void:
 func _run() -> void:
 	var generator = MAP_GENERATOR.new()
 	var theme_colors: Array[Color] = []
+	var boss_health_by_chapter: Array[int] = []
 	for chapter in range(1, 4):
 		var map_config: Resource = generator.load_config_for_chapter(chapter)
 		_assert_true(map_config != null and map_config.is_valid(), "第%d章地图配置合法" % chapter)
@@ -33,8 +34,14 @@ func _run() -> void:
 		_assert_equal(pool.chapter, chapter, "第%d章遭遇池编号" % chapter)
 		for tier in [ENEMY_DEFINITION.Tier.NORMAL, ENEMY_DEFINITION.Tier.ELITE, ENEMY_DEFINITION.Tier.BOSS]:
 			_test_tier(pool, chapter, tier)
+		var boss_rng := RandomNumberGenerator.new()
+		boss_rng.seed = chapter * 100 + ENEMY_DEFINITION.Tier.BOSS
+		var boss: Resource = pool.pick_enemy(ENEMY_DEFINITION.Tier.BOSS, boss_rng)
+		if boss != null:
+			boss_health_by_chapter.append(boss.max_health)
 
 	_assert_equal(_unique_colors(theme_colors), 3, "三章地图占位主题可区分")
+	_assert_equal(boss_health_by_chapter, [120, 165, 220], "三章Boss生命按120→165→220平稳成长")
 	if _failed:
 		quit(1)
 		return

@@ -116,8 +116,12 @@ func _show_card_choices() -> void:
 	_refresh_phase_progress()
 	title_label.text = "选择卡牌奖励"
 	subtitle_label.text = "选择1张加入本局牌库"
-	choices = _service.generate_card_choices(_is_boss_reward(), _rng)
+	choices = _service.generate_card_choices(_is_boss_reward(), _rng, run_state.card_reward_stock)
 	_refresh_buttons()
+	if choices.is_empty():
+		subtitle_label.text = "该卡牌奖励池本局已耗尽"
+		confirm_button.text = "继续下一步"
+		confirm_button.disabled = false
 
 
 # 旧存档字段名保留兼容性，当前语义为该场胜利是否包含第二步奖励品。
@@ -282,8 +286,7 @@ func _on_confirm_pressed() -> void:
 	if _is_scene_transitioning or _is_reward_animating:
 		return
 	if choices.is_empty():
-		if phase != Phase.ITEM:
-			return
+		pass # 奖励池耗尽时允许继续，且不会虚构或扣减任何奖励。
 	elif _selected_index < 0 or _selected_index >= choices.size():
 		return
 
@@ -298,7 +301,9 @@ func _on_confirm_pressed() -> void:
 		await _play_reward_fly_out(choice_buttons[_selected_index])
 
 	if phase == Phase.CARD:
-		run_state.add_card(choices[_selected_index].card_id)
+		if not choices.is_empty():
+			# 只有确认领取并成功入库才扣减本局奖励库存，浏览三选一不会产生消耗。
+			run_state.claim_reward_card(choices[_selected_index].card_id)
 		_is_reward_animating = false
 		# 精英和 Boss 胜利继续奖励品步骤；普通怪在卡牌入账后立即原子提交房间。
 		if _has_item_reward():

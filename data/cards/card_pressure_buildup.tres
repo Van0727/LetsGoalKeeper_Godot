@@ -18,4 +18,5 @@ description = "下一张防御牌获得的护盾翻倍"
 archetype_hint = "钢铁门神·护盾强化"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_egd5a")])

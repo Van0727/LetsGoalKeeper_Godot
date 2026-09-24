@@ -18,4 +18,5 @@ description = "本回合下一张多段攻击每命中一次，获得2点护盾"
 archetype_hint = "钢铁门神·多段叠盾"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_tv7es")])

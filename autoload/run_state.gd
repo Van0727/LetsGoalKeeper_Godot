@@ -10,20 +10,14 @@ const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const DEFAULT_MAX_HEALTH := 100
 const FINAL_CHAPTER := 3
 const CHAPTER_SEED_STEP := 1000003
-# 初始牌组收录全部具有实际伤害效果的卡牌各一张，不加入纯防御、治疗或能力牌。
+# 初始牌库是明确的基础构筑，不受奖励池库存影响；重复项表示实际持有张数。
 const DEFAULT_DECK: Array[String] = [
 	"card_straight_shot",
-	"card_banana_shot",
-	"card_lob_shot",
-	"card_barrage_shot",
-	"card_attack_and_defend",
-	"card_explosion_ball",
-	"card_energy_shot",
-	"card_shot_group",
-	"card_double_banana_shot",
-	"card_bloodthirsty_ball",
-	"card_spiked_ball",
-	"card_rugby_ball",
+	"card_straight_shot",
+	"card_straight_shot",
+	"card_gloves",
+	"card_gloves",
+	"card_sports_drink",
 ]
 
 # 对局状态供主菜单、战斗和独立结算界面共享；后续存档只需持久化该状态值。
@@ -56,6 +50,8 @@ var run_status := RunStatus.NOT_STARTED
 var player_hp := DEFAULT_MAX_HEALTH
 var max_hp := DEFAULT_MAX_HEALTH
 var deck_card_ids: Array[String] = []
+# 每张卡本局还能被奖励领取的次数；只保存与配表初始值不同或相同的完整快照，确保读档确定性。
+var card_reward_stock: Dictionary = {}
 # 战利品持有顺序使用 CSV 第一列数字 ID；英文资源键不得进入运行时状态。
 var owned_item_ids: Array[int] = []
 var damage_modifiers := {"all": 0, "straight": 0, "banana": 0, "lob": 0}
@@ -91,6 +87,7 @@ func start_new_run(seed_value: int) -> void:
 	player_hp = max_hp
 	# 新局只装入已实装的初始牌；读档路径仍保留原ID，避免下架内容破坏旧存档。
 	deck_card_ids.assign(_enabled_default_deck())
+	_reset_card_reward_stock()
 	owned_item_ids.clear()
 	damage_modifiers = {"all": 0, "straight": 0, "banana": 0, "lob": 0}
 	run_max_energy_bonus = 0
@@ -101,14 +98,24 @@ func start_new_run(seed_value: int) -> void:
 	run_changed.emit()
 
 
+# 初始牌库允许使用奖励库存为0的开局专属牌，但仍拒绝缺失或未实装资源。
 func _enabled_default_deck() -> Array[String]:
 	var result: Array[String] = []
 	var service = REWARD_SERVICE.new()
 	for card_id in DEFAULT_DECK:
 		var card: Resource = service.get_card_by_id(card_id)
-		if service._is_card_available(card):
+		if card != null and card.enabled:
 			result.append(card_id)
 	return result
+
+
+# 新局从卡牌资源重建奖励库存，任何上局消耗都不得跨局继承。
+func _reset_card_reward_stock() -> void:
+	card_reward_stock.clear()
+	var service = REWARD_SERVICE.new()
+	for card: Resource in service.get_all_cards():
+		if card != null:
+			card_reward_stock[card.card_id] = maxi(int(card.reward_stock), 0)
 
 
 # 测试玩法沿用牌库与战利品运行数据，但不创建可继续的正式路线，也绝不由 SaveService 持久化。
@@ -150,6 +157,18 @@ func add_card(card_id: String) -> bool:
 	if card_id.is_empty():
 		return false
 	deck_card_ids.append(card_id)
+	run_changed.emit()
+	return true
+
+
+# 奖励确认采用“校验库存→加入牌库→扣库存”的固定顺序，失败时不产生部分消耗。
+func claim_reward_card(card_id: String) -> bool:
+	var remaining := int(card_reward_stock.get(card_id, 0))
+	if remaining <= 0:
+		return false
+	if not add_card(card_id):
+		return false
+	card_reward_stock[card_id] = remaining - 1
 	run_changed.emit()
 	return true
 
@@ -270,6 +289,7 @@ func to_dict() -> Dictionary:
 		"player_hp": player_hp,
 		"max_hp": max_hp,
 		"deck_card_ids": deck_card_ids.duplicate(),
+		"card_reward_stock": card_reward_stock.duplicate(true),
 		"owned_item_ids": owned_item_ids.duplicate(),
 		"damage_modifiers": damage_modifiers.duplicate(true),
 		"run_max_energy_bonus": run_max_energy_bonus,
@@ -289,6 +309,7 @@ func from_dict(data: Dictionary) -> bool:
 	max_hp = maxi(int(data.get("max_hp", DEFAULT_MAX_HEALTH)), 1)
 	player_hp = clampi(int(data.get("player_hp", max_hp)), 0, max_hp)
 	deck_card_ids = _string_array(data.get("deck_card_ids", DEFAULT_DECK))
+	card_reward_stock = _reward_stock_dictionary(data.get("card_reward_stock", null))
 	owned_item_ids = _positive_int_array(data.get("owned_item_ids", []))
 	var saved_modifiers: Dictionary = data.get("damage_modifiers", {}) if data.get("damage_modifiers", {}) is Dictionary else {}
 	damage_modifiers = {
@@ -309,6 +330,21 @@ func from_dict(data: Dictionary) -> bool:
 		map_state = null
 	run_changed.emit()
 	return true
+
+
+# 旧档缺少库存时按当前配表初始化；新档只接纳已知卡牌的非负整数并以配表上限封顶。
+func _reward_stock_dictionary(value: Variant) -> Dictionary:
+	_reset_card_reward_stock()
+	if value is not Dictionary:
+		return card_reward_stock.duplicate(true)
+	var restored := card_reward_stock.duplicate(true)
+	for card_id in restored:
+		if not value.has(card_id):
+			continue
+		var raw_value: Variant = value[card_id]
+		if (raw_value is int or raw_value is float) and not raw_value is bool:
+			restored[card_id] = clampi(int(raw_value), 0, int(restored[card_id]))
+	return restored
 
 
 # JSON 数组恢复为强类型稳定 ID 数组，并忽略无法转换为有效 ID 的异常项。

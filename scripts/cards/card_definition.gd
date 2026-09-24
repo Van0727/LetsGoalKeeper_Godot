@@ -42,6 +42,8 @@ enum Rarity {
 @export_range(0.0, 16.0, 0.0001, "or_greater") var attack_delay_beats := 1.0
 @export_range(0.0, 16.0, 0.0001, "or_greater") var multi_hit_interval_beats := 0.5
 @export var rarity := Rarity.COMMON
-# 实装状态只控制新奖励与正常游戏入口；资源仍保留，供旧存档和GM诊断安全读取。
+# 实装状态控制正常游戏入口；奖励次数还需同时满足 reward_stock 与本局剩余库存。
 @export var enabled := true
+# 每局可被玩家领取的次数上限；0表示只允许初始牌库、旧档或GM等显式入口使用。
+@export_range(0, 255, 1) var reward_stock := 0
 @export var effects: Array[Resource] = []

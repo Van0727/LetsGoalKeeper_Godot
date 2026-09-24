@@ -18,4 +18,5 @@ description = "下一张攻击牌额外攻击1次，追加段使用原牌的基�
 archetype_hint = "爆裂鼓手·段数强化"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_hboli")])

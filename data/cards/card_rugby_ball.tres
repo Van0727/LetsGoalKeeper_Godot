@@ -6,15 +6,16 @@
 
 [sub_resource type="Resource" id="Resource_bxu5h"]
 script = ExtResource("2_effect")
-amount = 6
+amount = 7
 
 [resource]
 script = ExtResource("1_card")
 id = 1011
 card_id = "card_rugby_ball"
 display_name = "橄榄球"
-description = "使用随机射门造成6点伤害"
+description = "使用随机射门造成7点伤害"
 archetype_hint = "通用·随机球型"
 illustration = ExtResource("3_illustration")
 shot_type = 4
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_bxu5h")])

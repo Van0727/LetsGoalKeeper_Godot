@@ -18,4 +18,5 @@ description = "向左、向右各踢出1颗香蕉球，每颗造成3点伤害"
 archetype_hint = "桑巴精灵·左右香蕉"
 illustration = ExtResource("3_illustration")
 shot_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_x5dyg")])

@@ -1,7 +1,7 @@
-# 持久化存档服务：负责版本化 JSON 校验、旧战利品键与游戏历程能量上限迁移及崩溃安全替换。
+# 持久化存档服务：负责版本化 JSON 校验、旧字段迁移及崩溃安全替换。
 extends Node
 
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 const DEFAULT_SAVE_PATH := "user://run_save.json"
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 
@@ -15,7 +15,7 @@ func _ready() -> void:
 	load_game()
 
 
-# v1 英文战利品键先迁移为数字 ID；v2 再补游戏历程级能量上限字段，最终统一升级到 v3。
+# v1英文战利品键先迁移为数字ID，v2补能量字段，v3缺少奖励库存时交由RunState按当前配表恢复。
 func _migrate_payload(payload: Dictionary) -> Dictionary:
 	var version := int(payload.get("save_version", 0))
 	if version == SAVE_VERSION:
@@ -42,6 +42,9 @@ func _migrate_payload(payload: Dictionary) -> Dictionary:
 		var state: Dictionary = migrated.run_state
 		state["run_max_energy_bonus"] = maxi(int(state.get("run_max_energy_bonus", 0)), 0)
 		migrated["run_state"] = state
+		version = 3
+	if version == 3 and migrated.get("run_state") is Dictionary:
+		# 不在迁移层固化配表库存；RunState读取缺失字段时使用当前卡牌配置，兼容后续策划调整。
 		migrated["save_version"] = SAVE_VERSION
 		return migrated
 	return {}

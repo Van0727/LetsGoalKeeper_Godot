@@ -20,4 +20,5 @@ illustration = ExtResource("3_illustration")
 shot_type = 2
 multi_hit_interval_beats = 0.25
 rarity = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_lxp7d")])

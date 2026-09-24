@@ -19,4 +19,5 @@ cost = 2
 illustration = ExtResource("3_illustration")
 shot_type = 1
 rarity = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_0dybe")])

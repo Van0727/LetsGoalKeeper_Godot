@@ -17,4 +17,5 @@ description = "造成6点伤害"
 archetype_hint = "桑巴精灵·香蕉基础"
 illustration = ExtResource("3_illustration")
 shot_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_v2odc")])

@@ -19,4 +19,5 @@ description = "目标伤害变为0.5倍，持续2个目标回合"
 archetype_hint = "通用·削弱"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_5eb4v")])

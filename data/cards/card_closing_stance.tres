@@ -19,4 +19,5 @@ description = "获得5点护盾；在小节最后一拍打出时额外获得4点
 archetype_hint = "爆裂鼓手·末拍防御"
 illustration = ExtResource("3_illustration")
 card_type = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_4akxr")])

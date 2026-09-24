@@ -13,12 +13,12 @@ const FIELD_NAMES := [
 	"id", "display_name", "description", "cost", "card_type", "shot_type", "rarity",
 	"attack_delay_beats", "multi_hit_interval_beats", "effect_id", "amounts", "hits",
 	"amounts_per_energy", "multipliers", "chances", "interrupts", "source_file",
-	"archetype_hint", "enabled",
+	"archetype_hint", "enabled", "reward_stock",
 ]
 const FIELD_TYPES := [
 	"uint16", "string", "string", "uint8", "uint8", "uint8", "uint8", "float32", "float32",
 	"uint16", "uint16_list", "uint8_list", "uint8_list", "uint8_list",
-	"uint8_list", "uint8_list", "string", "string", "uint8",
+	"uint8_list", "uint8_list", "string", "string", "uint8", "uint8",
 ]
 const EFFECT_FIELD_NAMES := [
 	"effect_id", "name", "description",
@@ -185,10 +185,11 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 	var source_file := row[16].strip_edges()
 	var archetype_hint := row[17].strip_edges()
 	var enabled := _parse_uint(row[18], 0, 1, "实装状态", line_number, errors)
+	var reward_stock := _parse_uint(row[19], 0, 255, "奖励库存", line_number, errors)
 	if source_file.is_empty() or not _is_safe_resource_name(source_file):
 		errors.append("第%d行资源文件名无效：%s" % [line_number, source_file])
 		return -1
-	if numeric_id < 0 or cost < 0 or card_type < 0 or shot_type < 0 or rarity < 0 or delay < 0 or interval < 0.0 or effect_id < 0 or enabled < 0:
+	if numeric_id < 0 or cost < 0 or card_type < 0 or shot_type < 0 or rarity < 0 or delay < 0 or interval < 0.0 or effect_id < 0 or enabled < 0 or reward_stock < 0:
 		return -1
 	var value_count := amounts.size()
 	if value_count == 0 or hits.size() != value_count or amounts_per_energy.size() != value_count or multipliers.size() != value_count or chances.size() != value_count or interrupts.size() != value_count:
@@ -215,6 +216,7 @@ func _parse_card_row(row: PackedStringArray, line_number: int, cards: Dictionary
 		"shot_type": shot_type,
 		"rarity": rarity,
 		"enabled": enabled == 1,
+		"reward_stock": reward_stock,
 		"attack_delay_beats": delay,
 		"multi_hit_interval_beats": interval,
 		"effect_id": effect_id,
@@ -298,6 +300,7 @@ func _save_and_verify_card(data: Dictionary, output_directory: String) -> String
 	card.multi_hit_interval_beats = data.multi_hit_interval_beats
 	card.rarity = data.rarity
 	card.enabled = data.enabled
+	card.reward_stock = data.reward_stock
 	for effect_data in data.effects:
 		var effect := EFFECT_DEFINITION.new()
 		effect.effect_type = effect_data.effect_type
@@ -320,7 +323,7 @@ func _save_and_verify_card(data: Dictionary, output_directory: String) -> String
 func _verify_saved_card(saved_card: Resource, expected_card: Resource, resource_path: String) -> String:
 	if saved_card == null:
 		return "导入后无法重新加载卡牌：%s" % resource_path
-	for property_name in ["id", "card_id", "display_name", "description", "archetype_hint", "cost", "card_type", "shot_type", "rarity", "enabled"]:
+	for property_name in ["id", "card_id", "display_name", "description", "archetype_hint", "cost", "card_type", "shot_type", "rarity", "enabled", "reward_stock"]:
 		if saved_card.get(property_name) != expected_card.get(property_name):
 			return "导入回读不一致：%s 的 %s" % [resource_path, property_name]
 	if not is_equal_approx(saved_card.attack_delay_beats, expected_card.attack_delay_beats):

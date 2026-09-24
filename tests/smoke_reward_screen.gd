@@ -137,9 +137,9 @@ func _run() -> void:
 		if screen.choices[index].icon != null:
 			_assert_equal(screen.item_icons[index].texture, screen.choices[index].icon, "奖励槽读取战利品定义中的正式图片")
 			_assert_equal(screen.item_icons[index].stretch_mode, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "奖励槽保持正方形图片比例")
-		# 占位图和长文字必须受卡片槽位约束，不能按源图尺寸或内容高度撑破三选一布局。
+		# 战利品沿用卡牌候选外框：放大图标、缩小摘要，仍不能按源图尺寸或内容高度撑破三选一布局。
 		_assert_equal(screen.item_icons[index].expand_mode, TextureRect.EXPAND_IGNORE_SIZE, "遗物图标忽略原图尺寸")
-		_assert_equal(screen.item_icons[index].custom_minimum_size, Vector2(80, 48), "遗物图标使用固定小尺寸")
+		_assert_equal(screen.item_icons[index].custom_minimum_size, Vector2(84, 64), "遗物图标使用放大的固定尺寸")
 		_assert_equal(screen.item_name_labels[index].max_lines_visible, 2, "遗物名称最多显示两行")
 		_assert_equal(screen.item_description_labels[index].max_lines_visible, 6, "遗物槽增加至六行摘要")
 		_assert_equal(screen.item_name_labels[index].text, screen.choices[index].display_name, "遗物名称由独立标签显示")
@@ -159,7 +159,7 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	for label in screen.item_description_labels:
-		_assert_true(label.size.y >= 72, "战利品描述预留六行摘要高度")
+		_assert_true(label.size.y >= 60, "战利品描述预留紧凑摘要高度")
 		_assert_true(label.get_rect().end.y <= label.get_parent().size.y, "战利品描述位于可见容器范围")
 	await _capture("items", screen)
 	# 使用独立副本验证长文本和空文本，避免修改共享正式物品资源。

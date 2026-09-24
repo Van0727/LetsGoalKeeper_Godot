@@ -63,6 +63,14 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 # 六束舞台灯光作为背景子层，随背景缩放且不遮挡角色、卡牌或输入。
 @onready var stage_lights: Control = $Background/StageLights
 @onready var player_display: CharacterDisplay = %PlayerDisplay
+# 底部角色 HUD 只读取控制器已结算的状态，和隐藏的 CharacterDisplay 表现层不共享布局职责。
+@onready var player_health_bar: ProgressBar = %PlayerHealthBar
+@onready var player_health_label: Label = %PlayerHealthLabel
+@onready var player_shield_bar: ProgressBar = %PlayerShieldBar
+@onready var player_shield_label: Label = %PlayerShieldLabel
+@onready var strength_status_label: Label = %StrengthStatus
+@onready var bleed_status_label: Label = %BleedStatus
+@onready var block_status_label: Label = %BlockStatus
 @onready var owned_item_icons: HFlowContainer = %OwnedItemIcons
 @onready var item_detail_popup: PanelContainer = %ItemDetailPopup
 @onready var item_detail_icon: TextureRect = %Icon
@@ -243,6 +251,8 @@ func _ready() -> void:
 	# 参考布局把敌人作为上方视觉焦点，玩家状态则压缩到底部生命栏。
 	enemy_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.ENEMY)
 	player_display.set_battle_layout_role(CharacterDisplay.BattleLayoutRole.PLAYER_BAR)
+	# 玩家 CharacterDisplay 保留给受击反馈与足球命中坐标，实际底部信息由专用 HUD 承担。
+	player_display.hide()
 	# 地图入口通常已完成过场；直接打开战斗场景时由服务补做，保证战斗第一拍不与切曲音效重叠。
 	var bgm_service := get_node_or_null("/root/BgmService")
 	if bgm_service != null:
@@ -1046,10 +1056,11 @@ func _rebuild_hand() -> void:
 	_update_input_state()
 
 
-# 同步双方生命、护盾、能量、回合、意图、牌堆计数与底部已获战利品图标。
+# 同步双方生命、护盾、状态、能量、回合、意图、牌堆计数与底部已获战利品图标。
 func _refresh_all() -> void:
 	player_display.set_health(controller.player.health)
 	player_display.set_shield(controller.player.shield)
+	_refresh_player_hud()
 	enemy_display.set_health(controller.enemy.health)
 	enemy_display.set_shield(controller.enemy.shield)
 	_refresh_monster_info()
@@ -1070,6 +1081,28 @@ func _refresh_all() -> void:
 	discard_pile_count.text = str(deck_state.discard_pile.size())
 	_refresh_owned_item_icons()
 	_update_input_state()
+
+
+# 底部 HUD 的护盾容量至少显示 20，超过时随实际值扩展；增益与减益直接读取本场角色状态。
+func _refresh_player_hud() -> void:
+	var player := controller.player
+	var max_health := maxi(player.max_health, 1)
+	player_health_bar.max_value = max_health
+	player_health_bar.value = clampi(player.health, 0, max_health)
+	player_health_label.text = "%d/%d" % [player.health, max_health]
+	var shield_capacity := maxi(20, player.shield)
+	player_shield_bar.max_value = shield_capacity
+	player_shield_bar.value = clampi(player.shield, 0, shield_capacity)
+	player_shield_label.text = "%d/%d" % [player.shield, shield_capacity]
+	strength_status_label.visible = player.strength_status != CombatantState.StrengthStatus.NONE
+	if strength_status_label.visible:
+		strength_status_label.text = ("↑" if player.strength_status == CombatantState.StrengthStatus.STRENGTH else "↓") + str(player.strength_turns)
+	bleed_status_label.visible = player.bleed_turns > 0
+	if bleed_status_label.visible:
+		bleed_status_label.text = "✦%d/%d" % [player.bleed_amount, player.bleed_turns]
+	block_status_label.visible = player.single_block > 0
+	if block_status_label.visible:
+		block_status_label.text = "◆%d" % player.single_block
 
 
 # 按真实生命比例裁切红色切图；无有效行为时使用控制器的默认攻击意图。
@@ -1464,6 +1497,9 @@ func _apply_effect_feedback(event: Dictionary) -> void:
 				bgm_service.reset_battle_pitch()
 			else:
 				bgm_service.shift_battle_pitch(int(event.get("semitone_delta", 0)))
+	if target == controller.player:
+		# 多段命中期间全量刷新被抑制，玩家专用 HUD 必须跟随每段结算后的快照立即刷新。
+		_refresh_player_hud()
 
 
 # 只刷新玩家可见的顶部怪物生命，不读取控制器的未来状态，保证并发多段按命中顺序显示。

@@ -20,4 +20,5 @@ description = "伤害变为1.5倍，持续2个自身回合"
 archetype_hint = "通用·强化"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_ncrmc")])

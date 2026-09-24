@@ -19,4 +19,5 @@ description = "恢复2点能量"
 archetype_hint = "通用·能量"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_32j7o")])

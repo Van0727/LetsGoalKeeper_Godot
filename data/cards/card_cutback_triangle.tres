@@ -17,4 +17,5 @@ description = "造成4点香蕉球伤害；若与上一颗香蕉球方向相同�
 archetype_hint = "桑巴精灵·同向香蕉"
 illustration = ExtResource("3_illustration")
 shot_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_fhdkm")])

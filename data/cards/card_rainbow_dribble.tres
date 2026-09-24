@@ -18,4 +18,5 @@ description = "下一张攻击牌改为香蕉球，且每段伤害+1"
 archetype_hint = "桑巴精灵·香蕉启动"
 illustration = ExtResource("3_illustration")
 card_type = 2
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_o0y38")])

@@ -19,4 +19,5 @@ archetype_hint = "爆裂鼓手·快速多段"
 illustration = ExtResource("3_illustration")
 shot_type = 4
 multi_hit_interval_beats = 0.25
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_rvpiw")])

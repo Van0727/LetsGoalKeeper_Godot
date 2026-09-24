@@ -35,6 +35,7 @@
 [ext_resource type="Texture2D" uid="uid://b1iwals3rs7a3" path="res://assets/ui/battle/icon_draw_pile.svg" id="40_draw_pile_icon"]
 [ext_resource type="Texture2D" uid="uid://yab5h252dg05" path="res://assets/ui/battle/icon_discard_pile.svg" id="41_discard_pile_icon"]
 [ext_resource type="Script" uid="uid://bcu5i4ta6uy1" path="res://scripts/battle/skill_pulse_ring.gd" id="42_skill_pulse_ring"]
+[ext_resource type="Texture2D" uid="uid://cruflse4iw86b" path="res://assets/placeholders/player_portrait.png" id="43_player_portrait"]
 
 [sub_resource type="StyleBoxTexture" id="Style_button"]
 texture = ExtResource("19_action_button_art")
@@ -148,8 +149,91 @@ corner_radius_bottom_left = 27
 shadow_color = Color(1, 0.31, 0.06, 0.55)
 shadow_size = 5
 
-[sub_resource type="StyleBoxTexture" id="Style_player_status"]
-texture = ExtResource("18_player_status_art")
+[sub_resource type="StyleBoxFlat" id="Style_player_status"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+bg_color = Color(0.025, 0.07, 0.14, 0.94)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.28, 0.63, 0.88, 0.94)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+shadow_color = Color(0, 0, 0, 0.46)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="Style_player_avatar"]
+bg_color = Color(0.03, 0.1, 0.17, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.92, 0.96, 1, 1)
+corner_radius_top_left = 30
+corner_radius_top_right = 30
+corner_radius_bottom_right = 30
+corner_radius_bottom_left = 30
+
+[sub_resource type="StyleBoxFlat" id="Style_player_health_bg"]
+bg_color = Color(0.12, 0.16, 0.24, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_player_health_fill"]
+bg_color = Color(1, 0.22, 0.25, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_player_shield_bg"]
+bg_color = Color(0.08, 0.17, 0.28, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_player_shield_fill"]
+bg_color = Color(0.18, 0.68, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="Style_player_buff"]
+content_margin_left = 4.0
+content_margin_right = 4.0
+bg_color = Color(0.04, 0.45, 0.28, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 1, 0.64, 0.9)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="Style_player_debuff"]
+content_margin_left = 4.0
+content_margin_right = 4.0
+bg_color = Color(0.42, 0.09, 0.16, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.38, 0.45, 0.9)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
 
 [sub_resource type="StyleBoxFlat" id="Style_item_detail"]
 content_margin_left = 10.0
@@ -1083,15 +1167,147 @@ text = "结束"
 horizontal_alignment = 1
 
 [node name="PlayerStatus" type="PanelContainer" parent="." unique_id=283201227]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 100.0
-offset_top = 576.0
-offset_right = -100.0
-offset_bottom = 614.0
+offset_left = 8.0
+offset_top = 552.0
+offset_right = -104.0
+offset_bottom = 616.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("Style_player_status")
+
+[node name="PlayerHud" type="HBoxContainer" parent="PlayerStatus"]
+layout_mode = 2
+theme_override_constants/separation = 7
+mouse_filter = 2
+
+[node name="AvatarFrame" type="Panel" parent="PlayerStatus/PlayerHud"]
+custom_minimum_size = Vector2(54, 54)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_player_avatar")
+
+[node name="Avatar" type="TextureRect" parent="PlayerStatus/PlayerHud/AvatarFrame"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("43_player_portrait")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Stats" type="VBoxContainer" parent="PlayerStatus/PlayerHud"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+mouse_filter = 2
+
+[node name="HealthRow" type="HBoxContainer" parent="PlayerStatus/PlayerHud/Stats"]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="HealthIcon" type="Label" parent="PlayerStatus/PlayerHud/Stats/HealthRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.4, 1)
+theme_override_font_sizes/font_size = 13
+text = "♥"
+
+[node name="PlayerHealthBar" type="ProgressBar" parent="PlayerStatus/PlayerHud/Stats/HealthRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+value = 100.0
+show_percentage = false
+theme_override_styles/background = SubResource("Style_player_health_bg")
+theme_override_styles/fill = SubResource("Style_player_health_fill")
+
+[node name="PlayerHealthLabel" type="Label" parent="PlayerStatus/PlayerHud/Stats/HealthRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.94, 0.91, 1)
+theme_override_font_sizes/font_size = 10
+text = "100/100"
+vertical_alignment = 1
+
+[node name="ShieldRow" type="HBoxContainer" parent="PlayerStatus/PlayerHud/Stats"]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="ShieldIcon" type="Label" parent="PlayerStatus/PlayerHud/Stats/ShieldRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "◆"
+
+[node name="PlayerShieldBar" type="ProgressBar" parent="PlayerStatus/PlayerHud/Stats/ShieldRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 20.0
+show_percentage = false
+theme_override_styles/background = SubResource("Style_player_shield_bg")
+theme_override_styles/fill = SubResource("Style_player_shield_fill")
+
+[node name="PlayerShieldLabel" type="Label" parent="PlayerStatus/PlayerHud/Stats/ShieldRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(42, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.92, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0/20"
+vertical_alignment = 1
+
+[node name="StatusRow" type="HBoxContainer" parent="PlayerStatus/PlayerHud/Stats"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="StrengthStatus" type="Label" parent="PlayerStatus/PlayerHud/Stats/StatusRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(42, 15)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 1, 0.9, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("Style_player_buff")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BleedStatus" type="Label" parent="PlayerStatus/PlayerHud/Stats/StatusRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(42, 15)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.9, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("Style_player_debuff")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BlockStatus" type="Label" parent="PlayerStatus/PlayerHud/Stats/StatusRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(42, 15)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 1, 0.9, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("Style_player_buff")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="PlayerDisplay" parent="PlayerStatus" unique_id=1897411797 instance=ExtResource("3_display")]
 unique_name_in_owner = true

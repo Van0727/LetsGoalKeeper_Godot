@@ -13,16 +13,17 @@ interrupt_on_success = true
 
 [sub_resource type="Resource" id="Resource_88miu"]
 script = ExtResource("2_effect")
-amount = 12
+amount = 14
 
 [resource]
 script = ExtResource("1_card")
 id = 1005
 card_id = "card_explosion_ball"
 display_name = "爆炸球"
-description = "50%概率爆炸：自身受到3点伤害并中断；否则造成12点伤害"
+description = "50%概率爆炸：自身受到3点伤害并中断；否则造成14点伤害"
 archetype_hint = "暴力·风险攻击"
 illustration = ExtResource("3_illustration")
 shot_type = 1
 rarity = 1
+reward_stock = 1
 effects = Array[Resource]([SubResource("Resource_mlhow"), SubResource("Resource_88miu")])
