@@ -120,6 +120,15 @@ func play_main_bgm() -> void:
 		_main_player.play()
 
 
+# 浏览器首次用户手势到达时重新发起播放，修复启动阶段 autoplay 被拒后播放器仍显示 playing 却无声音的问题。
+func resume_after_web_user_gesture() -> void:
+	if not OS.has_feature("web") or _main_player == null:
+		return
+	_main_player.stop()
+	_reset_main_beat_clock()
+	_main_player.play()
+
+
 # 只有音乐真正从头播放时才清空节拍时间轴；暂停恢复必须沿用原播放位置。
 func _reset_main_beat_clock() -> void:
 	_last_main_beat = -1
