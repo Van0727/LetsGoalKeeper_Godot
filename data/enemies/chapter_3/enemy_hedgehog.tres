@@ -1,46 +1,46 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_2tb0t"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_5a5mo"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_34sck"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_qws74"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_6spcj"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_unu7h"]
 
-[sub_resource type="Resource" id="Resource_51rys"]
-script = ExtResource("1_2tb0t")
+[sub_resource type="Resource" id="Resource_xt0jx"]
+script = ExtResource("1_qws74")
 amount = 8
 
-[sub_resource type="Resource" id="Resource_kgodq"]
-script = ExtResource("2_5a5mo")
+[sub_resource type="Resource" id="Resource_cb07d"]
+script = ExtResource("2_6spcj")
 id = 39
 description = "造成8点伤害"
-effects = Array[Resource]([SubResource("Resource_51rys")])
+effects = Array[Resource]([SubResource("Resource_xt0jx")])
 display_name = "刺球射门"
 
-[sub_resource type="Resource" id="Resource_al2sw"]
-script = ExtResource("1_2tb0t")
+[sub_resource type="Resource" id="Resource_stuuf"]
+script = ExtResource("1_qws74")
 effect_type = 1
 target = 1
 amount = 8
 
-[sub_resource type="Resource" id="Resource_73en2"]
-script = ExtResource("1_2tb0t")
+[sub_resource type="Resource" id="Resource_cbv0d"]
+script = ExtResource("1_qws74")
 effect_type = 8
 target = 1
 amount = 3
 
-[sub_resource type="Resource" id="Resource_tqlmk"]
-script = ExtResource("2_5a5mo")
+[sub_resource type="Resource" id="Resource_dagq0"]
+script = ExtResource("2_6spcj")
 id = 40
 category = 1
 description = "获得8点护盾；下回合前首次受伤反伤3点"
-effects = Array[Resource]([SubResource("Resource_al2sw"), SubResource("Resource_73en2")])
+effects = Array[Resource]([SubResource("Resource_stuuf"), SubResource("Resource_cbv0d")])
 display_name = "尖刺防守"
 
 [resource]
-script = ExtResource("3_34sck")
+script = ExtResource("3_unu7h")
 enemy_id = "enemy_hedgehog"
 id = 6031
 chapter = 3
 action_ids = Array[int]([39, 40])
 display_name = "刺猬球员"
 max_health = 52
-actions = Array[Resource]([SubResource("Resource_kgodq"), SubResource("Resource_tqlmk")])
+actions = Array[Resource]([SubResource("Resource_cb07d"), SubResource("Resource_dagq0")])

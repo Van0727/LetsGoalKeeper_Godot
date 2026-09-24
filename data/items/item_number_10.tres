@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_bnhlx"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_argentina_ten.png" id="1_dglnb"]
 
 [resource]
 script = ExtResource("1_bnhlx")
@@ -8,6 +9,7 @@ id = 5002
 item_id = "item_number_10"
 display_name = "阿根廷10号"
 description = "香蕉球伤害+1"
+icon = ExtResource("1_dglnb")
 rarity = 1
 modifier_type = 2
 amount = 1

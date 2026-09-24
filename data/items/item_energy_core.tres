@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_energy_core.png" id="1_7hjyh"]
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_vfhup"]
 
 [resource]
@@ -8,5 +9,6 @@ id = 4029
 item_id = "item_energy_core"
 display_name = "能量核心"
 description = "获得后在本次游戏历程中能量上限永久+1"
+icon = ExtResource("1_7hjyh")
 modifier_type = 4
 run_max_energy_bonus = 1

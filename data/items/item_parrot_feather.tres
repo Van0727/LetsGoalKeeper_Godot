@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://b6lyb7oroy501"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_2mpna"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_pg0fs"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_2mpna"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_parrot_feather.png" id="2_kksxw"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_pg0fs"]
 
-[sub_resource type="Resource" id="Resource_2mpna"]
+[sub_resource type="Resource" id="Resource_2blko"]
 script = ExtResource("1_2mpna")
 trigger = 3
 operation = 3
@@ -11,7 +12,7 @@ amount = 1.0
 card_filter = 3
 counter_key = "parrot_feather_bonus"
 
-[sub_resource type="Resource" id="Resource_pg0fs"]
+[sub_resource type="Resource" id="Resource_myfc8"]
 script = ExtResource("1_2mpna")
 trigger = 2
 operation = 7
@@ -20,7 +21,7 @@ amount = 1.0
 card_filter = 1
 counter_key = "parrot_feather_bonus"
 
-[sub_resource type="Resource" id="Resource_kksxw"]
+[sub_resource type="Resource" id="Resource_yyi76"]
 script = ExtResource("1_2mpna")
 trigger = 2
 operation = 4
@@ -33,5 +34,6 @@ id = 4021
 item_id = "item_parrot_feather"
 display_name = "鹦鹉羽毛"
 description = "每打出1张技能牌，下一张攻击牌的每段伤害+1，可叠加"
+icon = ExtResource("2_kksxw")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_2mpna"), SubResource("Resource_pg0fs"), SubResource("Resource_kksxw")])
+effects = Array[Resource]([SubResource("Resource_2blko"), SubResource("Resource_myfc8"), SubResource("Resource_yyi76")])

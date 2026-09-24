@@ -1,49 +1,49 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_sco7v"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_rxpmv"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_dwygw"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_t1q37"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_58bk6"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_jo87e"]
 
-[sub_resource type="Resource" id="Resource_1gydp"]
-script = ExtResource("1_sco7v")
+[sub_resource type="Resource" id="Resource_7p5k1"]
+script = ExtResource("1_t1q37")
 amount = 9
 
-[sub_resource type="Resource" id="Resource_e3m0g"]
-script = ExtResource("2_rxpmv")
+[sub_resource type="Resource" id="Resource_ioskh"]
+script = ExtResource("2_58bk6")
 id = 8
 description = "造成9点伤害"
-effects = Array[Resource]([SubResource("Resource_1gydp")])
+effects = Array[Resource]([SubResource("Resource_7p5k1")])
 display_name = "冲撞"
 
-[sub_resource type="Resource" id="Resource_ufqcq"]
-script = ExtResource("1_sco7v")
+[sub_resource type="Resource" id="Resource_yy5dk"]
+script = ExtResource("1_t1q37")
 effect_type = 9
 target = 1
 break_rule = 1
 threshold = 3
 
-[sub_resource type="Resource" id="Resource_njsxx"]
-script = ExtResource("2_rxpmv")
+[sub_resource type="Resource" id="Resource_q1xbv"]
+script = ExtResource("2_58bk6")
 id = 9
 category = 2
 description = "蓄力下一次重炮；受到3次有效命中可打断"
-effects = Array[Resource]([SubResource("Resource_ufqcq")])
+effects = Array[Resource]([SubResource("Resource_yy5dk")])
 display_name = "助跑"
 
-[sub_resource type="Resource" id="Resource_vr6un"]
-script = ExtResource("1_sco7v")
+[sub_resource type="Resource" id="Resource_du43c"]
+script = ExtResource("1_t1q37")
 amount = 18
 
-[sub_resource type="Resource" id="Resource_31ied"]
-script = ExtResource("2_rxpmv")
+[sub_resource type="Resource" id="Resource_1u2mf"]
+script = ExtResource("2_58bk6")
 id = 10
 description = "造成18点伤害"
-effects = Array[Resource]([SubResource("Resource_vr6un")])
+effects = Array[Resource]([SubResource("Resource_du43c")])
 interrupted_action_id = 11
 display_name = "重炮"
 
 [resource]
-script = ExtResource("3_dwygw")
+script = ExtResource("3_jo87e")
 enemy_id = "enemy_boar"
 id = 6011
 image_id = 7011
@@ -51,4 +51,4 @@ action_ids = Array[int]([8, 9, 10])
 display_name = "野猪前锋"
 tier = 1
 max_health = 65
-actions = Array[Resource]([SubResource("Resource_e3m0g"), SubResource("Resource_njsxx"), SubResource("Resource_31ied")])
+actions = Array[Resource]([SubResource("Resource_ioskh"), SubResource("Resource_q1xbv"), SubResource("Resource_1u2mf")])

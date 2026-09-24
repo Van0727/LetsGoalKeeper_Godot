@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://g0xrdv1ul4gb"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_r1iky"]
-[ext_resource type="Texture2D" uid="uid://yk2i4rg412qd" path="res://assets/ui/items/item_drum_isolation_screen.png" id="2_jck1x"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_ymirf"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_r1iky"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_drum_isolation_screen.png" id="2_jck1x"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_ymirf"]
 
-[sub_resource type="Resource" id="Resource_832pj"]
+[sub_resource type="Resource" id="Resource_ymirf"]
 script = ExtResource("1_r1iky")
 trigger = 1
 operation = 5
@@ -20,4 +20,4 @@ display_name = "鼓手隔音屏"
 description = "每场战斗首回合开始时获得5点护盾"
 icon = ExtResource("2_jck1x")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_832pj")])
+effects = Array[Resource]([SubResource("Resource_ymirf")])

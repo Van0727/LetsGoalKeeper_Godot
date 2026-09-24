@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://c66yuropxkwp1"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_h5bev"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_2rd64"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_h5bev"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_2rd64"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_gorilla_doll.png" id="2_vm8ci"]
 
-[sub_resource type="Resource" id="Resource_h5bev"]
+[sub_resource type="Resource" id="Resource_rrgag"]
 script = ExtResource("1_h5bev")
 trigger = 5
 operation = 5
@@ -19,5 +20,6 @@ id = 4014
 item_id = "item_gorilla_doll"
 display_name = "猩猩玩偶"
 description = "香蕉球每段命中后有25%概率立即恢复1点生命"
+icon = ExtResource("2_vm8ci")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_h5bev")])
+effects = Array[Resource]([SubResource("Resource_rrgag")])

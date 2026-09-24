@@ -1,22 +1,23 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://xmb22se1j5sw"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_gexhh"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_8k8gq"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_gexhh"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_8k8gq"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_lumberjack_axe.png" id="2_wm5wl"]
 
-[sub_resource type="Resource" id="Resource_gexhh"]
+[sub_resource type="Resource" id="Resource_ph44i"]
 script = ExtResource("1_gexhh")
 trigger = 6
 operation = 8
 amount = 1.0
 counter_key = "lumberjack_yellow_active"
 
-[sub_resource type="Resource" id="Resource_8k8gq"]
+[sub_resource type="Resource" id="Resource_e2eh8"]
 script = ExtResource("1_gexhh")
 trigger = 1
 operation = 4
 counter_key = "lumberjack_yellow_active"
 
-[sub_resource type="Resource" id="Resource_wm5wl"]
+[sub_resource type="Resource" id="Resource_ss5c4"]
 script = ExtResource("1_gexhh")
 operation = 7
 amount = 2.0
@@ -29,5 +30,6 @@ id = 4018
 item_id = "item_lumberjack_axe"
 display_name = "伐木斧"
 description = "本回合获得黄牌后，后续攻击每段伤害+2"
+icon = ExtResource("2_wm5wl")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_gexhh"), SubResource("Resource_8k8gq"), SubResource("Resource_wm5wl")])
+effects = Array[Resource]([SubResource("Resource_ph44i"), SubResource("Resource_e2eh8"), SubResource("Resource_ss5c4")])

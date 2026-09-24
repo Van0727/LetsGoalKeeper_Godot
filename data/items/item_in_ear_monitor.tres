@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_1q0at"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_in_ear_monitor.png" id="1_vd0hd"]
 
 [resource]
 script = ExtResource("1_1q0at")
@@ -8,4 +9,5 @@ id = 4016
 item_id = "item_in_ear_monitor"
 display_name = "耳返"
 description = "无论何时出牌，都视为完美卡在当前BGM拍子上；不改变真实拍位"
+icon = ExtResource("1_vd0hd")
 modifier_type = 4

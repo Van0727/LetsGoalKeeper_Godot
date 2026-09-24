@@ -1,52 +1,52 @@
 [gd_resource type="Resource" script_class="EnemyDefinition" format=3]
 
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_n8yw1"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_14yt5"]
-[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_rue1h"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_effect.gd" id="1_hcx8t"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_action_definition.gd" id="2_rwuhc"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_definition.gd" id="3_wlj5c"]
 
-[sub_resource type="Resource" id="Resource_yemfw"]
-script = ExtResource("1_n8yw1")
+[sub_resource type="Resource" id="Resource_bymhx"]
+script = ExtResource("1_hcx8t")
 amount = 10
 
-[sub_resource type="Resource" id="Resource_wibfr"]
-script = ExtResource("2_14yt5")
+[sub_resource type="Resource" id="Resource_k8x0y"]
+script = ExtResource("2_rwuhc")
 id = 19
 description = "造成10点伤害"
-effects = Array[Resource]([SubResource("Resource_yemfw")])
+effects = Array[Resource]([SubResource("Resource_bymhx")])
 display_name = "精准射击"
 
-[sub_resource type="Resource" id="Resource_mp8tb"]
-script = ExtResource("1_n8yw1")
+[sub_resource type="Resource" id="Resource_6068r"]
+script = ExtResource("1_hcx8t")
 effect_type = 1
 target = 1
 amount = 12
 
-[sub_resource type="Resource" id="Resource_ttane"]
-script = ExtResource("2_14yt5")
+[sub_resource type="Resource" id="Resource_u2l4p"]
+script = ExtResource("2_rwuhc")
 id = 20
 category = 1
 description = "获得12点护盾"
-effects = Array[Resource]([SubResource("Resource_mp8tb")])
+effects = Array[Resource]([SubResource("Resource_6068r")])
 display_name = "机械护卫"
 
-[sub_resource type="Resource" id="Resource_kumtc"]
-script = ExtResource("1_n8yw1")
+[sub_resource type="Resource" id="Resource_mqgmr"]
+script = ExtResource("1_hcx8t")
 amount = 4
 hits = 3
 
-[sub_resource type="Resource" id="Resource_rt4ob"]
-script = ExtResource("2_14yt5")
+[sub_resource type="Resource" id="Resource_ibee3"]
+script = ExtResource("2_rwuhc")
 id = 21
 description = "连续造成3次4点伤害"
-effects = Array[Resource]([SubResource("Resource_kumtc")])
+effects = Array[Resource]([SubResource("Resource_mqgmr")])
 display_name = "连发射击"
 
 [resource]
-script = ExtResource("3_rue1h")
+script = ExtResource("3_wlj5c")
 enemy_id = "enemy_arena_robot"
 id = 6008
 chapter = 3
 action_ids = Array[int]([19, 20, 21])
 display_name = "机器人"
 max_health = 54
-actions = Array[Resource]([SubResource("Resource_wibfr"), SubResource("Resource_ttane"), SubResource("Resource_rt4ob")])
+actions = Array[Resource]([SubResource("Resource_k8x0y"), SubResource("Resource_u2l4p"), SubResource("Resource_ibee3")])

@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://b5janbj7oysu3"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_q3eum"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_bovlb"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_q3eum"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_rotating_drums.png" id="2_5p4ew"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_bovlb"]
 
-[sub_resource type="Resource" id="Resource_q3eum"]
+[sub_resource type="Resource" id="Resource_lcab8"]
 script = ExtResource("1_q3eum")
 trigger = 8
 operation = 5
@@ -17,5 +18,6 @@ id = 4025
 item_id = "item_rotating_drums"
 display_name = "回转鼓组"
 description = "在当前BGM小节最后一拍结束回合时，获得3点护盾"
+icon = ExtResource("2_5p4ew")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_q3eum")])
+effects = Array[Resource]([SubResource("Resource_lcab8")])

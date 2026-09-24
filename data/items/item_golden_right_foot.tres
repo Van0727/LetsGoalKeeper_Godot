@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bu54pqlm2iggk"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_7yhlu"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_rpihd"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_7yhlu"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_rpihd"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_golden_right_foot.png" id="2_t2klb"]
 
-[sub_resource type="Resource" id="Resource_7yhlu"]
+[sub_resource type="Resource" id="Resource_vv450"]
 script = ExtResource("1_7yhlu")
 amount = 2.0
 shot_filter = 3
@@ -16,5 +17,6 @@ id = 4013
 item_id = "item_golden_right_foot"
 display_name = "黄金右脚"
 description = "所有向右踢出的香蕉球每段伤害+2"
+icon = ExtResource("2_t2klb")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_7yhlu")])
+effects = Array[Resource]([SubResource("Resource_vv450")])

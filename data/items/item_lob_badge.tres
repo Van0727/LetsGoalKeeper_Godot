@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_0w2w0"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_lob_badge.png" id="1_rqpnp"]
 
 [resource]
 script = ExtResource("1_0w2w0")
@@ -8,5 +9,6 @@ id = 4017
 item_id = "item_lob_badge"
 display_name = "挑射徽章"
 description = "挑射伤害+1"
+icon = ExtResource("1_rqpnp")
 modifier_type = 3
 amount = 1

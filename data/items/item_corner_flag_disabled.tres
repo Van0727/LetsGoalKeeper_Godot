@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_corner_flag.png" id="1_ex0ll"]
 [ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_rpnlw"]
 
 [resource]
@@ -8,6 +9,7 @@ id = 5003
 item_id = "item_corner_flag"
 display_name = "角旗杆（未启用）"
 description = "需要角球卡，当前版本不进入奖励池"
+icon = ExtResource("1_ex0ll")
 rarity = 1
 modifier_type = 4
 enabled = false

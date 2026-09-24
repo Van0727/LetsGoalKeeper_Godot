@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cohueaqs8yxlb"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_3ustq"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_aqsel"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_3ustq"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_aqsel"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_racing_drumsticks.png" id="2_dcb6w"]
 
-[sub_resource type="Resource" id="Resource_3ustq"]
+[sub_resource type="Resource" id="Resource_q18wn"]
 script = ExtResource("1_3ustq")
 amount = 1.0
 target_filter = 1
@@ -15,5 +16,6 @@ id = 4022
 item_id = "item_racing_drumsticks"
 display_name = "竞速鼓棒"
 description = "BGM处于1/8或更快细分时，对敌每段伤害+1"
+icon = ExtResource("2_dcb6w")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_3ustq")])
+effects = Array[Resource]([SubResource("Resource_q18wn")])

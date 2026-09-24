@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bd1swr4qd46jp"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_luld7"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_u5iny"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_luld7"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_three_phase_charger.png" id="2_jkctb"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_u5iny"]
 
-[sub_resource type="Resource" id="Resource_luld7"]
+[sub_resource type="Resource" id="Resource_x64fc"]
 script = ExtResource("1_luld7")
 trigger = 1
 operation = 5
@@ -17,5 +18,6 @@ id = 4031
 item_id = "item_three_phase_charger"
 display_name = "三相充能器"
 description = "每逢第3、6、9回合获得1点临时额外能量"
+icon = ExtResource("2_jkctb")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_luld7")])
+effects = Array[Resource]([SubResource("Resource_x64fc")])

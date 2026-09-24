@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://pnxomajng68t"]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
 
-[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_7nv4h"]
-[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_2c6k4"]
-[ext_resource type="Texture2D" uid="uid://ha0auhwwac38" path="res://assets/ui/items/item_banana.png" id="2_i820y"]
+[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_7nv4h"]
+[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_2c6k4"]
+[ext_resource type="Texture2D" path="res://assets/ui/items/item_banana.png" id="2_i820y"]
 
-[sub_resource type="Resource" id="Resource_cl8ie"]
+[sub_resource type="Resource" id="Resource_2c6k4"]
 script = ExtResource("1_7nv4h")
 trigger = 9
 operation = 2
@@ -20,4 +20,4 @@ display_name = "香蕉"
 description = "所有踢出的球都变为香蕉球"
 icon = ExtResource("2_i820y")
 modifier_type = 4
-effects = Array[Resource]([SubResource("Resource_cl8ie")])
+effects = Array[Resource]([SubResource("Resource_2c6k4")])
