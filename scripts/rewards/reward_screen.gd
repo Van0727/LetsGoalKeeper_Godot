@@ -1,8 +1,9 @@
-# 战斗奖励界面：普通怪只发放卡牌，Boss 继续发放卡牌与战利品；确认后离屏再入账。
+# 战斗奖励界面：普通怪只发放卡牌，精英与 Boss 继续发放卡牌和对应品级的奖励品；确认后离屏再入账。
 extends Control
 
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
+const MAP_STATE := preload("res://scripts/map/map_state.gd")
 const ITEM_DEFINITION := preload("res://scripts/items/item_definition.gd")
 const NORMAL_ITEM_PLACEHOLDER := preload("res://assets/ui/items/item_placeholder_normal.svg")
 const BOSS_ITEM_PLACEHOLDER := preload("res://assets/ui/items/item_placeholder_boss.svg")
@@ -108,14 +109,28 @@ func _copy_reward_font(source: Font) -> Font:
 # 展示当前战斗级别对应的三张候选卡。
 func _show_card_choices() -> void:
 	phase = Phase.CARD
-	# 普通怪只有一步卡牌奖励，隐藏会误导玩家的战利品进度。
-	card_step.get_parent().get_node("Arrow").visible = run_state.pending_reward_is_boss
-	item_step.visible = run_state.pending_reward_is_boss
+	# 普通怪只有一步卡牌奖励；精英和 Boss 显示后续奖励品步骤。
+	var has_item_reward := _has_item_reward()
+	card_step.get_parent().get_node("Arrow").visible = has_item_reward
+	item_step.visible = has_item_reward
 	_refresh_phase_progress()
 	title_label.text = "选择卡牌奖励"
 	subtitle_label.text = "选择1张加入本局牌库"
-	choices = _service.generate_card_choices(run_state.pending_reward_is_boss, _rng)
+	choices = _service.generate_card_choices(_is_boss_reward(), _rng)
 	_refresh_buttons()
+
+
+# 旧存档字段名保留兼容性，当前语义为该场胜利是否包含第二步奖励品。
+func _has_item_reward() -> bool:
+	return bool(run_state.pending_reward_is_boss)
+
+
+# 当前房间是奖励品级的事实来源：精英使用普通池，Boss 使用稀有池；无房间的旧 Boss 存档沿用旧标记。
+func _is_boss_reward() -> bool:
+	var current_room: Dictionary = run_state.get_current_room()
+	if not current_room.is_empty():
+		return int(current_room.get("type", MAP_STATE.RoomType.NORMAL)) == MAP_STATE.RoomType.BOSS
+	return bool(run_state.pending_reward_is_boss)
 
 
 # 展示未拥有战利品；池耗尽时提供明确的继续入口。
@@ -125,7 +140,7 @@ func _show_item_choices() -> void:
 	title_label.text = "选择遗物奖励"
 	subtitle_label.text = "选择1件遗物，确认后立即生效"
 	choices = _service.generate_item_choices(
-		run_state.pending_reward_is_boss,
+		_is_boss_reward(),
 		run_state.owned_item_ids,
 		_rng
 	)
@@ -285,8 +300,8 @@ func _on_confirm_pressed() -> void:
 	if phase == Phase.CARD:
 		run_state.add_card(choices[_selected_index].card_id)
 		_is_reward_animating = false
-		# 只有 Boss 胜利才继续战利品步骤；小怪在卡牌入账后立即原子提交房间。
-		if run_state.pending_reward_is_boss:
+		# 精英和 Boss 胜利继续奖励品步骤；普通怪在卡牌入账后立即原子提交房间。
+		if _has_item_reward():
 			_show_item_choices()
 			return
 		await _complete_reward_flow()
@@ -297,7 +312,7 @@ func _on_confirm_pressed() -> void:
 	await _complete_reward_flow()
 
 
-# 卡牌单步或 Boss 两步奖励完成后共用同一原子提交出口，避免房间、存档与切曲顺序分叉。
+# 普通怪卡牌单步或精英/Boss 两步奖励完成后共用同一原子提交出口，避免房间、存档与切曲顺序分叉。
 func _complete_reward_flow() -> void:
 	# 最后一项奖励提交后禁止重复点击，等待音频过场期间不能再次推进房间。
 	_is_reward_animating = false

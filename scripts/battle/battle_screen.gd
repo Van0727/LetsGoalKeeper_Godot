@@ -1566,7 +1566,7 @@ func _finalize_battle_result(victory: bool) -> void:
 		rhythm_clock.stop_music()
 	_last_victory = victory
 	run_state.record_battle_health(controller.player.health)
-	# 失败不提交房间完成；胜利保留到小怪卡牌或 Boss 两步奖励领取后再提交。
+	# 失败不提交房间完成；胜利保留到普通怪卡牌或精英/Boss 两步奖励领取后再提交。
 	if not victory:
 		run_state.mark_run_failed()
 		run_state.cancel_current_room()
@@ -1577,15 +1577,21 @@ func _finalize_battle_result(victory: bool) -> void:
 		and controller.current_enemy_definition != null
 		and controller.current_enemy_definition.tier == 2
 	)
+	var has_item_reward: bool = (
+		victory
+		and controller.current_enemy_definition != null
+		and controller.current_enemy_definition.tier >= 1
+	)
 	result_kicker.text = "STAGE CLEAR  •  LIVE COMPLETE" if victory else "RUN ENDED  •  GOAL LOST"
 	victory_mark.text = "✦  V  ✦" if victory else "—  ×  —"
 	result_title.text = "战斗胜利" if victory else "战斗失败"
 	result_detail.text = "节拍仍在继续，领取本场奖励后返回路线地图。" if victory else "球门失守，本局已经结束；整顿阵容后再来一场。"
 	health_stat_label.text = "♥  %d / %d" % [run_state.player_hp, run_state.max_hp]
-	reward_stat_label.text = ("✦  2 项奖励" if is_boss_victory else "✦  1 项卡牌奖励") if victory else "本局已结算"
+	reward_stat_label.text = ("✦  2 项奖励" if has_item_reward else "✦  1 项卡牌奖励") if victory else "本局已结算"
 	result_action_button.text = "领取奖励  →" if victory else "查看本局结算  →"
 	if victory:
-		run_state.pending_reward_is_boss = is_boss_victory
+		# 沿用旧存档字段承载“存在奖励品步骤”；奖励页再依据当前房间区分精英普通池与 Boss 稀有池。
+		run_state.pending_reward_is_boss = has_item_reward
 		run_state.resume_point = run_state.ResumePoint.REWARD
 	# 胜负与跨房间生命确定后立即保存；胜利档保留当前房间，等待奖励完成再提交。
 	var save_service := get_node_or_null("/root/SaveService")
@@ -1614,7 +1620,7 @@ func _play_result_entrance() -> void:
 	tween.tween_property(result_panel, "modulate:a", 1.0, 0.18)
 
 
-# 胜利进入奖励页（小怪一步、Boss 两步），失败进入独立结算页。
+# 胜利进入奖励页（普通怪一步、精英/Boss 两步），失败进入独立结算页。
 func _on_restart_pressed() -> void:
 	if _last_victory:
 		get_tree().change_scene_to_file("res://scenes/reward_screen.tscn")

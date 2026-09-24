@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cxyssof8lwmvo"]
 
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_1gxdm"]
-[ext_resource type="Texture2D" path="res://assets/ui/items/item_free_kick_master_license.png" id="2_igg3x"]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_jtrbd"]
+[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_1gxdm"]
+[ext_resource type="Texture2D" uid="uid://bk2xm7yvxnx0h" path="res://assets/ui/items/item_free_kick_master_license.png" id="2_igg3x"]
+[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_jtrbd"]
 
 [sub_resource type="Resource" id="Resource_pe3qv"]
 script = ExtResource("1_1gxdm")
