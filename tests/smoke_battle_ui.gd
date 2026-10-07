@@ -246,7 +246,7 @@ func _run() -> void:
 	# 新竖屏布局必须保持敌人在手牌上方、玩家生命栏在手牌下方，防止后续内容撑高造成重叠。
 	var enemy_rect: Rect2 = battle_screen.enemy_display.get_global_rect()
 	var first_card_rect: Rect2 = battle_screen.hand_layer.get_child(0).get_global_rect()
-	var player_rect: Rect2 = battle_screen.player_display.get_global_rect()
+	var player_rect: Rect2 = battle_screen.get_node("PlayerStatus").get_global_rect()
 	var owned_item_rect: Rect2 = battle_screen.owned_item_icons.get_global_rect()
 	_assert_true(enemy_rect.end.y < first_card_rect.position.y, "敌方信息位于手牌上方")
 	_assert_true(first_card_rect.end.y < player_rect.position.y, "手牌不遮挡底部玩家生命栏")
@@ -259,6 +259,10 @@ func _run() -> void:
 	_assert_true(not battle_screen.strength_status_label.visible, "没有力量或虚弱时隐藏状态槽")
 	_assert_true(not battle_screen.bleed_status_label.visible, "没有流血时隐藏减益槽")
 	_assert_true(not battle_screen.block_status_label.visible, "没有格挡时隐藏增益槽")
+	# 无状态与多状态均验收真实容器布局，避免头像被纵向拉伸或血条贴着外框上边。
+	await process_frame
+	await process_frame
+	_check_player_hud_alignment(battle_screen)
 	battle_screen.controller.player.apply_strength(1.5, 2)
 	battle_screen.controller.player.apply_bleed(3, 2)
 	battle_screen.controller.player.single_block = 4
@@ -271,6 +275,15 @@ func _run() -> void:
 	_assert_equal(battle_screen.bleed_status_label.text, "✦3/2", "流血状态显示伤害与回合")
 	_assert_true(battle_screen.block_status_label.visible, "格挡出现时显示增益槽")
 	_assert_equal(battle_screen.block_status_label.text, "◆4", "格挡状态显示可吸收数值")
+	# 三种状态同时出现后等待容器完成布局，检查实际可见 HUD 而非隐藏的旧角色显示节点。
+	await process_frame
+	await process_frame
+	player_rect = battle_screen.get_node("PlayerStatus").get_global_rect()
+	_assert_true(first_card_rect.end.y + 4.0 <= player_rect.position.y, "多状态 HUD 与手牌保留安全间距")
+	_assert_true(player_rect.end.y <= owned_item_rect.position.y, "多状态 HUD 不挤占战利品区域")
+	_assert_true(player_rect.end.y <= 640.0, "多状态 HUD 不超出竖屏底边")
+	_check_player_hud_bounds(battle_screen.get_node("PlayerStatus/PlayerHud"), player_rect)
+	_check_player_hud_alignment(battle_screen)
 	_assert_true(not battle_screen.drag_threshold_guide.visible, "未拖拽时不显示虚线")
 	battle_screen._on_card_drag_started(battle_screen.hand_layer.get_child(0))
 	_assert_true(battle_screen.drag_threshold_guide.visible, "开始拖拽后显示虚线")
@@ -639,6 +652,28 @@ func _wait_until_phase(battle_screen: Control, expected_phase: int, timeout_seco
 	while battle_screen.controller.phase != expected_phase and Time.get_ticks_msec() < deadline:
 		await process_frame
 	return battle_screen.controller.phase == expected_phase
+
+
+# 头像保持正方形，信息组居中；两条进度条也必须在各自行内垂直居中。
+func _check_player_hud_alignment(battle_screen: Control) -> void:
+	var panel: Control = battle_screen.get_node("PlayerStatus")
+	var avatar: Control = panel.get_node("PlayerHud/AvatarFrame")
+	var stats: Control = panel.get_node("PlayerHud/Stats")
+	_assert_true(avatar.size.is_equal_approx(Vector2(36, 36)), "头像框保持 36×36，避免椭圆")
+	for control in [avatar, stats]:
+		_assert_true(absf(control.get_global_rect().get_center().y - panel.get_global_rect().get_center().y) <= 0.5, "角色信息垂直居中：%s" % control.name)
+	for bar in [battle_screen.player_health_bar, battle_screen.player_shield_bar]:
+		var row: Control = bar.get_parent()
+		_assert_true(absf(bar.get_global_rect().get_center().y - row.get_global_rect().get_center().y) <= 0.5, "进度条在信息行内垂直居中：%s" % bar.name)
+
+
+# 递归检查实际可见 HUD 子控件，防止状态行撑出面板而外框断言仍然通过。
+func _check_player_hud_bounds(node: Node, panel_rect: Rect2) -> void:
+	if node is Control and node.is_visible_in_tree():
+		var rect: Rect2 = node.get_global_rect()
+		_assert_true(panel_rect.grow(0.5).encloses(rect), "角色信息子控件位于底板内：%s" % node.name)
+	for child in node.get_children():
+		_check_player_hud_bounds(child, panel_rect)
 
 
 # 显式截图模式保存胜利层真实渲染，供 360×640 基准视口的遮挡与层级验收。

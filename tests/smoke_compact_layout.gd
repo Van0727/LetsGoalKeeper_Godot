@@ -45,9 +45,9 @@ func _run() -> void:
 	quit()
 
 
-# 检查当前控件矩形，并递归检查全部子节点。
+# 只检查实际可见控件；隐藏父节点下的旧显示分支不参与布局验收。
 func _check_control_tree(node: Node, scene_path: String) -> void:
-	if node is Control and node.visible:
+	if node is Control and node.is_visible_in_tree():
 		var control := node as Control
 		var rect: Rect2 = control.get_global_rect()
 		var bottom_right: Vector2 = rect.position + rect.size

@@ -1085,7 +1085,8 @@ func _refresh_all() -> void:
 
 # 底部 HUD 的护盾容量至少显示 20，超过时随实际值扩展；增益与减益直接读取本场角色状态。
 func _refresh_player_hud() -> void:
-	var player := controller.player
+	# 控制器公开的 player 未声明静态类型；显式指定角色状态类型，确保 HUD 脚本可正常解析。
+	var player: CombatantState = controller.player
 	var max_health := maxi(player.max_health, 1)
 	player_health_bar.max_value = max_health
 	player_health_bar.value = clampi(player.health, 0, max_health)

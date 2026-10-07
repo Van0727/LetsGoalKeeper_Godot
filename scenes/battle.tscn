@@ -150,10 +150,10 @@ shadow_color = Color(1, 0.31, 0.06, 0.55)
 shadow_size = 5
 
 [sub_resource type="StyleBoxFlat" id="Style_player_status"]
-content_margin_left = 5.0
-content_margin_top = 5.0
-content_margin_right = 5.0
-content_margin_bottom = 5.0
+content_margin_left = 1.0
+content_margin_top = 1.0
+content_margin_right = 1.0
+content_margin_bottom = 1.0
 bg_color = Color(0.025, 0.07, 0.14, 0.94)
 border_width_left = 2
 border_width_top = 2
@@ -165,7 +165,7 @@ corner_radius_top_right = 18
 corner_radius_bottom_right = 18
 corner_radius_bottom_left = 18
 shadow_color = Color(0, 0, 0, 0.46)
-shadow_size = 4
+shadow_size = 2
 
 [sub_resource type="StyleBoxFlat" id="Style_player_avatar"]
 bg_color = Color(0.03, 0.1, 0.17, 1)
@@ -1172,7 +1172,7 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 8.0
-offset_top = 552.0
+offset_top = 574.0
 offset_right = -104.0
 offset_bottom = 616.0
 grow_horizontal = 2
@@ -1180,12 +1180,13 @@ theme_override_styles/panel = SubResource("Style_player_status")
 
 [node name="PlayerHud" type="HBoxContainer" parent="PlayerStatus"]
 layout_mode = 2
-theme_override_constants/separation = 7
+theme_override_constants/separation = 4
 mouse_filter = 2
 
 [node name="AvatarFrame" type="Panel" parent="PlayerStatus/PlayerHud"]
-custom_minimum_size = Vector2(54, 54)
+custom_minimum_size = Vector2(36, 36)
 layout_mode = 2
+size_flags_vertical = 4
 theme_override_styles/panel = SubResource("Style_player_avatar")
 
 [node name="Avatar" type="TextureRect" parent="PlayerStatus/PlayerHud/AvatarFrame"]
@@ -1208,25 +1209,27 @@ stretch_mode = 5
 [node name="Stats" type="VBoxContainer" parent="PlayerStatus/PlayerHud"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 0
 mouse_filter = 2
 
 [node name="HealthRow" type="HBoxContainer" parent="PlayerStatus/PlayerHud/Stats"]
-custom_minimum_size = Vector2(0, 15)
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 theme_override_constants/separation = 3
 
 [node name="HealthIcon" type="Label" parent="PlayerStatus/PlayerHud/Stats/HealthRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.35, 0.4, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 9
 text = "♥"
 
 [node name="PlayerHealthBar" type="ProgressBar" parent="PlayerStatus/PlayerHud/Stats/HealthRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(70, 12)
+custom_minimum_size = Vector2(70, 9)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 max_value = 100.0
 value = 100.0
 show_percentage = false
@@ -1238,26 +1241,27 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.94, 0.91, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 9
 text = "100/100"
 vertical_alignment = 1
 
 [node name="ShieldRow" type="HBoxContainer" parent="PlayerStatus/PlayerHud/Stats"]
-custom_minimum_size = Vector2(0, 15)
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
 theme_override_constants/separation = 3
 
 [node name="ShieldIcon" type="Label" parent="PlayerStatus/PlayerHud/Stats/ShieldRow"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.32, 0.8, 1, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 9
 text = "◆"
 
 [node name="PlayerShieldBar" type="ProgressBar" parent="PlayerStatus/PlayerHud/Stats/ShieldRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(70, 12)
+custom_minimum_size = Vector2(70, 9)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 max_value = 20.0
 show_percentage = false
 theme_override_styles/background = SubResource("Style_player_shield_bg")
@@ -1268,7 +1272,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(42, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.92, 1, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 9
 text = "0/20"
 vertical_alignment = 1
 
@@ -1279,10 +1283,10 @@ theme_override_constants/separation = 3
 [node name="StrengthStatus" type="Label" parent="PlayerStatus/PlayerHud/Stats/StatusRow"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(42, 15)
+custom_minimum_size = Vector2(42, 12)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 1, 0.9, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("Style_player_buff")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -1290,10 +1294,10 @@ vertical_alignment = 1
 [node name="BleedStatus" type="Label" parent="PlayerStatus/PlayerHud/Stats/StatusRow"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(42, 15)
+custom_minimum_size = Vector2(42, 12)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.9, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("Style_player_debuff")
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -1301,16 +1305,17 @@ vertical_alignment = 1
 [node name="BlockStatus" type="Label" parent="PlayerStatus/PlayerHud/Stats/StatusRow"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(42, 15)
+custom_minimum_size = Vector2(42, 12)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 1, 0.9, 1)
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("Style_player_buff")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="PlayerDisplay" parent="PlayerStatus" unique_id=1897411797 instance=ExtResource("3_display")]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 
 [node name="OwnedItemIcons" type="HFlowContainer" parent="." unique_id=1714026409]
