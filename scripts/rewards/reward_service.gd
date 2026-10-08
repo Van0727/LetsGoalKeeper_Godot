@@ -17,6 +17,9 @@ const COMMON_CARD_IDS: Array[String] = [
 	"card_aftershock_armor", "card_shed_armor", "card_closing_stance",
 	"card_cymbal_block", "card_reinforced_post", "card_layered_defense",
 	"card_perfect_block",
+	"card_emergency_save", "card_steady_position", "card_double_arm_guard",
+	"card_desperate_save", "card_defensive_counter", "card_curve_block",
+	"card_charged_guard", "card_chain_save", "card_goal_line_save",
 ]
 const BOSS_CARD_IDS: Array[String] = [
 	"card_energy_shot", "card_shot_group", "card_double_banana_shot",

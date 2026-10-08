@@ -21,8 +21,8 @@ func _run() -> void:
 	_assert_true(not DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(_output_directory)), "校验失败前不创建输出目录")
 	var result: Dictionary = importer.import_cards("res://tables/cards.csv", _output_directory)
 	_assert_true(result.ok, "真实卡牌 CSV 可完成导入")
-	_assert_equal(result.card_count, 46, "CSV 导入46张卡牌")
-	_assert_equal(result.effect_count, 50, "CSV 导入50条效果")
+	_assert_equal(result.card_count, 55, "CSV 导入55张卡牌")
+	_assert_equal(result.effect_count, 60, "CSV 导入60条效果")
 	if result.ok:
 		_test_imported_values_affect_battle()
 	_cleanup()

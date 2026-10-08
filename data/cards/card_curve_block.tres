@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_vxpis"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_jwobe"]
+
+[sub_resource type="Resource" id="Resource_viax1"]
+script = ExtResource("1_vxpis")
+effect_type = 1
+target = 0
+amount = 5
+
+[resource]
+script = ExtResource("2_jwobe")
+id = 3012
+card_id = "card_curve_block"
+display_name = "弧线封堵"
+description = "获得5点护盾；下一张香蕉球每段伤害+1"
+archetype_hint = "桑巴精灵·防守反击"
+card_type = 1
+reward_stock = 1
+effects = Array[Resource]([SubResource("Resource_viax1")])

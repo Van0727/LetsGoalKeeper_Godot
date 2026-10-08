@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_ixu35"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_tlakf"]
+
+[sub_resource type="Resource" id="Resource_2vbv2"]
+script = ExtResource("1_ixu35")
+effect_type = 1
+target = 0
+amount = 5
+
+[resource]
+script = ExtResource("2_tlakf")
+id = 3010
+card_id = "card_desperate_save"
+display_name = "极限扑救"
+description = "获得5点护盾；生命不超过一半时额外获得5点护盾"
+archetype_hint = "通用·低血防御"
+card_type = 1
+reward_stock = 1
+effects = Array[Resource]([SubResource("Resource_2vbv2")])

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_0pdcv"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_0kmhm"]
+
+[sub_resource type="Resource" id="Resource_sei4j"]
+script = ExtResource("1_0pdcv")
+effect_type = 1
+target = 0
+amount = 4
+
+[resource]
+script = ExtResource("2_0kmhm")
+id = 3013
+card_id = "card_charged_guard"
+display_name = "蓄势守门"
+description = "获得4点护盾；下一张防御牌获得的护盾额外+3"
+archetype_hint = "钢铁门神·防御蓄势"
+card_type = 1
+reward_stock = 1
+effects = Array[Resource]([SubResource("Resource_sei4j")])

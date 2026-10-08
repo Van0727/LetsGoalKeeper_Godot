@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_c8kav"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_7ohkd"]
+
+[sub_resource type="Resource" id="Resource_gw3td"]
+script = ExtResource("1_c8kav")
+effect_type = 1
+target = 0
+amount = 4
+
+[resource]
+script = ExtResource("2_7ohkd")
+id = 3014
+card_id = "card_chain_save"
+display_name = "连续扑救"
+description = "获得4点护盾；上一张打出的牌为防御牌时额外获得4点护盾"
+archetype_hint = "钢铁门神·连续防御"
+card_type = 1
+reward_stock = 1
+effects = Array[Resource]([SubResource("Resource_gw3td")])

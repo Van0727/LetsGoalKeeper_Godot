@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_bvbdq"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_cw8ch"]
+
+[sub_resource type="Resource" id="Resource_odbpf"]
+script = ExtResource("1_bvbdq")
+effect_type = 1
+target = 0
+amount = 3
+
+[resource]
+script = ExtResource("2_cw8ch")
+id = 3007
+card_id = "card_emergency_save"
+display_name = "应急扑救"
+description = "获得3点护盾"
+archetype_hint = "通用·低费防御"
+cost = 0
+card_type = 1
+reward_stock = 1
+effects = Array[Resource]([SubResource("Resource_odbpf")])

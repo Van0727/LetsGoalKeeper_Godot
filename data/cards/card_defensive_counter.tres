@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_dfm8p"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_f01e6"]
+
+[sub_resource type="Resource" id="Resource_50emr"]
+script = ExtResource("1_dfm8p")
+effect_type = 1
+target = 0
+amount = 5
+
+[resource]
+script = ExtResource("2_f01e6")
+id = 3011
+card_id = "card_defensive_counter"
+display_name = "以守待攻"
+description = "获得5点护盾；下一张攻击牌首段伤害+2"
+archetype_hint = "通用·防守反击"
+card_type = 1
+reward_stock = 1
+effects = Array[Resource]([SubResource("Resource_50emr")])

@@ -1,4 +1,4 @@
-# 卡牌插画冒烟测试：覆盖46张配表资源存在、数字ID与图片引用，以及本批25张成品规格和缺图回退。
+# 卡牌插画冒烟测试：覆盖55张配表资源存在、数字ID与图片引用，以及本批25张成品规格和缺图回退。
 extends SceneTree
 
 func _initialize() -> void:
@@ -22,6 +22,10 @@ func _run() -> void:
 		var source := row[16]
 		var definition = load("res://data/cards/%s.tres" % source)
 		assert(definition != null and definition.id == id)
+		if id >= 3007:
+			assert(definition.illustration == null)
+			count += 1
+			continue
 		assert(definition.illustration != null)
 		assert(ResourceLoader.exists(definition.illustration.resource_path))
 		# 手套及此前攻击牌保留原已确认引用；本批仅检查新接入的技能与五张防御牌。
@@ -30,7 +34,7 @@ func _run() -> void:
 			assert(definition.illustration.get_size() == Vector2(342, 316))
 			new_art_count += 1
 		count += 1
-	assert(count == 46 and new_art_count == 25)
+	assert(count == 55 and new_art_count == 25)
 	var view = load("res://scenes/card_view.tscn").instantiate()
 	root.add_child(view)
 	assert(view.editor_preview_definition.id == 2001)
@@ -42,5 +46,5 @@ func _run() -> void:
 	assert(not view.illustration_rect.visible)
 	view.queue_free()
 	await process_frame
-	print("smoke_card_art: PASS | all_cards=46 | new_art=25")
+	print("smoke_card_art: PASS | all_cards=55 | new_art=25")
 	quit()

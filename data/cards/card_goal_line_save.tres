@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="CardDefinition" format=3]
+
+[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_vwi3f"]
+[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_6hdyn"]
+
+[sub_resource type="Resource" id="Resource_6drgn"]
+script = ExtResource("1_vwi3f")
+effect_type = 1
+target = 0
+amount = 10
+
+[sub_resource type="Resource" id="Resource_yq6sv"]
+script = ExtResource("1_vwi3f")
+effect_type = 2
+target = 0
+amount = 3
+
+[resource]
+script = ExtResource("2_6hdyn")
+id = 3015
+card_id = "card_goal_line_save"
+display_name = "门线救险"
+description = "获得10点护盾，恢复3点生命"
+archetype_hint = "通用·防御续航"
+cost = 2
+card_type = 1
+reward_stock = 1
+effects = Array[Resource]([SubResource("Resource_6drgn"), SubResource("Resource_yq6sv")])

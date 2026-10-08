@@ -64,6 +64,13 @@ const CARD_CYMBAL_BLOCK := 3003
 const CARD_REINFORCED_POST := 3004
 const CARD_LAYERED_DEFENSE := 3005
 const CARD_PERFECT_BLOCK := 3006
+# 新增防御牌的数字身份；连击与待用护盾只保存在本场战斗中。
+const CARD_STEADY_POSITION := 3008
+const CARD_DESPERATE_SAVE := 3010
+const CARD_DEFENSIVE_COUNTER := 3011
+const CARD_CURVE_BLOCK := 3012
+const CARD_CHARGED_GUARD := 3013
+const CARD_CHAIN_SAVE := 3014
 
 # 战斗阶段限制玩家只能在自己的行动阶段操作。
 enum Phase {
@@ -105,6 +112,9 @@ var pending_multihit_attack_bonus := 0
 var pending_next_attack_extra_hits := 0
 var pending_first_hit_bonus := 0
 var pending_next_defense_shield_multiplier := 1.0
+var pending_next_defense_shield_bonus := 0
+# 上一张成功卡牌独立于主动技清空的连击状态，用于连续扑救判定。
+var last_played_card_type := -1
 var pending_turn_multihit_shield_amount := 0
 # 暴力流物品的充能与待消费倍率只存在于当前战斗；GM 取消对应物品时同步清理。
 var blindfold_charges := 0
@@ -185,6 +195,8 @@ func setup(
 	pending_next_attack_extra_hits = 0
 	pending_first_hit_bonus = 0
 	pending_next_defense_shield_multiplier = 1.0
+	pending_next_defense_shield_bonus = 0
+	last_played_card_type = -1
 	pending_turn_multihit_shield_amount = 0
 	blindfold_charges = 0
 	pending_first_card_multiplier = 1.0
@@ -353,6 +365,10 @@ func play_card(
 	if int(card.card_type) == 2:
 		skill_cards_played_this_turn += 1
 	combo_state.register_card(card.card_type)
+	last_played_card_type = int(card.card_type)
+	# 稳健站位以更高基础护盾换取连击中断，本张也不能成为新连击起点。
+	if int(card.id) == CARD_STEADY_POSITION:
+		combo_state.clear()
 	_resolve_item_commands(item_runtime.trigger(
 		ITEM_EFFECT.Trigger.AFTER_CARD_PLAYED,
 		current_action_context.to_trigger_context()
@@ -488,24 +504,38 @@ func _prepare_drum_shield_context(card: Resource, context: Dictionary) -> void:
 				_log("效果：城门爆破消耗 %d 护盾" % spent)
 				effect_resolved.emit({"type": "shield_spent", "amount": spent, "target": player, "shield_after": player.shield})
 	elif card_type == 1:
+		context["shield_bonus"] = pending_next_defense_shield_bonus
+		pending_next_defense_shield_bonus = 0
 		if pending_next_defense_shield_multiplier > 1.0:
 			context["shield_multiplier"] = pending_next_defense_shield_multiplier
 			pending_next_defense_shield_multiplier = 1.0
 		match card_id:
+			CARD_DESPERATE_SAVE:
+				if player.health * 2 <= player.max_health:
+					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 5
+			CARD_CHAIN_SAVE:
+				if last_played_card_type == 1:
+					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 4
 			CARD_CLOSING_STANCE:
 				if int(context.get("beat_in_bar", -1)) == 3:
-					context["shield_bonus"] = 4
+					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 4
 			CARD_LAYERED_DEFENSE:
 				if player.shield > 0:
-					context["shield_bonus"] = 3
+					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 3
 			CARD_PERFECT_BLOCK:
 				if int(context.get("rhythm_grade", -1)) == 0:
-					context["shield_bonus"] = 3
+					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 3
 
 
 # 技能和节拍防御在自身结算完成后建立后续状态；卸甲只移除护盾，不触发伤害事件。
 func _apply_drum_shield_card_rule(card: Resource, context: Dictionary) -> void:
 	match int(card.get("id")):
+		CARD_DEFENSIVE_COUNTER:
+			pending_first_hit_bonus += 2
+		CARD_CURVE_BLOCK:
+			pending_next_banana_bonus += 1
+		CARD_CHARGED_GUARD:
+			pending_next_defense_shield_bonus += 3
 		CARD_MALLET_WARMUP:
 			pending_multihit_attack_bonus += 2
 		CARD_TEMPO_ACCELERATION:
