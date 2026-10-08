@@ -950,12 +950,17 @@ func _rebuild_gm_cards_list() -> void:
 		checkbox.disabled = not card.enabled
 		checkbox.toggled.connect(_on_gm_card_toggled.bind(card, checkbox))
 		entry.add_child(checkbox)
-		var description := Label.new()
+		# GM 卡牌列表也复用描述数值样式，避免调试查看时与实际卡面不一致。
+		var description := RichTextLabel.new()
+		description.bbcode_enabled = true
+		description.fit_content = true
+		description.scroll_active = false
 		var card_description := _to_player_grade_terms(card.description)
-		description.text = card_description if card.enabled else "%s（未实装，不可勾选）" % card_description
+		var formatter = preload("res://scripts/cards/card_description_format.gd")
+		description.text = formatter.format_description(card_description if card.enabled else "%s（未实装，不可勾选）" % card_description).rich
 		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		description.custom_minimum_size = Vector2(270.0, 0.0)
-		description.add_theme_font_size_override("font_size", 12)
+		description.add_theme_font_size_override("normal_font_size", 12)
 		entry.add_child(description)
 
 

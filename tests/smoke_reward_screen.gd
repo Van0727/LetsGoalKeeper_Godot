@@ -48,12 +48,18 @@ func _run() -> void:
 	_assert_equal(badge_view.category_badge.texture_filter, CanvasItem.TEXTURE_FILTER_LINEAR, "高清标签采用线性过滤")
 	await _capture("cards", screen)
 	_assert_equal(ThemeDB.fallback_font.get("oversampling"), 0.0, "奖励字体不修改全局默认字体")
-	var reward_font: Font = screen.card_views[0].description_label.get_theme_font("font")
-	_assert_equal(reward_font.get("multichannel_signed_distance_field"), true, "卡牌说明使用距离场字体")
+	var reward_font: Font = screen.card_views[0].description_label.get_theme_font("normal_font")
+	# 编辑器允许模拟加粗：此时沿用高采样栅格，否则使用距离场，二者均覆盖富文本。
+	var description_font := reward_font as FontVariation
+	if is_zero_approx(description_font.variation_embolden):
+		_assert_equal(description_font.base_font.get("multichannel_signed_distance_field"), true, "卡牌说明基础字库使用距离场字体")
+	else:
+		_assert_equal(description_font.base_font.get("oversampling"), 2.0, "模拟加粗说明保留高采样字体")
 	var cost_font := screen.card_views[0].cost_label.get_theme_font("font") as FontVariation
-	_assert_true(is_equal_approx(cost_font.variation_embolden, 1.2), "费用字体保留原有加粗")
-	_assert_equal(cost_font.base_font.get("oversampling"), 2.0, "模拟加粗费用使用高采样栅格避免轮廓缺色")
-	_assert_equal(screen.item_description_labels[0].get_theme_font("font"), reward_font, "战利品与卡牌共享本页MSDF 字体")
+	# 卡牌使用随包中文字库的真实字重，费用与说明均不依赖浏览器系统字体。
+	_assert_equal(cost_font.variation_opentype.get("wght"), 800.0, "费用使用真实粗体字重")
+	_assert_true(reward_font.has_char("护".unicode_at(0)), "打包字体包含中文护字")
+	_assert_true(reward_font.has_char("盾".unicode_at(0)), "打包字体包含中文盾字")
 	var map_state = screen.run_state.map_state
 	var active_room: Dictionary = map_state.rooms_on_layer(1)[0]
 	var connected_room: Dictionary = map_state.room_by_id(active_room.connections[0])

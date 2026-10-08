@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cpcmkq6iksb6y"]
 
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_cdtil"]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_7hjqv"]
-[ext_resource type="Texture2D" path="res://assets/ui/items/item_spiked_drum_mallet.png" id="2_vtw8i"]
+[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_cdtil"]
+[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_7hjqv"]
+[ext_resource type="Texture2D" uid="uid://xs6xlqvhmxim" path="res://assets/ui/items/item_spiked_drum_mallet.png" id="2_vtw8i"]
 
 [sub_resource type="Resource" id="Resource_ks4rp"]
 script = ExtResource("1_cdtil")

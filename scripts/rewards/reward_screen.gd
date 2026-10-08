@@ -73,6 +73,9 @@ func _ready() -> void:
 
 # 只处理会随奖励槽缩放的文字；领取副本继承字体覆盖，动画中也不会回到低分辨率字形。
 func _prepare_scaled_fonts(node: Node) -> void:
+	# 富文本卡牌说明使用 normal_font，仍需继承奖励缩放的中文字体处理。
+	if node is RichTextLabel:
+		node.add_theme_font_override("normal_font", _copy_reward_font(node.get_theme_font("normal_font")))
 	if node is Label:
 		var label := node as Label
 		label.add_theme_font_override("font", _copy_reward_font(label.get_theme_font("font")))
@@ -219,12 +222,16 @@ func _on_choice_pressed(index: int) -> void:
 	if index < 0 or index >= choices.size():
 		return
 	_selected_index = index
-	# 不启用 BBCode，配表中的括号等文本按原文显示；空描述给出明确回退。
+	# 仅卡牌详情启用数值颜色；战利品维持原文，空描述给出明确回退。
 	var definition := choices[index]
 	var description: String = definition.description
 	if description.strip_edges().is_empty():
 		description = "暂无效果说明"
 	reward_detail.text = "%s\n%s" % [definition.display_name, description]
+	reward_detail.bbcode_enabled = phase == Phase.CARD
+	if phase == Phase.CARD:
+		var formatter = preload("res://scripts/cards/card_description_format.gd")
+		reward_detail.text = formatter.escape_bbcode(definition.display_name) + "\n" + formatter.format_description(description.replace("Perfect", "Great")).rich
 	reward_detail.scroll_to_line(0)
 	for button_index in range(choice_buttons.size()):
 		var button := choice_buttons[button_index]

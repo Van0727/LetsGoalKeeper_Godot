@@ -4,6 +4,7 @@ class_name BattleCardView
 extends DraggableCard
 
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
+const DESCRIPTION_FORMAT := preload("res://scripts/cards/card_description_format.gd")
 # 默认预览使用新攻守兼备成品；同步卡牌定义，避免工具初始化覆盖为旧插画。
 const EDITOR_PREVIEW_CARD := preload("res://data/cards/card_attack_and_defend.tres")
 # 类型徽章以 200×52 矢量路径重建原英文与配色；显示槽不变，选中放大时不再放大低清截图。
@@ -30,7 +31,7 @@ var _glow_dragging := false
 @onready var name_label: Label = %NameLabel
 @onready var category_badge: TextureRect = %CategoryBadge
 @onready var shot_label: Label = %ShotLabel
-@onready var description_label: Label = %DescriptionLabel
+@onready var description_label: RichTextLabel = %DescriptionLabel
 
 
 # 在编辑器中自动填入一张真实卡牌，使设计人员能直接拖动节点并检查文本折行。
@@ -92,8 +93,9 @@ func configure(definition: Resource, index: int) -> void:
 	shot_label.text = _get_shot_type_text(definition.shot_type)
 	# 配表内部仍沿用 Perfect 规则键，战斗卡面只转换玩家可见的等级名称。
 	var display_description: String = definition.description.replace("Perfect", "Great")
-	description_label.text = display_description
-	tooltip_text = display_description
+	var formatted := DESCRIPTION_FORMAT.format_description(display_description)
+	description_label.text = formatted.rich
+	tooltip_text = formatted.plain
 
 
 # 专属插画只覆盖卡牌上方的固定画框；留空时隐藏节点，继续显示通用卡牌底板。

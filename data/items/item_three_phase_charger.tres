@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://ddwtflj2mqiwa"]
 
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_luld7"]
-[ext_resource type="Texture2D" path="res://assets/ui/items/item_three_phase_charger.png" id="2_jkctb"]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_u5iny"]
+[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_luld7"]
+[ext_resource type="Texture2D" uid="uid://dtma3x43qb534" path="res://assets/ui/items/item_three_phase_charger.png" id="2_jkctb"]
+[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_u5iny"]
 
 [sub_resource type="Resource" id="Resource_x64fc"]
 script = ExtResource("1_luld7")

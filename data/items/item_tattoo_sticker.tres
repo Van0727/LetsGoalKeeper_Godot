@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://cp5s5kqwver3"]
 
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_e3m7h"]
-[ext_resource type="Texture2D" path="res://assets/ui/items/item_tattoo_sticker.png" id="2_6k4xh"]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_17gbc"]
+[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_e3m7h"]
+[ext_resource type="Texture2D" uid="uid://bgta0xd2s3ow0" path="res://assets/ui/items/item_tattoo_sticker.png" id="2_6k4xh"]
+[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_17gbc"]
 
 [sub_resource type="Resource" id="Resource_5i6p3"]
 script = ExtResource("1_e3m7h")

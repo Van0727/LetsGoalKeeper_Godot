@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://ddniv36r4mk1h"]
 
-[ext_resource type="Script" path="res://scripts/items/item_effect_definition.gd" id="1_ss1fm"]
-[ext_resource type="Texture2D" path="res://assets/ui/items/item_national_flip_flops.png" id="2_gakwo"]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="2_gs0ux"]
+[ext_resource type="Script" uid="uid://b5ba2ficxkuru" path="res://scripts/items/item_effect_definition.gd" id="1_ss1fm"]
+[ext_resource type="Texture2D" uid="uid://d2xwdalkyh21f" path="res://assets/ui/items/item_national_flip_flops.png" id="2_gakwo"]
+[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="2_gs0ux"]
 
 [sub_resource type="Resource" id="Resource_nc27d"]
 script = ExtResource("1_ss1fm")
