@@ -9,6 +9,11 @@ var _failed := false
 
 # 延迟执行以等待根视口初始化。
 func _initialize() -> void:
+	# 验收产物统一存入 Git 忽略目录；新检出项目也须能创建截图目录，失败即终止。
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://_local_artifacts/output")) != OK:
+		push_error("无法创建本地验收产物目录")
+		quit(1)
+		return
 	call_deferred("_run")
 
 
@@ -46,7 +51,7 @@ func _run() -> void:
 		var badge_texture: Texture2D = badge_view._get_card_type_badge(category)
 		_assert_equal(badge_texture.get_size(), Vector2(200, 52), "类型标签统一 200×52 导入尺寸")
 		if "--capture" in OS.get_cmdline_user_args():
-			_assert_equal(badge_texture.get_image().save_png("res://output/badge_%d.png" % category), OK, "保存标签回读预览")
+			_assert_equal(badge_texture.get_image().save_png("res://_local_artifacts/output/badge_%d.png" % category), OK, "保存标签回读预览")
 	_assert_equal(badge_view._get_card_type_badge(-1), badge_view.SKILL_BADGE, "未知类别安全回退技能标签")
 	_assert_equal(badge_view.category_badge.size, Vector2(50, 13), "类型标签显示槽保持不变")
 	_assert_equal(badge_view.category_badge.texture_filter, CanvasItem.TEXTURE_FILTER_LINEAR, "高清标签采用线性过滤")
@@ -219,7 +224,7 @@ func _capture(stage: String, screen: Control) -> void:
 		return
 	await RenderingServer.frame_post_draw
 	var image := screen.get_viewport().get_texture().get_image()
-	_assert_equal(image.save_png("res://output/reward_%s.png" % stage), OK, "奖励界面截图保存")
+	_assert_equal(image.save_png("res://_local_artifacts/output/reward_%s.png" % stage), OK, "奖励界面截图保存")
 
 
 # 本地截图验收兼容直接参数与 `--` 后用户参数，避免不同 Godot 启动方式漏掉视觉检查。

@@ -12,16 +12,16 @@
 https://你的用户名.github.io/LetsGoalKeeper_Godot/
 第一步：调整导出文件名
 目前导出入口是：
-output_web/BeatsFoward.html
+_local_artifacts/output_web/BeatsFoward.html
 建议在 Godot 的：
 项目 → 导出 → BeatsFoward → 导出路径
 改成：
-output_web/index.html
+_local_artifacts/output_web/index.html
 然后重新执行“导出项目”。
 Godot 官方建议 Web 入口使用 index.html，这样玩家访问目录链接便会直接进入游戏。应当通过导出配置修改文件名，而不是只手工重命名 HTML，因为 Godot 的 HTML、PCK、WASM 和 JS 文件名相互关联。Godot Web 导出文档
 第二步：本地测试
 不能直接双击 index.html，WebAssembly 需要通过 HTTP 服务运行。
-可以在 output_web 目录启动：
+可以在 _local_artifacts/output_web 目录启动：
 python -m http.server 8000
 然后打开：
 http://localhost:8000/
@@ -34,7 +34,7 @@ http://localhost:8000/
 - 浏览器控制台是否存在红色报错。
 - 首次加载时间是否可接受。目前导出内容约 72 MB，首次进入可能比较慢。
 第三步：部署 GitHub Pages
-建议增加 GitHub Actions，让它把 output_web 自动发布到 Pages。基本工作流是：
+建议增加 GitHub Actions，让它把 _local_artifacts/output_web 自动发布到 Pages。基本工作流是：
 name: Deploy Web Game
 
 on:
@@ -62,7 +62,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: output_web
+          path: _local_artifacts/output_web
 
       - name: Deploy
         id: deployment
@@ -84,7 +84,7 @@ itch.io 更适合游戏展示、收集玩家反馈；GitHub Pages 更适合分�
 variant/thread_support=false
 这是当前最省心的发布方式。Godot 多线程 Web 导出需要 SharedArrayBuffer 和额外的跨域隔离响应头；单线程导出可以避免这类服务器配置问题。
 目前真正需要做的主要是：
-1. 将导出入口改成 output_web/index.html。
+1. 将导出入口改成 _local_artifacts/output_web/index.html。
 2. 重新导出并进行浏览器验收。
 3. 增加 Pages 自动部署工作流。
 4. 推送后验证公开链接和移动端表现。

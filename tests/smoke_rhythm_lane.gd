@@ -5,6 +5,11 @@ const BATTLE := preload("res://scenes/battle.tscn")
 var _failed := false
 
 func _initialize() -> void:
+	# 验收产物统一存入 Git 忽略目录；新检出项目也须能创建截图目录，失败即终止。
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://_local_artifacts/output")) != OK:
+		push_error("无法创建本地验收产物目录")
+		quit(1)
+		return
 	call_deferred("_run")
 
 # 使用真实战斗 UI，但关闭音频时间自动刷新，以注入确定性时刻检验方向与边界，不写正式设置或存档。
@@ -156,4 +161,4 @@ func _capture(stage: String, battle: Control) -> void:
 	if not "--capture" in OS.get_cmdline_user_args():
 		return
 	await RenderingServer.frame_post_draw
-	_assert(battle.get_viewport().get_texture().get_image().save_png("res://output/rhythm_%s.png" % stage) == OK, "截图保存")
+	_assert(battle.get_viewport().get_texture().get_image().save_png("res://_local_artifacts/output/rhythm_%s.png" % stage) == OK, "截图保存")

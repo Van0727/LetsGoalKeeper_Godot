@@ -1,3 +1,6 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# 本地验收、日志、预览和导出中间产物，禁止提交。
+/_local_artifacts/

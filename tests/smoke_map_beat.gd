@@ -4,6 +4,11 @@ extends SceneTree
 var failures := 0
 
 func _initialize() -> void:
+	# 验收产物统一存入 Git 忽略目录；新检出项目也须能创建截图目录，失败即终止。
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://_local_artifacts/output")) != OK:
+		push_error("无法创建本地验收产物目录")
+		quit(1)
+		return
 	call_deferred("_run")
 
 func check(value: bool, message: String) -> void:
@@ -37,7 +42,7 @@ func _run() -> void:
 	check(active.pivot_offset.is_equal_approx(active.node_center()), "以圆盘中心缩放")
 	if "--capture" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
-		root.get_texture().get_image().save_png("res://output/map-beat-peak.png")
+		root.get_texture().get_image().save_png("res://_local_artifacts/output/map-beat-peak.png")
 	active._pulse_tween.custom_step(0.34)
 	check(active.scale.is_equal_approx(Vector2.ONE), "每拍结束恢复原尺寸")
 	bgm.main_beat_reached.emit(1)

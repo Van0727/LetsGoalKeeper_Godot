@@ -5,6 +5,11 @@ const BATTLE := preload("res://scenes/battle.tscn")
 var _failed := false
 
 func _initialize() -> void:
+	# 验收产物统一存入 Git 忽略目录；新检出项目也须能创建截图目录，失败即终止。
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://_local_artifacts/output")) != OK:
+		push_error("无法创建本地验收产物目录")
+		quit(1)
+		return
 	call_deferred("_run")
 
 # 不修改正式设置；注入音乐时刻检查确定性状态，并保存真实 GPU 渲染截图供目视验收。
@@ -110,7 +115,7 @@ func _capture(stage: String) -> void:
 		return
 	await process_frame
 	await RenderingServer.frame_post_draw
-	_assert(root.get_texture().get_image().save_png("res://output/stage_lights_%s.png" % stage) == OK, "截图保存")
+	_assert(root.get_texture().get_image().save_png("res://_local_artifacts/output/stage_lights_%s.png" % stage) == OK, "截图保存")
 
 func _assert(condition: bool, description: String) -> void:
 	if not condition:

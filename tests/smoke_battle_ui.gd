@@ -14,6 +14,11 @@ var _failed := false
 
 # 延迟执行以等待根视口初始化。
 func _initialize() -> void:
+	# 验收产物统一存入 Git 忽略目录；新检出项目也须能创建截图目录，失败即终止。
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://_local_artifacts/output")) != OK:
+		push_error("无法创建本地验收产物目录")
+		quit(1)
+		return
 	call_deferred("_run")
 
 
@@ -684,7 +689,7 @@ func _capture_battle_result(battle_screen: Control) -> void:
 	await create_timer(0.35).timeout
 	await RenderingServer.frame_post_draw
 	var image := battle_screen.get_viewport().get_texture().get_image()
-	_assert_equal(image.save_png("res://output/battle_victory_result.png"), OK, "保存胜利层验收截图")
+	_assert_equal(image.save_png("res://_local_artifacts/output/battle_victory_result.png"), OK, "保存胜利层验收截图")
 
 
 # 显式截图模式保存底部工具栏稳态，核对四个图标在实际 360×640 视口的清晰度和遮挡。
@@ -693,4 +698,4 @@ func _capture_battle_footer(battle_screen: Control) -> void:
 		return
 	await RenderingServer.frame_post_draw
 	var image := battle_screen.get_viewport().get_texture().get_image()
-	_assert_equal(image.save_png("res://output/battle_footer_icons.png"), OK, "保存底部工具栏验收截图")
+	_assert_equal(image.save_png("res://_local_artifacts/output/battle_footer_icons.png"), OK, "保存底部工具栏验收截图")

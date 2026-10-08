@@ -11,6 +11,11 @@ class FixedClock extends Node:
 	func get_playback_rate() -> float: return 1.0
 
 func _initialize() -> void:
+	# 验收产物统一存入 Git 忽略目录；新检出项目也须能创建截图目录，失败即终止。
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://_local_artifacts/output")) != OK:
+		push_error("无法创建本地验收产物目录")
+		quit(1)
+		return
 	call_deferred("_run")
 
 func _run() -> void:
@@ -86,7 +91,7 @@ func _run() -> void:
 		if "--capture" in OS.get_cmdline_user_args():
 			await process_frame
 			await RenderingServer.frame_post_draw
-			assert(root.get_texture().get_image().save_png("res://output/qte_spotlight_%d%s.png" % [kind, capture_suffix]) == OK)
+			assert(root.get_texture().get_image().save_png("res://_local_artifacts/output/qte_spotlight_%d%s.png" % [kind, capture_suffix]) == OK)
 		var note: Dictionary = popup._notes[0]
 		var judged_time := float(note.target_time) - 0.05
 		assert(popup.judge_lane(int(note.lane), judged_time) == "Great")
@@ -101,7 +106,7 @@ func _run() -> void:
 		if "--capture" in OS.get_cmdline_user_args():
 			await process_frame
 			await RenderingServer.frame_post_draw
-			assert(root.get_texture().get_image().save_png("res://output/qte_hit_%d%s.png" % [kind, capture_suffix]) == OK)
+			assert(root.get_texture().get_image().save_png("res://_local_artifacts/output/qte_hit_%d%s.png" % [kind, capture_suffix]) == OK)
 		effect.free()
 		assert(popup._layout.get_node("Progress").text == "1 / 4")
 		popup._show_judgement("Good")
@@ -123,7 +128,7 @@ func _run() -> void:
 		if kind == 0 and "--capture" in OS.get_cmdline_user_args():
 			await process_frame
 			await RenderingServer.frame_post_draw
-			assert(root.get_texture().get_image().save_png("res://output/qte_last_hit%s.png" % capture_suffix) == OK)
+			assert(root.get_texture().get_image().save_png("res://_local_artifacts/output/qte_last_hit%s.png" % capture_suffix) == OK)
 		final_effect._process(0.4)
 		await process_frame
 		assert(not is_instance_valid(final_effect))

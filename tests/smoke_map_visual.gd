@@ -6,6 +6,11 @@ const GENERATOR := preload("res://scripts/map/map_generator.gd")
 var failures := 0
 
 func _initialize() -> void:
+	# 验收产物统一存入 Git 忽略目录；新检出项目也须能创建截图目录，失败即终止。
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://_local_artifacts/output")) != OK:
+		push_error("无法创建本地验收产物目录")
+		quit(1)
+		return
 	call_deferred("_run")
 
 func check(value: bool, message: String) -> void:
@@ -69,12 +74,12 @@ func _run() -> void:
 	await process_frame
 	if "--capture" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
-		root.get_texture().get_image().save_png("res://output/map-seven-rows.png")
+		root.get_texture().get_image().save_png("res://_local_artifacts/output/map-seven-rows.png")
 		run.start_new_run(777)
 		screen.refresh_ui()
 		await process_frame
 		await RenderingServer.frame_post_draw
-		root.get_texture().get_image().save_png("res://output/map-current.png")
+		root.get_texture().get_image().save_png("res://_local_artifacts/output/map-current.png")
 	# 缺失底板可安全绘制，旧缓存无法加载时使用战斗的乌龟回退。
 	var room: Dictionary = run.map_state.rooms[0]
 	room.enemy_id = "missing_map_visual_enemy"
