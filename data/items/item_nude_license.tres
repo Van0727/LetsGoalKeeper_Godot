@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://de6hx6dhsx8qp"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/items/item_nude_license.png" id="1_hci2n"]
-[ext_resource type="Script" path="res://scripts/items/item_definition.gd" id="1_xe4k7"]
+[ext_resource type="Texture2D" uid="uid://geug7o1yryf7" path="res://assets/ui/items/item_nude_license.png" id="1_hci2n"]
+[ext_resource type="Script" uid="uid://bcrhbbjixaakl" path="res://scripts/items/item_definition.gd" id="1_xe4k7"]
 
 [resource]
 script = ExtResource("1_xe4k7")
