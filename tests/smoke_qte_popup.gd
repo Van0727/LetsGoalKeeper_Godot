@@ -90,8 +90,8 @@ func _run() -> void:
 	_assert_true(battle._input_locked, "QTE期间锁住战斗输入")
 	_assert_true(not battle.pause_overlay.pause_button.visible, "QTE期间隐藏暂停入口")
 	_assert_true(
-		absf(battle.qte_popup._target_line_y - battle.rhythm_waveform.get_global_rect().get_center().y) < 0.1,
-		"QTE判定横线与原波形中心线保持同一高度"
+		absf(battle.qte_popup._target_line_y - battle.rhythm_waveform.get_global_rect().get_center().y - battle.qte_popup._target_layout_offset) < 0.1,
+		"QTE判定线在原波形中心上叠加可编辑的场景偏移"
 	)
 	var play_area: Rect2 = battle.qte_popup._get_play_area()
 	for lane in range(3):
@@ -213,6 +213,9 @@ func _run() -> void:
 	_assert_true(not battle._input_locked, "主动技结算后恢复战斗输入")
 	_assert_true(battle.pause_overlay.pause_button.visible, "QTE关闭后恢复暂停入口")
 
+	# 显式释放场景，避免退出时未清理的音频与纹理掩盖资源泄漏。
+	battle.free()
+	await process_frame
 	if _failed:
 		quit(1)
 		return

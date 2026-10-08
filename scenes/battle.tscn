@@ -37,6 +37,8 @@
 [ext_resource type="Script" uid="uid://bcu5i4ta6uy1" path="res://scripts/battle/skill_pulse_ring.gd" id="42_skill_pulse_ring"]
 [ext_resource type="Texture2D" uid="uid://cruflse4iw86b" path="res://assets/placeholders/player_portrait.png" id="43_player_portrait"]
 
+[ext_resource type="PackedScene" path="res://scenes/qte_presentation.tscn" id="qte_presentation"]
+
 [sub_resource type="StyleBoxTexture" id="Style_button"]
 texture = ExtResource("19_action_button_art")
 
@@ -1413,8 +1415,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+modulate = Color(1, 1, 1, 0.28)
 texture = ExtResource("20_overlay_art")
 expand_mode = 1
+
+[node name="VisualLayout" parent="QTEPopup" instance=ExtResource("qte_presentation")]
 
 [node name="GMOverlay" type="TextureRect" parent="." unique_id=1381583599]
 unique_name_in_owner = true

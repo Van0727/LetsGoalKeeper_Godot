@@ -671,6 +671,8 @@ func _on_skill_pressed() -> void:
 		_input_locked = false
 		_update_input_state()
 		return
+	# 标题使用当前主动技名称，纯表现层不参与释放与结算。
+	qte_popup.set_skill_title(skill.display_name)
 	pause_overlay.set_external_modal_open(true)
 	status_label.text = "%s：完成4次QTE" % skill.display_name
 

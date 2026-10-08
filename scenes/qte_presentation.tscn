@@ -1,0 +1,113 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/battle/bigbeat.png" id="core_preview"]
+
+[sub_resource type="StyleBoxFlat" id="Style_progress"]
+bg_color = Color(0.06, 0.035, 0.06, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.68, 0.25, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+shadow_color = Color(1, 0.32, 0.08, 0.3)
+shadow_size = 7
+
+[node name="VisualLayout" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SkillTitle" type="Label" parent="."]
+offset_left = 35.0
+offset_top = 98.0
+offset_right = 325.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.58, 1)
+theme_override_colors/font_outline_color = Color(0.28, 0.06, 0.02, 1)
+theme_override_colors/font_shadow_color = Color(1, 0.26, 0.05, 0.7)
+theme_override_constants/outline_size = 5
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 25
+text = "超级攻击"
+horizontal_alignment = 1
+
+[node name="Progress" type="Label" parent="."]
+offset_left = 148.0
+offset_top = 134.0
+offset_right = 212.0
+offset_bottom = 157.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.65, 1)
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("Style_progress")
+text = "0 / 4"
+horizontal_alignment = 1
+
+[node name="PlayArea" type="Control" parent="."]
+offset_left = 28.8
+offset_top = 158.0
+offset_right = 331.2
+offset_bottom = 340.0
+mouse_filter = 2
+
+[node name="Targets" type="Control" parent="."]
+offset_top = 340.0
+offset_bottom = 340.0
+mouse_filter = 2
+
+[node name="Left" type="TextureRect" parent="Targets"]
+texture_filter = 2
+texture = ExtResource("core_preview")
+expand_mode = 1
+offset_left = 48.0
+offset_top = -22.0
+offset_right = 92.0
+offset_bottom = 22.0
+mouse_filter = 2
+
+[node name="Center" type="TextureRect" parent="Targets"]
+texture_filter = 2
+texture = ExtResource("core_preview")
+expand_mode = 1
+offset_left = 158.0
+offset_top = -22.0
+offset_right = 202.0
+offset_bottom = 22.0
+mouse_filter = 2
+
+[node name="Right" type="TextureRect" parent="Targets"]
+texture_filter = 2
+texture = ExtResource("core_preview")
+expand_mode = 1
+offset_left = 268.0
+offset_top = -22.0
+offset_right = 312.0
+offset_bottom = 22.0
+mouse_filter = 2
+
+[node name="FeedbackAnchor" type="Control" parent="."]
+offset_left = 95.0
+offset_top = 357.0
+offset_right = 265.0
+offset_bottom = 380.0
+mouse_filter = 2
+
+[node name="Instruction" type="Label" parent="."]
+offset_left = 55.0
+offset_top = 381.0
+offset_right = 305.0
+offset_bottom = 394.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.43, 1)
+theme_override_font_sizes/font_size = 10
+text = "跟随节拍 · 点击光圈"
+horizontal_alignment = 1
