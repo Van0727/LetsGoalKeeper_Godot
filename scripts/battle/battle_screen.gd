@@ -2,6 +2,8 @@
 extends Control
 
 signal attack_impact_audio_triggered
+# 每段主动技真实伤害播放怪物受击音时广播，便于验证音效次数与命中次数一致。
+signal enemy_active_skill_hurt_audio_triggered
 signal miss_audio_triggered
 signal judgement_audio_triggered(grade_name: String, effects_finished_time: float, target_beat_time: float, played_time: float)
 signal game_win_audio_triggered(death_time: float, target_beat_time: float, played_time: float)
@@ -1463,10 +1465,11 @@ func _play_shot_event(
 	)
 	# 命中任务只等待 BGM 时间轴；动画完成信号不会阻塞音效、扣血或受击反馈。
 	await _wait_for_shot_launch(hit_music_time)
-	_play_attack_impact_audio()
-	flight.notify_impact()
 	var damage_committed := controller.commit_deferred_damage(event)
 	if damage_committed:
+		# 只有真实提交成功才播放命中反馈，途中死亡后的后续球不能继续制造受击声。
+		_play_attack_impact_audio()
+		flight.notify_impact()
 		_apply_effect_feedback(event)
 	# 临时足球仍由自己的动画生命周期清理，但这段等待发生在命中效果全部触发之后。
 	while not visual_state.finished:
@@ -1531,11 +1534,13 @@ func _apply_effect_feedback(event: Dictionary) -> void:
 			if target == controller.enemy:
 				_set_monster_health_display(health_after)
 			display.set_shield(event.get("shield_after", target.shield))
-			# 受击类音效只服务玩家：怪物受伤或护甲吸收仍保留画面反馈，但不额外播音。
+			# 玩家受伤和主动技对怪物的每段真实生命伤害均独立播放受击声，保留多声部重叠。
 			if target == controller.player and absorbed > 0:
 				_hit_shield_audio.play()
-			if target == controller.player and health_damage > 0:
+			if health_damage > 0 and (target == controller.player or (target == controller.enemy and event.get("damage_tag", "") == "active_skill")):
 				_take_damage_audio.play()
+				if target == controller.enemy:
+					enemy_active_skill_hurt_audio_triggered.emit()
 			if health_damage > 0:
 				# 射门事件携带真实弹道和方向，显示层据此选择击退或压扁动作。
 				display.show_damage(

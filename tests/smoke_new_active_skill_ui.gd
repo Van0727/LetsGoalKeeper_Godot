@@ -10,6 +10,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var screen = SCENE.instantiate()
+	var hurt_sounds := [0]
+	screen.enemy_active_skill_hurt_audio_triggered.connect(func() -> void: hurt_sounds[0] += 1)
 	root.add_child(screen)
 	var ready_deadline := Time.get_ticks_msec() + 5000
 	while screen._battle_generation == 0 and Time.get_ticks_msec() < ready_deadline:
@@ -42,6 +44,7 @@ func _run() -> void:
 	check(screen.skill_button.scale == screen._skill_button_base_scale, "关闭后恢复按钮缩放")
 	check(screen.skill_button.get_theme_stylebox("disabled").bg_color == screen._skill_button_default_styles.disabled.bg_color, "无累计恢复默认底色")
 	for kind in [1, 2]:
+		hurt_sounds[0] = 0
 		screen.run_state.start_new_run(7100 + kind)
 		screen.start_new_battle(ENEMY)
 		screen.ball_flight.playback_speed = 2.0
@@ -67,6 +70,7 @@ func _run() -> void:
 		if kind == 2:
 			check(values == [44, 38, 32], "随机射门逐颗刷新生命")
 		check(screen.controller.player.shield == (0 if kind == 1 else 9), "防御释放清盾，技能保留护盾抵挡反伤")
+		check(hurt_sounds[0] == 3, "三段主动技每次真实命中各播放一次怪物受击音")
 	screen.free()
 	if not failed:
 		print("smoke_new_active_skill_ui: PASS")
