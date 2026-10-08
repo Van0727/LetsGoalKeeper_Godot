@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_bvbdq"]
 [ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_cw8ch"]
 
+[ext_resource type="Texture2D" path="res://assets/ui/cards/card_emergency_save_rounded_v1.png" id="3_defense_art"]
+
 [sub_resource type="Resource" id="Resource_odbpf"]
 script = ExtResource("1_bvbdq")
 effect_type = 1
@@ -11,6 +13,7 @@ amount = 3
 
 [resource]
 script = ExtResource("2_cw8ch")
+illustration = ExtResource("3_defense_art")
 id = 3007
 card_id = "card_emergency_save"
 display_name = "应急扑救"

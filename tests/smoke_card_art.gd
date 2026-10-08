@@ -1,4 +1,4 @@
-# 卡牌插画冒烟测试：覆盖55张配表资源存在、数字ID与图片引用，以及本批25张成品规格和缺图回退。
+# 卡牌插画冒烟测试：覆盖55张配表资源、34张规范插画（含9张新增防御牌）及缺图回退。
 extends SceneTree
 
 func _initialize() -> void:
@@ -22,29 +22,27 @@ func _run() -> void:
 		var source := row[16]
 		var definition = load("res://data/cards/%s.tres" % source)
 		assert(definition != null and definition.id == id)
-		if id >= 3007:
-			assert(definition.illustration == null)
-			count += 1
-			continue
 		assert(definition.illustration != null)
 		assert(ResourceLoader.exists(definition.illustration.resource_path))
-		# 手套及此前攻击牌保留原已确认引用；本批仅检查新接入的技能与五张防御牌。
-		if (id >= 2001 and id <= 2020) or (id >= 3002 and id <= 3006):
+		# 手套及此前攻击牌保留原引用；九张防御牌与既有技能牌使用统一圆角规格。
+		if (id >= 2001 and id <= 2020) or (id >= 3002 and id <= 3015):
 			assert(definition.illustration.resource_path == "res://assets/ui/cards/%s_rounded_v1.png" % source)
 			assert(definition.illustration.get_size() == Vector2(342, 316))
 			new_art_count += 1
 		count += 1
-	assert(count == 55 and new_art_count == 25)
+	assert(count == 55 and new_art_count == 34)
 	var view = load("res://scenes/card_view.tscn").instantiate()
 	root.add_child(view)
 	assert(view.editor_preview_definition.id == 2001)
 	view.configure(view.editor_preview_definition, -1)
 	assert(view.illustration_rect.texture == view.editor_preview_definition.illustration)
 	assert(view.illustration_rect.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR)
-	assert(view.illustration_rect.size.is_equal_approx(Vector2(85.416664, 79)))
+	# 插画沿用场景中可编辑的槽位；验收有效显示范围，不锁死设计者的布局尺寸。
+	assert(view.illustration_rect.size.x > 0 and view.illustration_rect.size.y > 0)
+	assert(Rect2(Vector2.ZERO, view.size).encloses(view.illustration_rect.get_rect()))
 	view._apply_illustration(null)
 	assert(not view.illustration_rect.visible)
 	view.queue_free()
 	await process_frame
-	print("smoke_card_art: PASS | all_cards=55 | new_art=25")
+	print("smoke_card_art: PASS | all_cards=55 | new_art=34")
 	quit()

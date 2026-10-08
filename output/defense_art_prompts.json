@@ -1,0 +1,65 @@
+{
+  "mode": "built-in image_gen",
+  "final_size": [
+    342,
+    316
+  ],
+  "format": "PNG RGBA",
+  "processing": "LANCZOS resize; no subject crop; exact alpha copied from card_gloves_v5.png",
+  "cards": [
+    {
+      "key": "card_emergency_save",
+      "name": "应急扑救",
+      "source": "C:/Users/paulv/.codex/generated_images/01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d/exec-5ff9ba3c-64e0-44b0-9264-fef2ee01a0cc.png",
+      "prompt": "Flat mobile card illustration; oversized spring-loaded ivory goalkeeper glove, blue cuff, quick diagonal save catching single ball; aqua background, navy contours, upper-left light, lower-right hard shadow; opaque rectangular 171:158 canvas; no text, UI, rounded corners or texture."
+    },
+    {
+      "key": "card_steady_position",
+      "name": "稳健站位",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 稳健站位. Subject: A pair of chunky goalkeeper boots planted firmly like two little fortress towers, one small soccer ball bouncing off a broad simple impact wave. Stable grounded composition, muted warm yellow background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-b59c2c39-7c4a-46e8-ae17-f0f458909f03.png"
+    },
+    {
+      "key": "card_double_arm_guard",
+      "name": "双臂封门",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 双臂封门. Subject: Two gigantic ivory goalkeeper gloves with blue cuffs opened outward like a pair of sturdy gate doors, one small soccer ball stopped outside their gap. Broad symmetrical barrier silhouette, muted cobalt blue background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-c3493910-1aac-4235-bc1c-0aba4bcdbdb9.png"
+    },
+    {
+      "key": "card_desperate_save",
+      "name": "极限扑救",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 极限扑救. Subject: One oversized goalkeeper glove stretching diagonally across the panel, just its fingertips hooking a soccer ball at the far upper corner, exaggerated desperate reach, bold short speed streak attached behind cuff, muted coral background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-ec85aab2-7eaa-43bb-b4c9-2991ac8f3dd7.png"
+    },
+    {
+      "key": "card_defensive_counter",
+      "name": "以守待攻",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 以守待攻. Subject: One goalkeeper glove pressing a soccer ball into a flexible shield, shield surface visibly bowed like a trampoline ready to rebound, one bold bent return arrow shape without text. Muted teal background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-fbdd31a2-9de9-4921-87f6-325c77c01a70.png"
+    },
+    {
+      "key": "card_curve_block",
+      "name": "弧线封堵",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 弧线封堵. Subject: An ivory goalkeeper glove firmly pinching the end of a broad C-shaped swooping soccer ball trajectory like stopping a curved slide, one small ball at palm, bold clean sweeping composition, muted violet background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-a640cfed-b1bd-40de-b6ed-ebf4edf68263.png"
+    },
+    {
+      "key": "card_charged_guard",
+      "name": "蓄势守门",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 蓄势守门. Subject: Two ivory goalkeeper gloves held together in front of a chunky compressed blue spring, two simple layered shield shapes behind them suggesting stored protection, compact powerful silhouette, muted amber background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-75d66e8b-95c9-443f-af9e-3ea44277c8c9.png"
+    },
+    {
+      "key": "card_chain_save",
+      "name": "连续扑救",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 连续扑救. Subject: Two ivory goalkeeper gloves making alternating left and right saves, two soccer balls with clearly different panel orientations and perspective sizes, separate short swooshes connecting each ball to its glove, lively zigzag composition, muted sky blue background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-6bc5a287-d247-4f38-90d9-4e0e25957e05.png"
+    },
+    {
+      "key": "card_goal_line_save",
+      "name": "门线救险",
+      "prompt": "Use case: stylized-concept. Generate ONE illustration panel for a mobile football card game. Reference image is STYLE ONLY: flat vector-like mobile illustration, very clean thick navy outlines, large readable blocks of moderately saturated color, ivory glove palms and blue cuffs, few hard-edged highlights, upper-left light and restrained lower-right hard cast shadow. Playful exaggerated object-based visual metaphor. Subject must dominate and remain readable at 65x60. Canvas aspect ratio 171:158, fully opaque rectangular background fills every edge and corner. NO rounded corners, margins, transparency, card frame, UI, text, letters, numbers, watermark, logos, realistic textures, gradients, grain, complex stitching or cinematic effects. Card: 门线救险. Subject: One oversized goalkeeper glove scooping a soccer ball back from the very edge of a thick white goal line, a cropped simple goal post at side and a bold short skid mark, dramatic last-second save, muted mint green background.",
+      "source": "C:\\Users\\paulv\\.codex\\generated_images\\01a0bcc8-3bb6-7b32-815e-73ebdd7fdf5d\\exec-440d5be6-a76d-46b3-90b9-5e9b3a35ad64.png"
+    }
+  ]
+}
