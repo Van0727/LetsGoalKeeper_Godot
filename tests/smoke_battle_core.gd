@@ -502,7 +502,7 @@ func _test_remaining_migrated_cards() -> void:
 	)
 	_assert_equal(blood_events[0].type, "damage", "嗜血球先造成伤害")
 	_assert_equal(blood_events[1].type, "heal", "嗜血球后恢复生命")
-	_assert_equal(blood_target.health, 14, "嗜血球造成6点伤害")
+	_assert_equal(blood_target.health, 15, "嗜血球造成5点伤害，保留续航定位")
 	_assert_equal(blood_source.health, 13, "嗜血球恢复3点生命")
 
 	var spike_source = COMBATANT_STATE.new("尖刺球球员", 20, 3)

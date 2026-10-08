@@ -48,7 +48,7 @@ func _test_basic_multihit_and_buffs() -> void:
 	battle.player.energy = 3
 	events.clear()
 	_assert_true(battle.play_card(DOUBLE_KICK), "强化后的双踩连击成功")
-	_assert_equal(_damage_amounts(events), [6, 6, 6], "双踩两段加追加一段且每段获得预热加成")
+	_assert_equal(_damage_amounts(events), [5, 5, 5], "双踩基础3点加预热2点，追加段同样受益")
 	_assert_equal(_damage_events(events)[0].multi_hit_interval_beats, 0.25, "双踩保留四分之一拍间隔")
 	battle.player.energy = 3
 	events.clear()
@@ -69,7 +69,7 @@ func _test_timing_defenses() -> void:
 	var events: Array[Dictionary] = []
 	battle.effect_resolved.connect(func(event: Dictionary) -> void: events.append(event))
 	_assert_true(battle.play_card(DOUBLE_KICK), "铜钹后的双踩成功")
-	_assert_equal(_damage_amounts(events), [7, 4], "铜钹只为第一段增加3点伤害")
+	_assert_equal(_damage_amounts(events), [6, 3], "铜钹只为第一段增加3点伤害")
 	battle.free()
 
 
@@ -116,19 +116,19 @@ func _test_shield_conversion_attacks() -> void:
 	var bash_events: Array[Dictionary] = []
 	bash_battle.effect_resolved.connect(func(event: Dictionary) -> void: bash_events.append(event))
 	_assert_true(bash_battle.play_card(SHIELD_BASH), "盾牌冲撞成功")
-	_assert_equal(_damage_amounts(bash_events), [8], "7盾的一半向下取整追加3点伤害")
-	_assert_equal(bash_battle.player.shield, 7, "盾牌冲撞不消费护盾")
+	_assert_equal(_damage_amounts(bash_events), [8], "6盾的一半追加3点伤害")
+	_assert_equal(bash_battle.player.shield, 6, "盾牌冲撞不消费护盾")
 	bash_battle.free()
 
 	var shed_battle = _new_battle(1006)
 	_assert_true(shed_battle.play_card(POST), "卸甲前加固门柱成功")
 	_assert_true(shed_battle.play_card(SHED_ARMOR), "卸甲备战成功")
-	_assert_equal(shed_battle.player.shield, 1, "卸甲最多消费6盾")
+	_assert_equal(shed_battle.player.shield, 0, "卸甲消费全部6盾")
 	shed_battle.player.energy = 3
 	var shed_events: Array[Dictionary] = []
 	shed_battle.effect_resolved.connect(func(event: Dictionary) -> void: shed_events.append(event))
 	_assert_true(shed_battle.play_card(DOUBLE_KICK), "卸甲后的双踩成功")
-	_assert_equal(_damage_amounts(shed_events), [7, 7], "消费6盾使多段攻击每段加3")
+	_assert_equal(_damage_amounts(shed_events), [6, 6], "消费6盾使基础3点的多段攻击每段加3")
 	shed_battle.free()
 
 	var breaker_battle = _new_battle(1007)
@@ -137,7 +137,7 @@ func _test_shield_conversion_attacks() -> void:
 	var breaker_events: Array[Dictionary] = []
 	breaker_battle.effect_resolved.connect(func(event: Dictionary) -> void: breaker_events.append(event))
 	_assert_true(breaker_battle.play_card(GATE_BREAKER), "城门爆破成功")
-	_assert_equal(_damage_amounts(breaker_events), [20], "7盾转化为14点追加伤害")
+	_assert_equal(_damage_amounts(breaker_events), [18], "6盾转化为12点追加伤害")
 	_assert_equal(breaker_battle.player.shield, 0, "城门爆破消费全部护盾")
 	breaker_battle.free()
 

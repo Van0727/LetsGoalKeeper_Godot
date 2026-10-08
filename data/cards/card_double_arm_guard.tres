@@ -9,7 +9,7 @@
 script = ExtResource("1_vn3eq")
 effect_type = 1
 target = 0
-amount = 15
+amount = 14
 
 [resource]
 script = ExtResource("2_4vo2r")
@@ -17,7 +17,7 @@ illustration = ExtResource("3_defense_art")
 id = 3009
 card_id = "card_double_arm_guard"
 display_name = "双臂封门"
-description = "获得15点护盾"
+description = "获得14点护盾"
 archetype_hint = "通用·高费防御"
 cost = 2
 card_type = 1

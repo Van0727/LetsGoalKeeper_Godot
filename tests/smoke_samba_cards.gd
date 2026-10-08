@@ -54,7 +54,7 @@ func _test_direction_attacks() -> void:
 	battle.player.energy = 3
 	events.clear()
 	_assert_true(battle.play_card(CUTBACK), "同向倒三角成功")
-	_assert_equal(_damage_amounts(events), [6], "同向倒三角获得2点加成")
+	_assert_equal(_damage_amounts(events), [7], "同向倒三角基础5点加条件2点")
 	battle.player.energy = 3
 	events.clear()
 	_assert_true(battle.play_card(HAT_TRICK), "回旋帽子戏法成功")

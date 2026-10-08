@@ -511,8 +511,9 @@ func _prepare_drum_shield_context(card: Resource, context: Dictionary) -> void:
 			pending_next_defense_shield_multiplier = 1.0
 		match card_id:
 			CARD_DESPERATE_SAVE:
+				# 低血救场额外提供4盾，半血恰好达标；不改变基础5盾与增益叠加顺序。
 				if player.health * 2 <= player.max_health:
-					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 5
+					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 4
 			CARD_CHAIN_SAVE:
 				if last_played_card_type == 1:
 					context["shield_bonus"] = int(context.get("shield_bonus", 0)) + 4

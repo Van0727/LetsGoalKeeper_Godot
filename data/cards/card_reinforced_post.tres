@@ -8,14 +8,14 @@
 script = ExtResource("1_vm5sn")
 effect_type = 1
 target = 0
-amount = 7
+amount = 6
 
 [resource]
 script = ExtResource("2_86it7")
 id = 3004
 card_id = "card_reinforced_post"
 display_name = "加固门柱"
-description = "获得7点护盾"
+description = "获得6点护盾"
 archetype_hint = "钢铁门神·基础叠盾"
 illustration = ExtResource("3_illustration")
 card_type = 1

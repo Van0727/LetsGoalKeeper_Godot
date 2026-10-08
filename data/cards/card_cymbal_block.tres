@@ -8,14 +8,14 @@
 script = ExtResource("1_eyo8n")
 effect_type = 1
 target = 0
-amount = 6
+amount = 5
 
 [resource]
 script = ExtResource("2_sh43b")
 id = 3003
 card_id = "card_cymbal_block"
 display_name = "铜钹格挡"
-description = "获得6点护盾；在小节第一拍打出时，下一张攻击牌第一段伤害+3"
+description = "获得5点护盾；在小节第一拍打出时，下一张攻击牌第一段伤害+3"
 archetype_hint = "爆裂鼓手·强拍反击"
 illustration = ExtResource("3_illustration")
 card_type = 1
