@@ -4,16 +4,15 @@ extends RefCounted
 
 const EMPTY_TYPE := -1
 const SKILL_THRESHOLD := 3
-const MAX_COMBO := 3
 
 var card_type := EMPTY_TYPE
 var count := 0
 
 
-# 记录一张成功打出的卡；同类型累积，换类型从1重新开始。
+# 记录成功出牌；同类型蓄力不设玩法上限，换类型从1重新开始，三层仅为释放门槛。
 func register_card(new_card_type: int) -> int:
 	if card_type == new_card_type:
-		count = mini(count + 1, MAX_COMBO)
+		count += 1
 	else:
 		card_type = new_card_type
 		count = 1

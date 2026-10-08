@@ -184,11 +184,20 @@ var _card_warning_tween: Tween
 # 连击按钮保留场景中可编辑的基础缩放；每拍只围绕该基准做短促回弹。
 var _skill_button_base_scale := Vector2.ONE
 var _skill_button_pulse_tween: Tween
+# 按钮样式保留场景基础副本；累计类型只改变颜色，不修改共享主题资源。
+const SKILL_TYPE_COLORS := [Color(1.0, 0.39, 0.08), Color(0.16, 0.56, 1.0), Color(0.12, 0.76, 0.38)]
+var _skill_button_default_styles: Dictionary = {}
+var _skill_visual_type := -2
+var _skill_visual_ready := false
+# 三类主动技独立小图标；手套和多球使用同尺寸矢量轮廓，与原攻击图标共用槽位。
+const SKILL_TYPE_ICONS := [preload("res://assets/ui/battle/icon_super_attack.svg"), preload("res://assets/ui/battle/icon_super_defense.svg"), preload("res://assets/ui/battle/icon_super_ability.svg")]
 
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
 func _ready() -> void:
 	_skill_button_base_scale = skill_button.scale
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		_skill_button_default_styles[state] = skill_button.get_theme_stylebox(state).duplicate()
 	_attack_hit_audio = AudioStreamPlayer.new()
 	_attack_hit_audio.name = "AttackHitAudio"
 	_attack_hit_audio.stream = HIT_AUDIO_STREAM
@@ -551,7 +560,7 @@ func _pulse_skill_button() -> void:
 	skill_button.scale = _skill_button_base_scale
 	_skill_button_pulse_tween = create_tween().bind_node(skill_button)
 	_skill_button_pulse_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_skill_button_pulse_tween.tween_property(skill_button, "scale", _skill_button_base_scale * 1.11, 0.07)
+	_skill_button_pulse_tween.tween_property(skill_button, "scale", _skill_button_base_scale * 1.20, 0.07)
 	_skill_button_pulse_tween.set_ease(Tween.EASE_IN)
 	_skill_button_pulse_tween.tween_property(skill_button, "scale", _skill_button_base_scale, 0.18)
 
@@ -595,6 +604,7 @@ func _resolve_enemy_turn_with_ball(end_timing: Dictionary, forced_by_red_card: b
 
 # 敌方统一使用直球表现；球抵达玩家生命栏中心后才返回，调用方随后提交敌人行动。
 func _play_enemy_attack_ball() -> void:
+	ball_flight.set_glove_projectile(false)
 	var launch_music_time: float = rhythm_clock.get_music_time()
 	var flight_seconds: float = rhythm_clock.beats_to_seconds(1.0)
 	var hit_music_time: float = launch_music_time + flight_seconds
@@ -680,6 +690,17 @@ func _on_qte_finished(result: Dictionary) -> void:
 # 四次及以上Miss时随机踢飞并只消费连击；其余结果命中后按Miss数选择震屏强度。
 func _play_active_skill_qte_result(skill: Resource, result: Dictionary) -> void:
 	var miss_count := int(result.get("miss", 0))
+	# 防御与技能主动技沿用 QTE 入口，成功后复用逐颗命中队列，避免连射在第一球统一扣血。
+	if int(skill.card_type) != CARD_DEFINITION.CardType.ATTACK and miss_count < 4:
+		_is_presenting_resolution = true
+		_pending_effect_events.clear()
+		_resolution_beat_anchor_time = rhythm_clock.get_music_time()
+		if controller.play_active_skill(skill, result, true, true):
+			await _play_pending_resolution()
+		else:
+			_is_presenting_resolution = false
+			_finish_resolution()
+		return
 	var hit_target := miss_count < 4
 	var launch_music_time: float = rhythm_clock.get_music_time()
 	var flight_seconds: float = rhythm_clock.beats_to_seconds(ACTIVE_SKILL_FLIGHT_BEATS)
@@ -754,6 +775,7 @@ func _play_active_skill_ball_visual(
 		hit_music_time: float,
 		visual_state: Dictionary
 ) -> void:
+	ball_flight.set_glove_projectile(false)
 	await ball_flight.play_shot(
 		CARD_DEFINITION.ShotType.STRAIGHT,
 		_get_player_shot_origin(),
@@ -765,9 +787,14 @@ func _play_active_skill_ball_visual(
 		launch_music_time,
 		hit_music_time,
 		false,
-		ACTIVE_SKILL_BALL_SCALE
+		_get_active_skill_ball_scale(controller.combo_state.count)
 	)
 	visual_state.finished = true
+
+
+# 超过三层后按原主动技尺寸线性增大，每额外一层增加20%，不用复利倍率。
+func _get_active_skill_ball_scale(charge: int) -> float:
+	return ACTIVE_SKILL_BALL_SCALE * (1.0 + maxf(float(charge - 3), 0.0) * 0.2)
 
 
 # 视觉协程通常与音乐命中同时结束；独立等待可覆盖掉帧，避免下一次操作复用仍显示的足球。
@@ -1271,15 +1298,22 @@ func _update_input_state() -> void:
 		skill_button.tooltip_text = "换牌 %d/3" % controller.blindfold_charges
 		skill_button.disabled = not can_act or controller.blindfold_charges <= 0
 	elif current_skill == null:
-		skill_count_label.text = "0/3"
-		skill_button.tooltip_text = "连击 0/3"
+		skill_count_label.text = "蓄力 0"
+		skill_button.tooltip_text = "蓄力 0（3层可释放）"
 	else:
-		skill_count_label.text = "%d/3" % combo_count
-		skill_button.tooltip_text = "%s %d/3" % [current_skill.display_name, combo_count]
+		skill_count_label.text = "蓄力 %d" % combo_count
+		skill_button.tooltip_text = "%s · 蓄力 %d（3层可释放）" % [current_skill.display_name, combo_count]
 	if not controller.item_runtime.has_item(BLINDFOLD_ID):
 		skill_button.disabled = not can_act or not controller.combo_state.can_activate()
 	# 波形环严格复用最终禁用状态，蒙眼布的换牌入口不会误显示为连击已准备。
 	skill_pulse_ring.call("set_skill_ready", not skill_button.disabled)
+	# 有累计即着色，按钮禁用只控制交互；可释放时才开启节拍动画和同色特效。
+	var visual_type: int = controller.combo_state.card_type if combo_count > 0 and not controller.item_runtime.has_item(BLINDFOLD_ID) else -1
+	_update_skill_type_visual(visual_type, not skill_button.disabled)
+	if skill_button.disabled:
+		if _skill_button_pulse_tween != null and _skill_button_pulse_tween.is_valid():
+			_skill_button_pulse_tween.kill()
+		skill_button.scale = _skill_button_base_scale
 	for child in hand_layer.get_children():
 		if child is BattleCardView:
 			var affordable: bool = controller.player.can_spend_energy(child.card_definition.cost)
@@ -1287,7 +1321,28 @@ func _update_input_state() -> void:
 			child.modulate = Color.WHITE if can_act and affordable else Color(0.55, 0.55, 0.55, 0.82)
 
 
-# 根据当前连击类型取得三种主动技能之一；无连击时不提供技能。
+# 根据累计牌型统一设置所有交互状态的底色，确保未攒满时禁用样式仍显示类型。
+func _update_skill_type_visual(card_type: int, ready_to_release: bool) -> void:
+	if card_type == _skill_visual_type and ready_to_release == _skill_visual_ready:
+		return
+	_skill_visual_type = card_type
+	_skill_visual_ready = ready_to_release
+	var has_type := card_type >= 0 and card_type < SKILL_TYPE_COLORS.size()
+	var color: Color = SKILL_TYPE_COLORS[card_type] if has_type else Color.WHITE
+	for state in _skill_button_default_styles:
+		var style: StyleBox = _skill_button_default_styles[state].duplicate()
+		if has_type and style is StyleBoxFlat:
+			# 未满只染边框，内部采用默认禁用底色；可释放才填充类型色。
+			style.bg_color = (color.darkened(0.15) if state == "pressed" else color) if ready_to_release else _skill_button_default_styles["disabled"].bg_color
+			style.border_color = color.lightened(0.35)
+			style.set_border_width_all(2)
+			style.shadow_color = Color(color, 0.35 if ready_to_release else 0.0)
+		skill_button.add_theme_stylebox_override(state, style)
+	(%SkillIcon as TextureRect).texture = SKILL_TYPE_ICONS[card_type] if has_type else SKILL_TYPE_ICONS[0]
+	skill_pulse_ring.call("set_type_color", color if has_type else SKILL_TYPE_COLORS[0])
+
+
+# 当前累计牌型决定主动技入口。
 func _get_current_skill() -> Resource:
 	return _skills_by_type.get(controller.combo_state.card_type)
 
@@ -1330,6 +1385,11 @@ func _play_pending_resolution() -> void:
 	if controller.red_card_pending:
 		_force_end_turn_after_red_card()
 		return
+	# 延迟主动技的骰子强制结束必须等全部球命中后再执行。
+	if controller.bar_dice_end_turn_pending:
+		deck_state.discard_hand()
+		if controller.resolve_bar_dice_end_turn() and controller.phase == BATTLE_CONTROLLER.Phase.PLAYER_TURN:
+			deck_state.draw_cards(STARTING_HAND_SIZE)
 	status_label.text = "卡牌已结算"
 	_finish_resolution()
 
@@ -1429,6 +1489,8 @@ func _play_shot_visual(
 		hit_music_time: float,
 		visual_state: Dictionary
 ) -> void:
+	# 手套由飞行组件的程序轮廓绘制，保持与足球相同的命中时间轴。
+	flight.set_glove_projectile(bool(event.get("projectile_glove", false)))
 	await flight.play_shot(
 		event.get("shot_type", 0),
 		_get_player_shot_origin(),

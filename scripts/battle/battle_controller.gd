@@ -644,7 +644,7 @@ func _resolve_actual_shot(action, configured_type: int, converted_banana := fals
 
 
 # 释放与当前连击类型匹配的主动技；结算完成后无论结果都清空类型与点数。
-func play_active_skill(skill: Resource, qte_result: Dictionary = {}, defer_turn_end := false) -> bool:
+func play_active_skill(skill: Resource, qte_result: Dictionary = {}, defer_turn_end := false, defer_damage := false) -> bool:
 	if not _can_player_act():
 		return false
 	if skill == null or not combo_state.can_activate():
@@ -670,13 +670,18 @@ func play_active_skill(skill: Resource, qte_result: Dictionary = {}, defer_turn_
 		player,
 		enemy,
 		damage_multiplier,
-		perfect_skill_multiplier
+		perfect_skill_multiplier,
+		defer_damage,
+		_shot_rng
 	)
 	for event in events:
 		_resolve_item_commands(event.get("item_commands", []))
-		_log_effect_event(event)
+		# 延迟主动技在各颗真实命中时才记录伤害、触发反伤，发射阶段仅入队。
+		if not bool(event.get("deferred_damage", false)):
+			_log_effect_event(event)
 		effect_resolved.emit(event)
-		_resolve_reactive_passive(event)
+		if not bool(event.get("deferred_damage", false)):
+			_resolve_reactive_passive(event)
 	combo_state.clear()
 	_resolve_item_commands(item_runtime.trigger(
 		ITEM_EFFECT.Trigger.ACTIVE_SKILL_FINISHED,

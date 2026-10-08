@@ -6,7 +6,7 @@
 script = ExtResource("1_skill")
 skill_id = "skill_super_ability"
 display_name = "超级能力"
-description = "每点连击获得1回合1.5倍力量"
+description = "按累计次数发射随机球型射门，每颗基础伤害6"
 card_type = 2
-base_value = 1
+base_value = 6
 multiplier = 1.5

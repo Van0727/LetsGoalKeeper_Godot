@@ -12,7 +12,9 @@ func resolve_skill(
 		source,
 		target,
 		target_damage_multiplier: float = 1.0,
-		effect_multiplier: float = 1.0
+		effect_multiplier: float = 1.0,
+		defer_damage := false,
+		rng: RandomNumberGenerator = null
 ) -> Array[Dictionary]:
 	var events: Array[Dictionary] = []
 	var points := maxi(combo_count, 0)
@@ -30,16 +32,26 @@ func resolve_skill(
 				"source": source,
 				"damage_tag": "active_skill",
 			})
-		CARD_DEFINITION.CardType.DEFENSE:
-			var gained: int = source.gain_shield(ceili(skill.base_value * points * effect_multiplier))
-			events.append({"type": "shield", "amount": gained, "target": source})
-		CARD_DEFINITION.CardType.ABILITY:
-			# 强化倍率属于效果数值；持续回合不参与音游奖杯翻倍。
-			var turns: int = source.apply_strength(skill.multiplier * effect_multiplier, skill.base_value * points)
-			events.append({
-				"type": "strength",
-				"multiplier": source.strength_multiplier,
-				"turns": turns,
-				"target": source,
-			})
+		CARD_DEFINITION.CardType.DEFENSE, CARD_DEFINITION.CardType.ABILITY:
+			# 每层发射一次；手套先锁定释放时护盾再清空，后续反伤或状态变化不改变已锁定伤害。
+			var defense: bool = skill.card_type == CARD_DEFINITION.CardType.DEFENSE
+			var hits: int = points
+			var random := rng if rng != null else RandomNumberGenerator.new()
+			var base: float = float(source.shield) if defense else float(skill.base_value) * source.strength_multiplier
+			if defense:
+				var spent: int = source.clear_shield()
+				events.append({"type": "shield_spent", "amount": spent, "target": source, "shield_after": 0})
+			for index in range(hits):
+				if target.is_dead() or source.is_dead():
+					break
+				var damage := maxi(ceili(base * target_damage_multiplier * effect_multiplier), 0)
+				var shot_type: int = 1 if defense else random.randi_range(1, 3)
+				var result: Dictionary = {"absorbed": 0, "health_damage": 0} if defer_damage else target.take_damage(damage)
+				events.append({"type": "damage", "amount": damage, "absorbed": result.absorbed,
+					"health_damage": result.health_damage, "target": target, "source": source,
+					"health_after": target.health, "shield_after": target.shield,
+					"damage_tag": "active_skill", "deferred_damage": defer_damage,
+					"shot_type": shot_type, "shot_direction": -1 if random.randi_range(0, 1) == 0 else 1,
+					"projectile_glove": defense, "hit": index + 1, "hits": hits,
+					"attack_delay_beats": 1.0, "multi_hit_interval_beats": 0.5})
 	return events

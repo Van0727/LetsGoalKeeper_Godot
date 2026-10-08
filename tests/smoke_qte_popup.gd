@@ -186,7 +186,10 @@ func _run() -> void:
 	_assert_true(bool(launched_results[0][0]), "少于四次Miss时足球飞向敌人")
 	_assert_true(battle.ball_flight.deform_pivot.scale.x > 0.9, "主动技足球明显大于普通足球")
 	var beat_seconds: float = battle.rhythm_clock.get_beat_duration()
-	await create_timer(beat_seconds + battle.PARTIAL_SHAKE_SECONDS + 0.25).timeout
+	# 音频线程与无头渲染的推进速度不同；观察真实命中和输入恢复，固定墙钟等待不能证明音乐一拍已到达。
+	var skill_deadline := Time.get_ticks_msec() + 5000
+	while (committed_times.is_empty() or battle._input_locked) and Time.get_ticks_msec() < skill_deadline:
+		await process_frame
 	_assert_true(battle.controller.enemy.health < health_before, "足球飞行一拍后才结算主动技伤害")
 	_assert_true("Great" in battle.status_label.text, "QTE结算使用Great完整名称")
 	_assert_true("Perfect" not in battle.status_label.text, "QTE结算不再显示旧Perfect等级名")

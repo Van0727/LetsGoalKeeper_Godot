@@ -63,7 +63,7 @@ func _run() -> void:
 	var end_turn_label := battle_screen.get_node_or_null("%EndTurnLabel") as Label
 	_assert_true(skill_icon != null and skill_icon.texture != null, "超级攻击图标作为独立节点加载")
 	_assert_true(end_turn_icon != null and end_turn_icon.texture != null, "结束回合图标作为独立节点加载")
-	_assert_equal(skill_count_label.text, "0/3", "连击数字使用独立标签显示")
+	_assert_equal(skill_count_label.text, "蓄力 0", "蓄力数字使用独立标签显示")
 	_assert_equal(end_turn_label.text, "结束", "结束回合按钮显示结束文字")
 	_assert_true(skill_pulse_ring != null, "连击技能提供独立可调整的节拍波形环")
 	_assert_equal(skill_pulse_ring.get_parent(), battle_screen.skill_button, "节拍波形环跟随连击按钮但保留独立布局节点")

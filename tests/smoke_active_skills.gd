@@ -28,6 +28,7 @@ func _run() -> void:
 	_test_super_ability()
 	_test_failed_qte_consumes_without_effect()
 	_test_new_battle_clears_combo()
+	_test_deferred_skill_hits()
 
 	if _failed:
 		quit(1)
@@ -36,14 +37,17 @@ func _run() -> void:
 	quit()
 
 
-# 同类型累积到3点封顶，换类型后改为新类型的1点。
+# 同类型可超过释放门槛继续积累，换类型后改为新类型的1点。
 func _test_combo_switch_and_cap() -> void:
 	var combo = COMBO_STATE.new()
 	combo.register_card(STRAIGHT_SHOT.card_type)
 	combo.register_card(STRAIGHT_SHOT.card_type)
 	combo.register_card(STRAIGHT_SHOT.card_type)
 	combo.register_card(STRAIGHT_SHOT.card_type)
-	_assert_equal(combo.count, 3, "连击点上限为3")
+	_assert_equal(combo.count, 4, "第四张同类牌继续增加蓄力")
+	for index in range(96):
+		combo.register_card(STRAIGHT_SHOT.card_type)
+	_assert_equal(combo.count, 100, "高层蓄力不封顶")
 	_assert_true(combo.can_activate(), "三点连击允许主动技")
 	combo.register_card(GLOVES.card_type)
 	_assert_equal(combo.card_type, GLOVES.card_type, "换卡牌类型同步切换技能类型")
@@ -60,27 +64,35 @@ func _test_super_attack_and_bear_reduction() -> void:
 	_assert_equal(battle.enemy.health, 117, "熊承受卡牌18和减半后的主动技15伤害")
 	_assert_equal(battle.combo_state.count, 0, "主动技后连击点清空")
 	_assert_equal(battle.combo_state.card_type, COMBO_STATE.EMPTY_TYPE, "主动技后连击类型清空")
+	battle.setup(212, TURTLE)
+	battle.enemy.health = 100
+	battle.enemy.max_health = 100
+	battle.combo_state.card_type = 0
+	battle.combo_state.count = 5
+	battle.play_active_skill(SUPER_ATTACK)
+	_assert_equal(battle.enemy.health, 50, "五层攻击造成50基础伤害")
 	battle.free()
 
 
-# 三张防御牌后，超级防御按每点6额外获得18护盾。
+# 三层防御主动技锁定18护盾后清空，逐只发射手套直至击杀。
 func _test_super_defense() -> void:
 	var battle = _create_battle(202, TURTLE)
 	for _index in range(3):
 		battle.play_card(GLOVES)
 	_assert_true(battle.play_active_skill(SUPER_DEFENSE), "超级防御释放成功")
-	_assert_equal(battle.player.shield, 36, "普通防御与超级防御护盾叠加")
+	_assert_equal(battle.enemy.health, 0, "三只手套各18伤害击杀50血怪物")
+	_assert_equal(battle.player.shield, 0, "释放防御主动技清空护盾")
 	battle.free()
 
 
-# 能力连击释放后获得1.5倍力量，持续回合等于三点连击。
+# 三点技能连击产生三段基础6伤害，不再施加力量。
 func _test_super_ability() -> void:
 	var battle = _create_battle(203, TURTLE)
 	for _index in range(3):
 		battle.play_card(TOWEL)
 	_assert_true(battle.play_active_skill(SUPER_ABILITY), "超级能力释放成功")
-	_assert_equal(battle.player.strength_multiplier, 1.5, "超级能力力量倍率")
-	_assert_equal(battle.player.strength_turns, 3, "超级能力持续三回合")
+	_assert_equal(battle.enemy.health, 32, "三次随机射门各造成6点伤害")
+	_assert_equal(battle.player.strength_multiplier, 1.0, "技能主动技不再施加力量")
 	battle.free()
 
 
@@ -108,6 +120,62 @@ func _test_new_battle_clears_combo() -> void:
 
 
 # 创建并挂入场景树，保证信号与控制器生命周期和真实战斗一致。
+func _test_deferred_skill_hits() -> void:
+	var battle = _create_battle(207, TURTLE)
+	var queued: Array[Dictionary] = []
+	battle.effect_resolved.connect(func(event: Dictionary) -> void:
+		if event.get("deferred_damage", false):
+			queued.append(event))
+	battle.combo_state.card_type = 2
+	battle.combo_state.count = 3
+	_assert_true(battle.play_active_skill(SUPER_ABILITY, {}, true, true), "随机连射进入命中队列")
+	_assert_equal(queued.size(), 3, "累计三次生成三颗独立足球")
+	_assert_equal(battle.enemy.health, 50, "发射阶段不扣血")
+	_assert_true(not battle.play_active_skill(SUPER_ABILITY), "释放后不能重复使用累计")
+	for index in range(queued.size()):
+		_assert_true(int(queued[index].shot_type) in [1, 2, 3], "每颗球路合法")
+		_assert_true(battle.commit_deferred_damage(queued[index]), "逐颗命中提交")
+		_assert_equal(battle.enemy.health, 50 - 6 * (index + 1), "每颗命中独立扣6血")
+	_assert_true(not battle.commit_deferred_damage(queued[0]), "重复命中被拒绝")
+	battle.setup(208, TURTLE)
+	queued.clear()
+	battle.combo_state.card_type = 1
+	battle.combo_state.count = 3
+	battle.play_active_skill(SUPER_DEFENSE, {}, true, true)
+	_assert_equal(queued[0].amount, 0, "零护盾手套伤害为零")
+	battle.commit_deferred_damage(queued[0])
+	_assert_equal(battle.enemy.health, 50, "零伤手套不扣血")
+	battle.setup(210, TURTLE)
+	queued.clear()
+	battle.player.shield = 4
+	battle.combo_state.card_type = 1
+	battle.combo_state.count = 5
+	battle.play_active_skill(SUPER_DEFENSE, {}, true, true)
+	_assert_equal(queued.size(), 5, "五层蓄力发射五只手套")
+	_assert_equal(battle.player.shield, 0, "发射前清空护盾")
+	for event in queued:
+		_assert_equal(event.amount, 4, "所有手套锁定释放时护盾值")
+		battle.commit_deferred_damage(event)
+	_assert_equal(battle.enemy.health, 30, "五只手套各造成4伤害")
+	battle.setup(211, TURTLE)
+	queued.clear()
+	battle.combo_state.card_type = 2
+	battle.combo_state.count = 5
+	battle.play_active_skill(SUPER_ABILITY, {}, true, true)
+	_assert_equal(queued.size(), 5, "五层技能发射五颗随机球")
+	battle.setup(209, TURTLE)
+	queued.clear()
+	battle.enemy.health = 5
+	battle.combo_state.card_type = 2
+	battle.combo_state.count = 3
+	battle.play_active_skill(SUPER_ABILITY, {}, true, true)
+	battle.commit_deferred_damage(queued[0])
+	_assert_equal(battle.enemy.health, 0, "途中击杀生命不低于零")
+	_assert_true(not battle.commit_deferred_damage(queued[1]), "死亡后的后续球不重复结算")
+	battle.free()
+
+
+# 创建真实战斗控制器供主动技数值和时序验收。
 func _create_battle(seed_value: int, enemy_definition: Resource):
 	var battle = BATTLE_CONTROLLER.new()
 	root.add_child(battle)

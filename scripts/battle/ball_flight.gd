@@ -27,6 +27,8 @@ const BANANA_BEND_PIXELS := 30.0
 var playback_speed := 1.0
 var last_actual_shot_type := CARD_DEFINITION.ShotType.NONE
 var last_banana_direction := 0
+# 防御主动技使用程序绘制手套，避免将整张卡牌插画作为飞行物。
+var _glove_projectile: Polygon2D
 
 var _start_position := Vector2.ZERO
 var _control_position := Vector2.ZERO
@@ -55,6 +57,22 @@ func _ready() -> void:
 	_ball_material.set_shader_parameter("ball_texture", BALL_TEXTURE)
 	_ball_material.set_shader_parameter("texture_angle", 0.0)
 	_build_ball_mesh(0)
+	_glove_projectile = Polygon2D.new()
+	_glove_projectile.color = Color(0.92, 0.97, 1.0)
+	_glove_projectile.polygon = PackedVector2Array([
+		Vector2(-30, 55), Vector2(-35, 10), Vector2(-61, -10), Vector2(-65, -31),
+		Vector2(-49, -37), Vector2(-28, -15), Vector2(-30, -65), Vector2(-15, -71),
+		Vector2(-8, -22), Vector2(-4, -78), Vector2(12, -78), Vector2(16, -24),
+		Vector2(23, -70), Vector2(38, -65), Vector2(35, -18), Vector2(44, -50),
+		Vector2(57, -43), Vector2(50, 20), Vector2(30, 55)])
+	deform_pivot.add_child(_glove_projectile)
+	set_glove_projectile(false)
+
+
+# 每次复用前明确选择飞行物，普通足球不会继承上一张防御技能的手套外观。
+func set_glove_projectile(enabled: bool) -> void:
+	ball_slices.visible = not enabled
+	_glove_projectile.visible = enabled
 
 
 # 播放一次射门并等待足球抵达目标；实战使用已解析球型与方向，独立调用时保留视觉随机回退。

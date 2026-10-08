@@ -5,12 +5,18 @@ extends Control
 const BAR_COUNT := 16
 const ATTACK_SECONDS := 0.05
 const RELEASE_SECONDS := 0.34
-const BASE_COLOR := Color(1.0, 0.72, 0.22, 0.3)
-const PEAK_COLOR := Color(1.0, 0.39, 0.08, 0.96)
 
 var _ready_to_activate := false
 var _pulse_age := -1.0
 var _visual_amplitude := 0.0
+# 类型颜色由按钮统一传入，波条在低透明底色与同色高亮之间插值。
+var _type_color := Color(1.0, 0.39, 0.08)
+
+
+# 换牌型立即替换当前波条色相，透明度仍由节拍包络控制。
+func set_type_color(color: Color) -> void:
+	_type_color = color
+	queue_redraw()
 
 
 # 波形环是纯表现层，不能遮挡按钮点击；初始隐藏以免未攒满连击时制造错误提示。
@@ -60,14 +66,15 @@ func _draw() -> void:
 	if not _ready_to_activate or size.x <= 1.0 or size.y <= 1.0:
 		return
 	var center := size * 0.5
-	var base_radius := minf(size.x, size.y) * 0.33
+	# 起点移到按钮外沿，峰值波条进一步外扩，强化满额时的轮廓辨识。
+	var base_radius := minf(size.x, size.y) * 0.43
 	for bar_index in range(BAR_COUNT):
 		var normalized_index := float(bar_index) / float(BAR_COUNT)
 		var angle := normalized_index * TAU - PI * 0.5
 		var direction := Vector2(cos(angle), sin(angle))
 		var wave_detail := 0.5 + 0.5 * sin(angle * 3.0 + 0.8)
-		var bar_length := 2.0 + (4.0 + wave_detail * 7.0) * _visual_amplitude
-		var color := BASE_COLOR.lerp(PEAK_COLOR, _visual_amplitude)
+		var bar_length := 3.0 + (8.0 + wave_detail * 12.0) * _visual_amplitude
+		var color := Color(_type_color, lerpf(0.3, 0.96, _visual_amplitude))
 		draw_line(
 			center + direction * base_radius,
 			center + direction * (base_radius + bar_length),

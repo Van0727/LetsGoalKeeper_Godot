@@ -6,6 +6,6 @@
 script = ExtResource("1_skill")
 skill_id = "skill_super_attack"
 display_name = "超级攻击"
-description = "每点连击造成10点主动技伤害"
+description = "每层蓄力增加10点伤害；超过3层后，每层使足球额外增大20%"
 card_type = 0
 base_value = 10
