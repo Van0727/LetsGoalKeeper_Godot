@@ -1,4 +1,4 @@
-# 主动技节奏弹窗：用图片节点呈现三轨四音符，判定仍严格跟随当前BGM时钟。
+# 主动技节奏弹窗：三轨四音符统一使用释放类型的颜色，判定仍严格跟随当前BGM时钟。
 extends Control
 
 signal qte_finished(result: Dictionary)
@@ -19,11 +19,14 @@ const MISS_STREAM := preload("res://sound/sounds/miss.mp3")
 const LANE_TEXTURE := preload("res://assets/placeholders/qte_lane.png")
 const TARGET_TEXTURE := preload("res://assets/placeholders/qte_target_ring.png")
 const NOTE_TEXTURE := preload("res://assets/placeholders/qte_note.png")
-const LANE_COLORS := [
-	Color(1.0, 0.3, 0.42),
-	Color(1.0, 0.78, 0.22),
-	Color(0.25, 0.72, 1.0),
-]
+const TYPE_COLORS := {
+	CardDefinition.CardType.ATTACK: Color(1.0, 0.3, 0.42),
+	CardDefinition.CardType.DEFENSE: Color(0.25, 0.72, 1.0),
+	CardDefinition.CardType.ABILITY: Color(0.3, 0.9, 0.45),
+}
+
+# 每次成功开启时覆盖颜色，避免连续释放不同类型时沿用上一次显示。
+var _skill_color := Color.WHITE
 
 var _rhythm_clock: Node
 var _rng := RandomNumberGenerator.new()
@@ -60,7 +63,7 @@ func _create_visual_nodes() -> void:
 	for lane in range(LANE_COUNT):
 		var lane_view := _create_texture_view("Lane%d" % lane, LANE_TEXTURE)
 		var target_view := _create_texture_view("Target%d" % lane, TARGET_TEXTURE)
-		target_view.modulate = LANE_COLORS[lane]
+		target_view.modulate = _skill_color
 		_lane_views.append(lane_view)
 		_target_views.append(target_view)
 	for note_index in range(NOTE_COUNT):
@@ -95,10 +98,13 @@ func _create_sfx_player(node_name: String, stream: AudioStream, polyphony: int) 
 	return player
 
 
-# 从同一 BGM 播放头安排首个整拍目标，随后按半拍排列四个音符；逐曲校准由节拍时钟统一应用。
-func start_qte(rhythm_clock: Node, seed_value: int = 0, target_line_y: float = 278.0) -> bool:
+# 从同一 BGM 播放头安排四音符；类型决定三轨统一色，无效类型拒绝开启且不改变当前状态。
+func start_qte(rhythm_clock: Node, seed_value: int = 0, target_line_y: float = 278.0, card_type: int = CardDefinition.CardType.ATTACK) -> bool:
 	if _running or rhythm_clock == null:
 		return false
+	if not TYPE_COLORS.has(card_type):
+		return false
+	_skill_color = TYPE_COLORS[card_type]
 	_rhythm_clock = rhythm_clock
 	_rng.seed = seed_value if seed_value != 0 else Time.get_ticks_usec()
 	# 配置值是玩家听到的现实秒数；判定时再换算为当前音源时间，避免变调后窗口缩水或膨胀。
@@ -306,12 +312,12 @@ func _refresh_visual_nodes() -> void:
 		var lane_view := _lane_views[lane]
 		lane_view.position = Vector2(lane_x - 1.5, play_area.position.y)
 		lane_view.size = Vector2(3.0, target_y - play_area.position.y)
-		lane_view.modulate = Color(LANE_COLORS[lane], 0.42)
+		lane_view.modulate = Color(_skill_color, 0.42)
 		var target_radius := TARGET_NOTE_RADIUS * _get_target_pulse_scale(lane)
 		var target_view := _target_views[lane]
 		target_view.position = Vector2(lane_x, target_y) - Vector2.ONE * target_radius
 		target_view.size = Vector2.ONE * target_radius * 2.0
-		target_view.modulate = LANE_COLORS[lane]
+		target_view.modulate = _skill_color
 	for note_index in range(_notes.size()):
 		var note: Dictionary = _notes[note_index]
 		var note_view := _note_views[note_index]
@@ -327,7 +333,7 @@ func _refresh_visual_nodes() -> void:
 		var note_y := lerpf(play_area.position.y, target_y, progress)
 		note_view.position = Vector2(note_x, note_y) - Vector2.ONE * 20.0
 		note_view.size = Vector2.ONE * 40.0
-		note_view.modulate = LANE_COLORS[lane]
+		note_view.modulate = _skill_color
 		note_view.show()
 	_refresh_judgement_label(target_y)
 

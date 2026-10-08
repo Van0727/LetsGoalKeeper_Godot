@@ -639,7 +639,7 @@ func _play_enemy_attack_ball_visual(
 	visual_state.finished = true
 
 
-# 主动技先打开战斗内嵌QTE弹窗；QTE完成前只锁输入，不提前消耗连击点或修改战斗数值。
+# 主动技按释放类型统一QTE三轨颜色；QTE完成前只锁输入，不提前消耗连击点或修改战斗数值。
 func _on_skill_pressed() -> void:
 	if _input_locked:
 		return
@@ -656,7 +656,7 @@ func _on_skill_pressed() -> void:
 	_pending_active_skill = skill
 	var qte_seed: int = run_state.seed + controller.turn_number * 1009 + controller.combo_state.count
 	var waveform_center_y: float = rhythm_waveform.get_global_rect().get_center().y
-	if not qte_popup.start_qte(rhythm_clock, qte_seed, waveform_center_y):
+	if not qte_popup.start_qte(rhythm_clock, qte_seed, waveform_center_y, skill.card_type):
 		_pending_active_skill = null
 		_input_locked = false
 		_update_input_state()
