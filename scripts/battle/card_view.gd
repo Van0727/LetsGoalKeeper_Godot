@@ -5,6 +5,8 @@ extends DraggableCard
 
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const DESCRIPTION_FORMAT := preload("res://scripts/cards/card_description_format.gd")
+# 卡面为完整规则预留五行空间，所有说明固定10号字，不再因规则较长缩为8号字。
+const DESCRIPTION_FONT_SIZE := 10
 # 默认预览使用新攻守兼备成品；同步卡牌定义，避免工具初始化覆盖为旧插画。
 const EDITOR_PREVIEW_CARD := preload("res://data/cards/card_attack_and_defend.tres")
 # 类型徽章以 200×52 矢量路径重建原英文与配色；显示槽不变，选中放大时不再放大低清截图。
@@ -95,6 +97,7 @@ func configure(definition: Resource, index: int) -> void:
 	var display_description: String = definition.description.replace("Perfect", "Great")
 	var formatted := DESCRIPTION_FORMAT.format_description(display_description)
 	description_label.text = formatted.rich
+	description_label.add_theme_font_size_override("normal_font_size", DESCRIPTION_FONT_SIZE)
 	tooltip_text = formatted.plain
 
 

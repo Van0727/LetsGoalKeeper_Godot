@@ -26,17 +26,15 @@ texture = ExtResource("3_cost_art")
 [sub_resource type="FontVariation" id="Font_card_name"]
 base_font = ExtResource("7_card_font")
 variation_opentype = {
-"wght": 750.0
+2003265652: 750.0
 }
-variation_embolden = 1.0
-spacing_glyph = 2
+spacing_glyph = 1
 
 [sub_resource type="FontVariation" id="Font_card_description"]
 base_font = ExtResource("7_card_font")
 variation_opentype = {
-"wght": 500.0
+2003265652: 600.0
 }
-variation_embolden = 1.0
 
 [node name="CardView" type="PanelContainer" unique_id=977323431]
 offset_right = 104.0
@@ -54,10 +52,10 @@ mouse_filter = 2
 unique_name_in_owner = true
 texture_filter = 2
 layout_mode = 0
-offset_left = 9.0
+offset_left = 19.563332
 offset_top = 16.0
-offset_right = 94.416664
-offset_bottom = 95.0
+offset_right = 84.436668
+offset_bottom = 76.0
 mouse_filter = 2
 texture = ExtResource("4_preview_art")
 expand_mode = 1
@@ -81,9 +79,9 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 7.0
-offset_top = 96.0
+offset_top = 77.0
 offset_right = 95.0
-offset_bottom = 114.0
+offset_bottom = 95.0
 theme_override_colors/font_color = Color(0.08, 0.12, 0.16, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = SubResource("Font_card_name")
@@ -98,9 +96,9 @@ unique_name_in_owner = true
 texture_filter = 2
 layout_mode = 0
 offset_left = 27.0
-offset_top = 114.0
+offset_top = 95.0
 offset_right = 77.0
-offset_bottom = 127.0
+offset_bottom = 108.0
 mouse_filter = 2
 texture = ExtResource("6_sd05u")
 expand_mode = 1
@@ -120,18 +118,18 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 9.0
-offset_top = 128.0
+offset_top = 109.0
 offset_right = 97.0
-offset_bottom = 168.0
-theme_override_colors/default_color = Color(0.12, 0.16, 0.19, 1)
-theme_override_constants/line_spacing = 2
+offset_bottom = 170.0
+theme_override_colors/default_color = Color(0.055, 0.07, 0.085, 1)
+theme_override_constants/line_spacing = 0
 theme_override_fonts/normal_font = SubResource("Font_card_description")
-theme_override_font_sizes/normal_font_size = 9
+theme_override_font_sizes/normal_font_size = 10
 bbcode_enabled = true
 scroll_active = false
 text = "造成5点伤害，获得5点护盾"
 horizontal_alignment = 1
-vertical_alignment = 1
+vertical_alignment = 0
 autowrap_mode = 2
 
 [node name="EditorReference" type="Sprite2D" parent="." unique_id=1486124172]

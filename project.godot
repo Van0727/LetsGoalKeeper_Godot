@@ -34,7 +34,7 @@ window/handheld/orientation=1
 
 [gui]
 
-theme/custom_font="res://assets/fonts/NotoSansSC-VF.ttf"
+theme/custom_font="res://assets/fonts/ui_font.tres"
 
 [physics]
 

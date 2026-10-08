@@ -47,7 +47,7 @@ const REWARD_RISE_DURATION := 0.16
 const REWARD_FALL_DURATION := 0.42
 const REWARD_FLY_DURATION := REWARD_RISE_DURATION + REWARD_FALL_DURATION
 const REWARD_RISE_DISTANCE := 72.0
-const REWARD_FONT_MSDF_SIZE := 96
+const REWARD_FONT_OVERSAMPLING := 2.0
 
 
 # 奖励随机数由本局seed和已胜场数派生，相同进度可复现同一组候选。
@@ -83,7 +83,7 @@ func _prepare_scaled_fonts(node: Node) -> void:
 		_prepare_scaled_fonts(child)
 
 
-# 复制现有字体及回退链；费用的模拟加粗可能产生重叠轮廓，单独保留高采样栅格渲染。
+# 奖励卡的小字号使用像素对齐的栅格字形；两倍采样覆盖选中放大，避免MSDF小字失去hinting。
 func _copy_reward_font(source: Font) -> Font:
 	if _reward_font_copies.has(source):
 		return _reward_font_copies[source]
@@ -92,16 +92,13 @@ func _copy_reward_font(source: Font) -> Font:
 	if copy is FontVariation:
 		var variation := copy as FontVariation
 		var base := variation.base_font if variation.base_font != null else ThemeDB.fallback_font
-		if not is_zero_approx(variation.variation_embolden) and (base is FontFile or base is SystemFont):
-			# MSDF 不支持重叠轮廓；避免费用数字出现内部缺色，同时不改变原来的粗细。
-			variation.base_font = base.duplicate() as Font
-			variation.base_font.set("oversampling", 2.0)
-		else:
-			variation.base_font = _copy_reward_font(base)
+		variation.base_font = _copy_reward_font(base)
 	elif copy is FontFile or copy is SystemFont:
-		# 距离场覆盖选中放大及缓动超调；提高距离场精度以保留中文笔画，保持原字号和换行。
-		copy.set("multichannel_signed_distance_field", true)
-		copy.set("msdf_size", REWARD_FONT_MSDF_SIZE)
+		# 只修改本页副本，既保留真实字重，也不改变全局字体缓存与其他场景的渲染方式。
+		copy.set("multichannel_signed_distance_field", false)
+		copy.set("oversampling", REWARD_FONT_OVERSAMPLING)
+		copy.set("force_autohinter", true)
+		copy.set("hinting", TextServer.HINTING_NORMAL)
 	var fallbacks: Array[Font] = []
 	for fallback in source.fallbacks:
 		fallbacks.append(_copy_reward_font(fallback))

@@ -1,4 +1,4 @@
-# 奖励界面冒烟测试：覆盖 Boss 两步奖励、高清标签、MSDF 字体隔离及动画后发奖。
+# 奖励界面冒烟测试：覆盖 Boss 两步奖励、高清标签、小字栅格字体隔离及动画后发奖。
 extends SceneTree
 
 const REWARD_SCENE := preload("res://scenes/reward_screen.tscn")
@@ -15,6 +15,10 @@ func _initialize() -> void:
 # 使用奖励真实场景完成两步选择，并检查其局部 RunState 变化。
 func _run() -> void:
 	root.size = Vector2i(360, 640)
+	# 全局字体现在为真实600字重的FontVariation，检查奖励页未改写其字重或基础字库。
+	var global_font := ThemeDB.fallback_font as FontVariation
+	var global_variation := global_font.variation_opentype.duplicate()
+	var global_oversampling: Variant = global_font.base_font.get("oversampling")
 	# 奖励场景使用 Autoload；先隔离存档路径并建立新局，避免读取或覆盖玩家正式进度。
 	var save_service: Node = root.get_node("SaveService")
 	var previous_save_path: String = str(save_service.save_path)
@@ -47,14 +51,14 @@ func _run() -> void:
 	_assert_equal(badge_view.category_badge.size, Vector2(50, 13), "类型标签显示槽保持不变")
 	_assert_equal(badge_view.category_badge.texture_filter, CanvasItem.TEXTURE_FILTER_LINEAR, "高清标签采用线性过滤")
 	await _capture("cards", screen)
-	_assert_equal(ThemeDB.fallback_font.get("oversampling"), 0.0, "奖励字体不修改全局默认字体")
+	_assert_equal(global_font.variation_opentype, global_variation, "奖励字体不修改全局默认字重")
+	_assert_equal(global_font.base_font.get("oversampling"), global_oversampling, "奖励字体不修改全局基础字库")
 	var reward_font: Font = screen.card_views[0].description_label.get_theme_font("normal_font")
-	# 编辑器允许模拟加粗：此时沿用高采样栅格，否则使用距离场，二者均覆盖富文本。
+	# 小字号说明保留hinting与两倍采样，选中放大也不回退到MSDF。
 	var description_font := reward_font as FontVariation
-	if is_zero_approx(description_font.variation_embolden):
-		_assert_equal(description_font.base_font.get("multichannel_signed_distance_field"), true, "卡牌说明基础字库使用距离场字体")
-	else:
-		_assert_equal(description_font.base_font.get("oversampling"), 2.0, "模拟加粗说明保留高采样字体")
+	_assert_equal(description_font.base_font.get("multichannel_signed_distance_field"), false, "卡牌说明使用小字栅格渲染")
+	_assert_equal(description_font.base_font.get("oversampling"), 2.0, "选中缩放使用两倍采样")
+	_assert_equal(description_font.base_font.get("hinting"), TextServer.HINTING_NORMAL, "小字号保持完整像素对齐")
 	var cost_font := screen.card_views[0].cost_label.get_theme_font("font") as FontVariation
 	# 卡牌使用随包中文字库的真实字重，费用与说明均不依赖浏览器系统字体。
 	_assert_equal(cost_font.variation_opentype.get("wght"), 800.0, "费用使用真实粗体字重")
