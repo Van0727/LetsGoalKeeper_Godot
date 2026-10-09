@@ -12,6 +12,7 @@ signal active_skill_effect_committed(elapsed_music_seconds: float)
 signal screen_shake_started(duration: float, amplitude: float)
 
 const BATTLE_CONTROLLER := preload("res://scripts/battle/battle_controller.gd")
+const BATTLE_MUSIC := preload("res://scripts/battle/battle_music.gd")
 const DECK_STATE := preload("res://scripts/cards/deck_state.gd")
 const REWARD_SERVICE := preload("res://scripts/rewards/reward_service.gd")
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
@@ -330,6 +331,8 @@ func start_new_battle(enemy_definition: Resource = null) -> void:
 	_pending_battle_result = null
 	_is_presenting_resolution = false
 	card_warning_overlay.hide()
+	# 先按房型选曲，再读取该曲校准并启动播放；节拍时钟从文件名同步 BPM。
+	rhythm_clock.music = BATTLE_MUSIC.select_for_room({} if run_state.is_test_battle else run_state.get_current_room())
 	_setup_bgm_calibration()
 	var bgm_service := get_node_or_null("/root/BgmService")
 	if bgm_service != null:
@@ -1567,10 +1570,11 @@ func _play_shot_visual(
 	visual_state.finished = true
 
 
-# 玩家当前仅显示底部状态条，足球从状态条上沿中央发出，避免依赖隐藏头像的位置。
+# 玩家起脚固定在战斗画面横向中央，沿用状态条上方的高度；隐藏显示节点不再决定横坐标。
+# 普通射门、多球和主动技共用此入口，避免底部HUD布局变化把足球起点带到左下角。
 func _get_player_shot_origin() -> Vector2:
 	var player_rect := player_display.get_global_rect()
-	return Vector2(player_rect.get_center().x, player_rect.position.y - 8.0)
+	return Vector2(get_global_rect().get_center().x, player_rect.position.y - 8.0)
 
 
 # 使用事件中的结算后快照更新血条，保证多段攻击不会在第一球时直接显示最终血量。

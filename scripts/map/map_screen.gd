@@ -13,11 +13,12 @@ const MAP_STATE := preload("res://scripts/map/map_state.gd")
 const ENEMY_CATALOG := preload("res://data/enemies/enemy_catalog.tres")
 const ENCOUNTER_PLANNER := preload("res://scripts/enemies/encounter_planner.gd")
 const ROOM_BUTTON := preload("res://scripts/map/map_room_button.gd")
+# 休息房沿用节点内部heart槽位，正式显示黄色枕头；不影响房型、治疗或路线状态。
 const ART_PATHS := {
 "boss":"res://assets/ui/map/boss_icon_v2.png",
 "monster":"res://assets/ui/map/monster_normal_map_icon_v4.png",
 "elite":"res://assets/ui/map/monster_elite_map_icon_v4.png",
-"heart":"res://assets/placeholders/icon_health.png",
+"heart":"res://assets/ui/map/rest_room_icon.png",
 }
 @onready var title_label: Label = %TitleLabel
 @onready var rows_container: Control = %RowsContainer

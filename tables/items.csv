@@ -34,6 +34,6 @@ uint16,string,string,string,uint8,uint8,uint16,uint8,uint8,string,string
 4031,item_three_phase_charger,三相充能器,每逢第3、6、9回合获得1点临时额外能量,0,4,0,0,1,item_three_phase_charger,item_three_phase_charger
 4032,item_energy_saving_bracelet,节能手环,每回合打出的第一张牌结算后恢复1点能量,0,4,0,0,1,item_energy_saving_bracelet,item_energy_saving_bangle
 4033,item_energy_storage_badge,蓄能徽章,回合结束时未用完的能量延续到下一回合并作为临时额外能量,0,4,0,0,1,item_energy_storage_badge,item_energy_storage_badge
-5001,item_number_7,葡萄牙7号,直球射门伤害+1,1,1,1,0,1,item_number_7,item_portugal_seven
-5002,item_number_10,阿根廷10号,香蕉球伤害+1,1,2,1,0,1,item_number_10,item_argentina_ten
+5001,item_number_7,葡萄牙7号,直球射门伤害+1,1,1,1,0,0,item_number_7,item_portugal_seven
+5002,item_number_10,阿根廷10号,香蕉球伤害+1,1,2,1,0,0,item_number_10,item_argentina_ten
 5003,item_corner_flag,角旗杆（未启用）,需要角球卡，当前版本不进入奖励池,1,4,0,0,0,item_corner_flag_disabled,item_corner_flag

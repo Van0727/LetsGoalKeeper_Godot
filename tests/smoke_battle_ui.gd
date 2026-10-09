@@ -37,6 +37,14 @@ func _run() -> void:
 	await process_frame
 	# 冒烟测试保留真实动画链路但提高播放速度，避免按正式时长等待。
 	battle_screen.ball_flight.playback_speed = 1000.0
+	# 玩家显示节点在HUD内隐藏且靠左，起脚横坐标必须独立锁定战斗画面中心。
+	var shot_origin: Vector2 = battle_screen._get_player_shot_origin()
+	_assert_equal(shot_origin.x, battle_screen.get_global_rect().get_center().x, "玩家从画面中间起脚")
+	_assert_equal(shot_origin.y, battle_screen.player_display.get_global_rect().position.y - 8.0, "保留原起脚高度")
+	var display_position: Vector2 = battle_screen.player_display.position
+	battle_screen.player_display.position.x -= 80.0
+	_assert_equal(battle_screen._get_player_shot_origin(), shot_origin, "隐藏节点横向移动不再影响起脚点")
+	battle_screen.player_display.position = display_position
 
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")

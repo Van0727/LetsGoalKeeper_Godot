@@ -1,4 +1,4 @@
-# 通用角色显示控件：维护生命、护盾文本和即时颜色反馈，并支持战斗界面的敌我紧凑布局。
+# 通用角色显示控件：维护生命、护盾、动作反馈及图片主体命中点，支持战斗界面的敌我紧凑布局。
 class_name CharacterDisplay
 extends PanelContainer
 
@@ -55,6 +55,8 @@ var _portrait_dead := false
 var _rhythm_direction := 1.0
 # 配表基础倍率与动作形变分属两套变换：基础倍率固定底边，动作只叠加临时形变。
 var _portrait_base_scale := Vector2.ONE
+# 换图时缓存非透明主体中心；保留美术透明留白，不让大体型Boss的命中点落到空白画布。
+var _portrait_body_center_ratio := Vector2(0.5, 0.5)
 
 
 # 按战斗位置压缩角色信息：敌方数值交给专用信息层，此控件保留头像与受击反馈。
@@ -120,6 +122,7 @@ func set_enemy_image_id(image_id: int, battle_image_scale := 1.0) -> void:
 	portrait.pivot_offset_ratio = Vector2(0.5, 1.0)
 	portrait.scale = _portrait_base_scale
 	portrait.texture = ENEMY_PLACEHOLDER
+	_cache_portrait_body_center()
 	portrait.material = null
 	_stop_blink_timer()
 	if image_id <= 0:
@@ -136,6 +139,7 @@ func set_enemy_image_id(image_id: int, battle_image_scale := 1.0) -> void:
 		portrait.modulate = _portrait_tint
 		return
 	portrait.texture = image
+	_cache_portrait_body_center()
 	_portrait_tint = Color.WHITE
 	portrait.modulate = Color.WHITE
 	_configure_blink_material(image_id)
@@ -154,9 +158,33 @@ func set_shield(shield: int) -> void:
 	shield_label.text = "护盾  %d" % maxi(shield, 0)
 
 
-# 返回头像的全局中心，供足球表现层把命中位置绑定到实际布局而不是写死坐标。
+# 返回非透明主体中心；先处理等比居中的实际绘制框，再应用底部枢轴和配表倍率。
+# 该锚点保持在主体基础姿态上，不跟随短暂受击抖动，避免连续飞球追逐旧动作的偏移。
 func get_portrait_global_center() -> Vector2:
-	return portrait.get_global_rect().get_center()
+	var local_center := portrait.size * _portrait_body_center_ratio
+	if portrait.texture != null and portrait.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED:
+		var texture_size := portrait.texture.get_size()
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			var ratio := minf(portrait.size.x / texture_size.x, portrait.size.y / texture_size.y)
+			var draw_size := texture_size * ratio
+			local_center = (portrait.size - draw_size) * 0.5 + draw_size * _portrait_body_center_ratio
+	return portrait.get_global_transform() * local_center
+
+
+# 只在换图时读取Alpha有效边界，避免每颗球从GPU回读图片；空图或全透明图回退画布中心。
+func _cache_portrait_body_center() -> void:
+	_portrait_body_center_ratio = Vector2(0.5, 0.5)
+	if portrait.texture == null:
+		return
+	var image := portrait.texture.get_image()
+	if image == null or image.is_empty():
+		return
+	# VRAM压缩纹理须先在回读副本上解压，失败时保留中心回退，不修改正式纹理。
+	if image.is_compressed() and image.decompress() != OK:
+		return
+	var used := image.get_used_rect()
+	if used.has_area():
+		_portrait_body_center_ratio = (Vector2(used.position) + Vector2(used.size) * 0.5) / Vector2(image.get_size())
 
 
 # 播放红色受击反馈；射门类型和方向只决定显示动作，不参与伤害与护盾结算。

@@ -20,6 +20,15 @@ func _run() -> void:
 		state.name = "RunState"
 		root.add_child(state)
 	state.start_new_run(8108)
+	# 独立验证对调后的正式素材路径，避免场景与映射同时错误时互相验证而漏报。
+	assert(THEMES.get_texture(1, false) == THEMES.BATTLE_ORANGE)
+	assert(THEMES.get_texture(1, true) == THEMES.MAP_ORANGE)
+	assert(THEMES.get_texture(2, false).resource_path == "res://assets/ui/backgrounds/battle_chapter_1.png")
+	assert(THEMES.get_texture(2, true).resource_path == "res://assets/ui/map/map_chapter_1.png")
+	assert(THEMES.get_texture(3, false).resource_path == "res://assets/ui/backgrounds/battle_chapter_3.png")
+	assert(THEMES.get_texture(3, true).resource_path == "res://assets/ui/map/map_chapter_3.png")
+	assert(THEMES.get_light_color(1) == Color(1.0, 0.25, 0.065))
+	assert(THEMES.get_light_color(2) == Color(0.32, 0.62, 1.0))
 	for chapter in [1, 2, 3]:
 		state.chapter = chapter
 		state._regenerate_map()
