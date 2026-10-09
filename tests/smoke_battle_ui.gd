@@ -40,6 +40,14 @@ func _run() -> void:
 
 	_assert_equal(battle_screen.deck_state.hand.size(), 3, "战斗开始抽三张")
 	_assert_equal(battle_screen.hand_layer.get_child_count(), 3, "三张手牌均生成视图")
+	# 战斗实例必须沿用场景尺寸，并在宽度改变后仍保持整组居中与固定间距。
+	var hand_template := CARD_SCENE.instantiate()
+	var hand_cards: Array[Node] = battle_screen.hand_layer.get_children()
+	for hand_card in hand_cards:
+		_assert_equal(hand_card.size, hand_template.size, "战斗手牌不覆盖场景宽高")
+	_assert_equal(hand_cards[1].position.x - hand_cards[0].position.x, hand_template.size.x + battle_screen.CARD_GAP, "手牌间距跟随场景宽度")
+	_assert_equal(hand_cards[0].position.x + hand_cards[2].position.x + hand_template.size.x, battle_screen.hand_layer.size.x, "三张手牌整体居中")
+	hand_template.free()
 	# 球路仍由足球飞行动画表达，界面不再额外叠加“直球/香蕉球”等文字提示。
 	_assert_true(battle_screen.get_node_or_null("ShotFeedback") == null, "出牌后不显示球路名称文字")
 	# 底部牌堆是玩家直接观察的公开界面：抽牌与弃牌必须拆分显示，不能继续合并成一段文字。
@@ -56,7 +64,8 @@ func _run() -> void:
 	_assert_equal(battle_screen.skill_button.get_parent(), footer, "超级攻击按钮可在 Footer 内自由定位")
 	_assert_equal(battle_screen.end_turn_button.get_parent(), footer, "结束回合按钮可在 Footer 内自由定位")
 	if draw_pile_count != null and discard_pile_count != null:
-		_assert_equal(draw_pile_count.text, "8", "抽牌堆显示当前十一张初始牌库抽取三张后的余量")
+		# 起始牌库由当前配置决定，界面应反映真实余量，不锁定历史十一张牌库。
+		_assert_equal(draw_pile_count.text, str(battle_screen.deck_state.draw_pile.size()), "抽牌堆显示实际剩余张数")
 		_assert_equal(discard_pile_count.text, "0", "弃牌堆开局显示为空")
 	# 四个高频入口必须拥有独立矢量图标，并由真实战斗场景完成资源加载。
 	var draw_pile_icon := battle_screen.get_node_or_null("%DrawPileIcon") as TextureRect
@@ -134,11 +143,15 @@ func _run() -> void:
 		Rect2(Vector2.ZERO, straight_shot_view.size).encloses(straight_shot_view.illustration_rect.get_rect()),
 		"插画槽完整位于卡面边界内"
 	)
-	_assert_equal(straight_shot_view.size, Vector2(104, 176), "卡牌按参考图使用紧凑的信息区")
+	# 对照场景原始尺寸，避免测试继续要求已移除的固定宽高。
+	var scene_card := CARD_SCENE.instantiate()
+	_assert_equal(straight_shot_view.size, scene_card.size, "卡牌保留 CardView 场景配置尺寸")
+	scene_card.free()
 	_assert_true(straight_shot_view.editor_preview_definition != null, "卡牌场景保留编辑器预览数据入口")
 	_assert_true(not straight_shot_view.editor_reference.visible, "运行时隐藏仅编辑器使用的参考图层")
 	_assert_true(straight_shot_view.category_badge.texture == straight_shot_view.ATTACK_BADGE, "攻击牌显示原图 ATTACK 徽章")
-	_assert_equal(straight_shot_view.description_label.text, STRAIGHT_SHOT.description, "卡牌底部显示配置说明")
+	# 数字着色由说明格式器统一生成，比较富文本结果而非未经格式化的配表原文。
+	_assert_equal(straight_shot_view.description_label.text, straight_shot_view.DESCRIPTION_FORMAT.format_description(STRAIGHT_SHOT.description).rich, "卡牌底部显示格式化配置说明")
 	_assert_equal(
 		straight_shot_view._get_card_type_badge(CARD_DEFINITION.CardType.DEFENSE),
 		straight_shot_view.DEFENSE_BADGE,

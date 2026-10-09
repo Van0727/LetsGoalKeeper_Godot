@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://cl75ellhjf7d5"]
 
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_t3agc"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_pc5mo"]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_outside_curve_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_t3agc"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_pc5mo"]
+[ext_resource type="Texture2D" uid="uid://cc8cr8rqwobs7" path="res://assets/ui/cards/card_outside_curve_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_pc5mo"]
 script = ExtResource("1_t3agc")

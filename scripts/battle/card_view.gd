@@ -1,11 +1,11 @@
 @tool
-# 战斗卡牌视图：显示卡面与柔和外发光，并在编辑器填入预览数据及开放参考图区域。
+# 战斗卡牌视图：按类型浅色区分底板、显示柔和外发光、自动缩小超框描述，并提供编辑器预览。
 class_name BattleCardView
 extends DraggableCard
 
 const CARD_DEFINITION := preload("res://scripts/cards/card_definition.gd")
 const DESCRIPTION_FORMAT := preload("res://scripts/cards/card_description_format.gd")
-# 卡面为完整规则预留五行空间，所有说明固定10号字，不再因规则较长缩为8号字。
+# 描述优先使用10号字；仅超框时逐级缩小，最小1号避免无效字号或无限循环。
 const DESCRIPTION_FONT_SIZE := 10
 # 默认预览使用新攻守兼备成品；同步卡牌定义，避免工具初始化覆盖为旧插画。
 const EDITOR_PREVIEW_CARD := preload("res://data/cards/card_attack_and_defend.tres")
@@ -18,6 +18,8 @@ var card_definition: Resource
 var hand_index := -1
 # 每张卡牌独享光晕样式，悬停和拖拽不会影响相邻卡牌。
 var _glow_style: StyleBoxFlat
+# 类型蒙版独享样式，切换或复用卡牌时不会改动其他卡牌的底色。
+var _type_tint_style: StyleBoxFlat
 var _glow_hovered := false
 var _glow_dragging := false
 # 编辑器预览只服务卡面排版；战斗运行时始终由手牌数据调用 configure 覆盖。
@@ -43,6 +45,8 @@ func _ready() -> void:
 	clip_contents = false
 	$Canvas.clip_contents = not editing
 	_create_outer_glow()
+	_create_type_tint()
+	description_label.resized.connect(_fit_description_font)
 	editor_reference.visible = editing
 	if editing:
 		if editor_preview_definition != null:
@@ -60,7 +64,7 @@ func _ready() -> void:
 func _create_outer_glow() -> void:
 	_glow_style = StyleBoxFlat.new()
 	_glow_style.draw_center = false
-	# 橙色底板为 292×456，圆角约 40 源像素；映射到 104×176 卡面约为 15 逻辑像素。
+	# 橙色底板为 292×456，圆角约 40 源像素；按当前约104宽的卡面采用15逻辑像素圆角。
 	# 原来的 10 像素圆角偏小，会让光晕在四角露出方形轮廓。
 	_glow_style.set_corner_radius_all(15)
 	_glow_style.corner_detail = 12
@@ -91,14 +95,57 @@ func configure(definition: Resource, index: int) -> void:
 	cost_label.text = str(definition.cost)
 	name_label.text = definition.display_name
 	category_badge.texture = _get_card_type_badge(definition.card_type)
+	_type_tint_style.bg_color = _get_card_type_tint(definition.card_type)
 	# 射门表现仍用于结算与后续动画，但不再挤占卡牌底部的类别信息区。
 	shot_label.text = _get_shot_type_text(definition.shot_type)
 	# 配表内部仍沿用 Perfect 规则键，战斗卡面只转换玩家可见的等级名称。
 	var display_description: String = definition.description.replace("Perfect", "Great")
 	var formatted := DESCRIPTION_FORMAT.format_description(display_description)
 	description_label.text = formatted.rich
-	description_label.add_theme_font_size_override("normal_font_size", DESCRIPTION_FONT_SIZE)
+	_fit_description_font()
+	# 等待容器与奖励页字体覆盖完成后再测量一次，编辑器预览也走同一规则。
+	_fit_description_font.call_deferred()
 	tooltip_text = formatted.plain
+
+
+# 在内容层首位绘制内缩圆角蒙版，避开金色外框；忽略鼠标，插画和文字保持原色。
+func _create_type_tint() -> void:
+	_type_tint_style = StyleBoxFlat.new()
+	_type_tint_style.bg_color = _get_card_type_tint(CARD_DEFINITION.CardType.ABILITY)
+	_type_tint_style.set_corner_radius_all(11)
+	_type_tint_style.corner_detail = 12
+	var tint := Panel.new()
+	tint.name = "TypeTint"
+	tint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tint.add_theme_stylebox_override("panel", _type_tint_style)
+	$Canvas.add_child(tint)
+	$Canvas.move_child(tint, 0)
+	tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tint.offset_left = 5.0
+	tint.offset_top = 5.0
+	tint.offset_right = -5.0
+	tint.offset_bottom = -5.0
+
+
+# 低透明度只提示类别，不遮盖底板细节；未知类别与徽章一致回退到技能绿色。
+func _get_card_type_tint(card_type: int) -> Color:
+	match card_type:
+		CARD_DEFINITION.CardType.ATTACK:
+			return Color(1.0, 0.45, 0.08, 0.18)
+		CARD_DEFINITION.CardType.DEFENSE:
+			return Color(0.15, 0.55, 1.0, 0.18)
+		_:
+			return Color(0.15, 0.85, 0.4, 0.18)
+
+
+# 从默认字号重新测量，保证长描述切回短描述时恢复字号；零尺寸等待 resized 后重试。
+func _fit_description_font() -> void:
+	if not is_node_ready() or description_label.size.x <= 0.0 or description_label.size.y <= 0.0:
+		return
+	for font_size in range(DESCRIPTION_FONT_SIZE, 0, -1):
+		description_label.add_theme_font_size_override("normal_font_size", font_size)
+		if description_label.get_content_height() <= description_label.size.y and description_label.get_content_width() <= description_label.size.x:
+			break
 
 
 # 专属插画只覆盖卡牌上方的固定画框；留空时隐藏节点，继续显示通用卡牌底板。

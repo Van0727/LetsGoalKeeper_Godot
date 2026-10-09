@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bk0snrv3c2bxt" path="res://scripts/map/map_screen.gd" id="1_screen"]
 [ext_resource type="Script" uid="uid://cc0fclmdkre0b" path="res://scripts/map/map_connections.gd" id="2_connections"]
 [ext_resource type="PackedScene" uid="uid://cul2ho1d7dah5" path="res://scenes/pause_overlay.tscn" id="3_pause"]
-[ext_resource type="Texture2D" path="res://assets/ui/map/map_background_v3.png" id="4_background"]
+[ext_resource type="Texture2D" path="res://assets/ui/map/map_chapter_1.png" id="4_background"]
 [ext_resource type="Texture2D" uid="uid://ck648js84io5i" path="res://assets/ui/game_ball.png" id="5_ball"]
 
 [sub_resource type="StyleBoxFlat" id="Style_result"]

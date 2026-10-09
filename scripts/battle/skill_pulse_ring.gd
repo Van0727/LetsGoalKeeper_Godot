@@ -10,7 +10,8 @@ var _ready_to_activate := false
 var _pulse_age := -1.0
 var _visual_amplitude := 0.0
 # 类型颜色由按钮统一传入，波条在低透明底色与同色高亮之间插值。
-var _type_color := Color(1.0, 0.39, 0.08)
+# 尚未收到类型更新时，也沿用攻击牌与主动技入口的橙色基调。
+var _type_color := Color(1.0, 0.45, 0.08)
 
 
 # 换牌型立即替换当前波条色相，透明度仍由节拍包络控制。

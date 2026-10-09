@@ -8,6 +8,7 @@ extends Control
 @export_range(0.5, 3.0, 0.05) var boss_ui_scale := 1.74
 @export_range(0.5, 3.0, 0.05) var rest_ui_scale := 1.0
 const RUN_STATE_SCRIPT := preload("res://autoload/run_state.gd")
+const CHAPTER_BACKGROUNDS := preload("res://scripts/map/chapter_backgrounds.gd")
 const MAP_STATE := preload("res://scripts/map/map_state.gd")
 const ENEMY_CATALOG := preload("res://data/enemies/enemy_catalog.tres")
 const ENCOUNTER_PLANNER := preload("res://scripts/enemies/encounter_planner.gd")
@@ -55,6 +56,8 @@ func _on_main_beat_reached(_beat_index: int) -> void:
 
 # 战斗与休息返回时只重建表现，未结算的房间不能解锁后续路线。
 func refresh_ui() -> void:
+	# 从战斗返回及章节推进均按当前章节换图，不改变节点、路线或存档。
+	$Background/Stadium.texture = CHAPTER_BACKGROUNDS.get_texture(run_state.chapter, true)
 	if run_state.map_state == null:
 		completed_overlay.hide()
 		missing_overlay.show()

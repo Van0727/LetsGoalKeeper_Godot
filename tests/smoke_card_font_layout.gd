@@ -1,4 +1,4 @@
-# 卡牌字体验收：遍历正式卡牌，检查中文覆盖、长描述高度及空插画回退。
+# 卡牌显示验收：检查中文覆盖、描述适配、类型底色与空插画回退。
 extends SceneTree
 
 const CARD_SCENE := preload("res://scenes/card_view.tscn")
@@ -20,6 +20,16 @@ func _run() -> void:
 	root.size = Vector2i(360, 640)
 	var card = CARD_SCENE.instantiate()
 	root.add_child(card)
+	# 三类蒙版颜色、透明度及未知类别回退一致；底色层必须位于文字和插画下方且不拦截输入。
+	for type_index in range(3):
+		var expected: Color = [Color(1.0, 0.45, 0.08, 0.18), Color(0.15, 0.55, 1.0, 0.18), Color(0.15, 0.85, 0.4, 0.18)][type_index]
+		if not card._get_card_type_tint(type_index).is_equal_approx(expected):
+			_failed = true
+			push_error("类型蒙版颜色不匹配")
+	var tint: Panel = card.get_node("Canvas/TypeTint")
+	if tint.get_index() != 0 or tint.mouse_filter != Control.MOUSE_FILTER_IGNORE or not card._get_card_type_tint(-1).is_equal_approx(card._get_card_type_tint(2)):
+		_failed = true
+		push_error("类型蒙版层级、输入或未知类别回退错误")
 	# 奖励页使用独立的字体副本，需验证同一批长规则在两条渲染路径下均不越界。
 	var reward_fonts := REWARD_SCRIPT.new()
 	var normal_font: Font = card.description_label.get_theme_font("normal_font")
@@ -32,16 +42,37 @@ func _run() -> void:
 		for font in [normal_font, reward_font]:
 			card.description_label.add_theme_font_override("normal_font", font)
 			card.configure(definition, 0)
+			if not card._type_tint_style.bg_color.is_equal_approx(card._get_card_type_tint(definition.card_type)):
+				_failed = true
+				push_error("复用卡牌时未同步类型底色")
 			await process_frame
 			await process_frame
 			var label: RichTextLabel = card.description_label
-			if label.get_theme_font_size("normal_font_size") != 10:
+			if label.get_theme_font_size("normal_font_size") > 10 or label.get_theme_font_size("normal_font_size") < 1:
 				_failed = true
-				push_error("%s 说明不应自动缩小字号" % filename)
+				push_error("%s 说明字号超出有效范围" % filename)
 			if label.get_content_height() > label.size.y + 0.5:
 				_failed = true
 				push_error("%s 说明被裁切：内容 %s / 槽高 %s" % [filename, label.get_content_height(), label.size.y])
 		count += 1
+	# 人工超长描述必须缩小且不裁切；复用控件显示短文、空文时恢复默认字号。
+	var sample = load("res://data/cards/card_attack_and_defend.tres").duplicate()
+	for content in ["获得5点护盾；下一次受到伤害时反击。".repeat(8), "获得5点护盾", ""]:
+		sample.description = content
+		card.configure(sample, 0)
+		await process_frame
+		await process_frame
+		var label: RichTextLabel = card.description_label
+		if label.get_content_height() > label.size.y or label.get_content_width() > label.size.x:
+			_failed = true
+			push_error("长文、短文或空文边界发生裁切")
+		if (content.length() > 30 and label.get_theme_font_size("normal_font_size") >= 10) or (content.length() <= 30 and label.get_theme_font_size("normal_font_size") != 10):
+			_failed = true
+			push_error("描述字号未按内容缩小或恢复")
+	# 零尺寸时安全跳过；恢复有效尺寸后 resized 必须重新适配。
+	card.description_label.size = Vector2.ZERO
+	card._fit_description_font()
+	card.description_label.size = Vector2(88, 41)
 	# 缺少插画仍能显示文字，说明字体必须随包包含中文。
 	card._apply_illustration(null)
 	if card.illustration_rect.visible or not card.description_label.get_theme_font("normal_font").has_char("护".unicode_at(0)):

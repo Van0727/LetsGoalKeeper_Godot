@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="CardDefinition" format=3]
+[gd_resource type="Resource" script_class="CardDefinition" format=3 uid="uid://xru6sqlt8kxp"]
 
-[ext_resource type="Script" path="res://scripts/cards/effect_definition.gd" id="1_ho4t1"]
-[ext_resource type="Script" path="res://scripts/cards/card_definition.gd" id="2_21k8w"]
-[ext_resource type="Texture2D" path="res://assets/ui/cards/card_chain_feint_rounded_v1.png" id="3_illustration"]
+[ext_resource type="Script" uid="uid://dy2vydaadgsvs" path="res://scripts/cards/effect_definition.gd" id="1_ho4t1"]
+[ext_resource type="Script" uid="uid://ckp8xfbhic8os" path="res://scripts/cards/card_definition.gd" id="2_21k8w"]
+[ext_resource type="Texture2D" uid="uid://bapbrko37jkxl" path="res://assets/ui/cards/card_chain_feint_rounded_v1.png" id="3_illustration"]
 
 [sub_resource type="Resource" id="Resource_21k8w"]
 script = ExtResource("1_ho4t1")

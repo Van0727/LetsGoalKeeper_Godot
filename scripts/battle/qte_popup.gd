@@ -20,8 +20,9 @@ const CORE_TEXTURE := preload("res://assets/ui/battle/bigbeat.png")
 const LINE_TEXTURE := preload("res://assets/ui/battle/beatline.png")
 const TARGET_TEXTURE := preload("res://assets/placeholders/qte_target_ring.png")
 const NOTE_TEXTURE := preload("res://assets/placeholders/qte_note.png")
+# 攻击主动技沿用攻击牌的橙色基调，避免弹窗轨道和音符偏成浅棕色。
 const TYPE_COLORS := {
-	CardDefinition.CardType.ATTACK: Color(0.94, 0.57, 0.29),
+	CardDefinition.CardType.ATTACK: Color(1.0, 0.45, 0.08),
 	CardDefinition.CardType.DEFENSE: Color(0.38, 0.65, 0.87),
 	CardDefinition.CardType.ABILITY: Color(0.42, 0.74, 0.48),
 }

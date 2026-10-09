@@ -42,9 +42,9 @@ const SUPER_ATTACK := preload("res://data/skills/skill_super_attack.tres")
 const SUPER_DEFENSE := preload("res://data/skills/skill_super_defense.tres")
 const SUPER_ABILITY := preload("res://data/skills/skill_super_ability.tres")
 
+const CHAPTER_BACKGROUNDS := preload("res://scripts/map/chapter_backgrounds.gd")
 const STARTING_HAND_SIZE := 3
-# 参考设计图的三张手牌维持 104 宽横排；缩短卡身以避免底部信息区压迫战斗画面。
-const CARD_SIZE := Vector2(104, 176)
+# 卡牌宽高由 CardView 场景维护，手牌布局仅控制相邻卡牌间距。
 const CARD_GAP := 6.0
 const REST_ROOM_TYPE := 3
 const ACTIVE_SKILL_FLIGHT_BEATS := 1.0
@@ -187,12 +187,13 @@ var _card_warning_tween: Tween
 var _skill_button_base_scale := Vector2.ONE
 var _skill_button_pulse_tween: Tween
 # 按钮样式保留场景基础副本；累计类型只改变颜色，不修改共享主题资源。
-const SKILL_TYPE_COLORS := [Color(1.0, 0.39, 0.08), Color(0.16, 0.56, 1.0), Color(0.12, 0.76, 0.38)]
+# 攻击入口与攻击牌、主动技弹窗共用橙色基调，各交互状态只调整明暗。
+const SKILL_TYPE_COLORS := [Color(1.0, 0.45, 0.08), Color(0.16, 0.56, 1.0), Color(0.12, 0.76, 0.38)]
 var _skill_button_default_styles: Dictionary = {}
 var _skill_visual_type := -2
 var _skill_visual_ready := false
-# 三类主动技独立小图标；手套和多球使用同尺寸矢量轮廓，与原攻击图标共用槽位。
-const SKILL_TYPE_ICONS := [preload("res://assets/ui/battle/icon_super_attack.svg"), preload("res://assets/ui/battle/icon_super_defense.svg"), preload("res://assets/ui/battle/icon_super_ability.svg")]
+# 三类主动技与怪物行为共用攻击、防御、技能分类图片，在同一图标槽中切换。
+const SKILL_TYPE_ICONS := [preload("res://assets/ui/battle/behavior_attack.png"), preload("res://assets/ui/battle/behavior_defense.png"), preload("res://assets/ui/battle/behavior_skill.png")]
 
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
@@ -292,8 +293,10 @@ func _apply_metronome_style() -> void:
 	rhythm_accent_waveform.visible = use_circle
 
 
-# 战斗背景直接使用完整图片；保持白色调制可避免运行时染色破坏原始美术。
+# 按本局章节读取完整背景，并同步动态灯光；白色调制保留图片本身配色。
 func _apply_chapter_theme() -> void:
+	background.texture = CHAPTER_BACKGROUNDS.get_texture(run_state.chapter, false)
+	(stage_lights.material as ShaderMaterial).set_shader_parameter("light_color", CHAPTER_BACKGROUNDS.get_light_color(run_state.chapter))
 	background.self_modulate = Color.WHITE
 
 
@@ -304,6 +307,8 @@ func _to_player_grade_terms(text: String) -> String:
 
 # 使用本局牌库和房间敌人重置战斗：路线地图进入的房间按房型从章节池选敌。
 func start_new_battle(enemy_definition: Resource = null) -> void:
+	# 重开或GM切章也重新读取主题，避免复用场景遗留上一章背景。
+	_apply_chapter_theme()
 	_battle_generation += 1
 	_game_win_audio_scheduled = false
 	result_overlay.hide()
@@ -1068,20 +1073,16 @@ func _on_state_changed() -> void:
 	_refresh_all()
 
 
-# 依据当前手牌创建横向卡牌视图；界面节点是运行实例，不修改卡牌 Resource。
+# 保留 CardView 场景尺寸并按实际宽度居中排列；空手牌不创建节点，也不产生负间距。
 func _rebuild_hand() -> void:
 	for child in hand_layer.get_children():
 		child.queue_free()
 
-	var hand_width := deck_state.hand.size() * CARD_SIZE.x
-	if deck_state.hand.size() > 1:
-		hand_width += (deck_state.hand.size() - 1) * CARD_GAP
-	var start_x := (hand_layer.size.x - hand_width) * 0.5
+	var card_views: Array[BattleCardView] = []
+	var hand_width := 0.0
 	for index in range(deck_state.hand.size()):
 		var card_view: BattleCardView = CARD_VIEW_SCENE.instantiate()
 		hand_layer.add_child(card_view)
-		card_view.position = Vector2(start_x + index * (CARD_SIZE.x + CARD_GAP), 0)
-		card_view.size = CARD_SIZE
 		# 阈值采用全局坐标，释放指针高于虚线才允许结算；无需可见圆形落点。
 		card_view.drop_threshold_y = drag_threshold_guide.global_position.y
 		card_view.card_played.connect(_on_card_played)
@@ -1089,6 +1090,15 @@ func _rebuild_hand() -> void:
 		card_view.drag_moved.connect(_on_card_drag_moved)
 		card_view.drag_finished.connect(_on_card_drag_finished)
 		card_view.configure(deck_state.hand[index], index)
+		card_views.append(card_view)
+		hand_width += card_view.size.x
+	if card_views.size() > 1:
+		hand_width += (card_views.size() - 1) * CARD_GAP
+	var next_x := (hand_layer.size.x - hand_width) * 0.5
+	# 在拖拽父类延迟记录归位坐标前完成排列，保证无效释放回到新布局位置。
+	for card_view in card_views:
+		card_view.position = Vector2(next_x, 0)
+		next_x += card_view.size.x + CARD_GAP
 	_update_input_state()
 
 
@@ -1104,12 +1114,13 @@ func _refresh_all() -> void:
 	turn_label.text = str(controller.turn_number)
 	phase_label.text = controller.get_phase_text()
 	var full_intent: String = controller.get_enemy_intent_text()
-	# 顶栏只显示类别与名称，完整数值、打断进度和临时状态在头像左侧换行显示，避免撑出360视口。
+	# 顶栏保留类别与名称及完整意图提示；左侧规则文字和底部结算文字仅留作隐藏调试数据。
 	var table_action: bool = controller.current_enemy_action != null and not controller.current_enemy_action.effects.is_empty()
 	intent_label.text = full_intent.get_slice("：", 0) if table_action else "意图：%s" % full_intent
 	intent_label.tooltip_text = full_intent
 	monster_rules_label.text = full_intent + "\n\n" + controller.get_enemy_rules_text()
-	monster_rules_label.visible = table_action or not controller.get_enemy_rules_text().is_empty()
+	monster_rules_label.hide()
+	status_label.hide()
 	# 费用面板由独立背景、闪电与动态数字组成；临时费用允许超过上限，保留实际数值。
 	energy_label.text = "%d/%d" % [controller.player.energy, controller.player.max_energy]
 	# 抽牌与弃牌分别显示，玩家无需在一段紧凑文字中辨认两个会频繁变化的数字。

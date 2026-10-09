@@ -6,6 +6,8 @@ render_mode unshaded, blend_add;
 uniform vec2 origins[6];
 uniform float angles[6];
 uniform float pulse = 0.0;
+// 背景主题只更新灯色，保持原有拍点与运动参数。
+uniform vec4 light_color : source_color = vec4(1.0, 0.25, 0.065, 1.0);
 
 void fragment() {
 	// 与背景使用相同拉伸空间，灯口在宽屏及基准画面中始终重合。
@@ -22,5 +24,5 @@ void fragment() {
 		float fade = smoothstep(-0.006, 0.012, along) * (1.0 - smoothstep(0.24, 0.63, along));
 		light += soft_edge * fade * (0.19 + 0.08 * pulse);
 	}
-	COLOR = vec4(vec3(1.0, 0.25, 0.065), min(light, 0.6));
+	COLOR = vec4(light_color.rgb, min(light, 0.6));
 }
