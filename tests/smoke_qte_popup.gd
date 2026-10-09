@@ -1,4 +1,4 @@
-# 主动技QTE冒烟测试：验证半拍目标、变调后的现实判定窗口、输入锁和延迟结算。
+# 主动技QTE冒烟测试：验证一拍一音目标、变调后的现实判定窗口、输入锁和延迟结算。
 extends SceneTree
 
 const BATTLE_SCENE := preload("res://scenes/battle.tscn")
@@ -56,8 +56,8 @@ func _run() -> void:
 		float(battle.qte_popup._notes[1].target_time) - float(battle.qte_popup._notes[0].target_time)
 	)
 	_assert_true(
-		absf(note_interval - battle.rhythm_clock.get_beat_duration() * 0.5) < 0.0001,
-		"相邻音符保持半拍间隔"
+		absf(note_interval - battle.rhythm_clock.get_beat_duration()) < 0.0001,
+		"相邻音符保持一拍间隔"
 	)
 	var first_target_beat: float = (
 		(float(battle.qte_popup._notes[0].target_time) - battle.rhythm_clock.first_beat_offset)
@@ -84,7 +84,7 @@ func _run() -> void:
 			(float(note.target_time) - battle.rhythm_clock.first_beat_offset)
 			/ battle.rhythm_clock.get_beat_duration()
 		)
-		_assert_true(absf(target_beat * 2.0 - roundf(target_beat * 2.0)) < 0.0001, "所有QTE音符目标均对齐半拍网格")
+		_assert_true(absf(target_beat - roundf(target_beat)) < 0.0001, "所有QTE音符目标均对齐整数拍网格")
 	_assert_equal(battle.controller.combo_state.count, 3, "QTE期间不提前消耗连击")
 	_assert_equal(battle.controller.enemy.health, health_before, "QTE期间不提前结算主动技")
 	_assert_true(battle._input_locked, "QTE期间锁住战斗输入")

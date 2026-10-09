@@ -8,7 +8,8 @@ signal miss_audio_triggered
 const NOTE_COUNT := 4
 const LANE_COUNT := 3
 const TRAVEL_BEATS := 2.0
-const NOTE_INTERVAL_BEATS := 0.5
+# 所有房型统一每拍一个音符，实际秒数随当前BGM速度变化。
+const NOTE_INTERVAL_BEATS := 1.0
 const CLICK_PULSE_SECONDS := 0.18
 const CLICK_ATTACK_SECONDS := 0.055
 const JUDGEMENT_VISIBLE_SECONDS := 0.42
@@ -206,7 +207,7 @@ func start_qte(rhythm_clock: Node, seed_value: int = 0, target_line_y: float = 2
 	_target_line_y = target_line_y + _target_layout_offset
 	var beat_duration: float = _rhythm_clock.get_beat_duration()
 	var next_beat_time: float = _rhythm_clock.get_next_beat_time(_rhythm_clock.get_music_time())
-	# 首个音符仍在下一个整数拍出现并完整移动两拍；只把后续目标压缩为半拍间隔。
+	# 首个音符在下一个整数拍出现并完整移动两拍；后续目标每隔一拍到达判定线。
 	_first_target_time = next_beat_time + beat_duration * TRAVEL_BEATS
 	_notes.clear()
 	_counts = {"perfect": 0, "good": 0, "miss": 0}
