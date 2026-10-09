@@ -9,7 +9,7 @@ enum ModifierType { ALL_SHOTS, STRAIGHT, BANANA, LOB, DISABLED }
 @export var item_id := ""
 @export var display_name := "战利品"
 @export_multiline var description := ""
-# 正式图片由配表导入到定义资源；所有界面读取同一纹理，空值时各自使用品级占位图。
+# 配表图片用于奖励和详情；底栏通过 get_mini_icon 读取同名32像素资源，空值由界面按品级回退。
 @export var icon: Texture2D
 @export var rarity := Rarity.NORMAL
 @export var modifier_type := ModifierType.ALL_SHOTS
@@ -30,3 +30,13 @@ func get_modifier_key() -> String:
 		ModifierType.BANANA: return "banana"
 		ModifierType.LOB: return "lob"
 		_: return ""
+
+
+# 迷你图按正式图片文件名关联，无须改变配表或存档；缺少迷你图时安全回退正式图。
+func get_mini_icon() -> Texture2D:
+	if icon == null:
+		return null
+	var mini_path := "res://assets/ui/items/mini/" + icon.resource_path.get_file()
+	if not icon.resource_path.is_empty() and ResourceLoader.exists(mini_path, "Texture2D"):
+		return load(mini_path) as Texture2D
+	return icon

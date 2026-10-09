@@ -1325,21 +1325,67 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 
-[node name="OwnedItemIcons" type="HFlowContainer" parent="." unique_id=1714026409]
+[node name="OwnedItemBar" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
-anchors_preset = 10
+anchor_top = 1.0
+anchor_bottom = 1.0
 anchor_right = 1.0
 offset_left = 8.0
-offset_top = 618.0
+offset_top = -40.0
 offset_right = -8.0
-offset_bottom = 640.0
+offset_bottom = -2.0
 grow_horizontal = 2
 mouse_filter = 2
-theme_override_constants/h_separation = 2
-theme_override_constants/v_separation = 2
+
+[node name="Background" type="ColorRect" parent="OwnedItemBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.92, 0.96, 1, 0.12)
+
+[node name="Row" type="HBoxContainer" parent="OwnedItemBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_right = -4.0
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="ItemPrevious" type="Button" parent="OwnedItemBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(24, 32)
+size_flags_vertical = 4
+focus_mode = 0
+flat = true
+text = "‹"
+theme_override_font_sizes/font_size = 24
+
+[node name="OwnedItemIcons" type="HBoxContainer" parent="OwnedItemBar/Row" unique_id=1714026409]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 2
 alignment = 1
+
+[node name="ItemNext" type="Button" parent="OwnedItemBar/Row"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(24, 32)
+size_flags_vertical = 4
+focus_mode = 0
+flat = true
+text = "›"
+theme_override_font_sizes/font_size = 24
 
 [node name="ItemDetailPopup" type="PanelContainer" parent="." unique_id=935510143]
 unique_name_in_owner = true
@@ -1364,6 +1410,7 @@ theme_override_constants/separation = 10
 [node name="Icon" type="TextureRect" parent="ItemDetailPopup/Content" unique_id=1692651895]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(72, 72)
+texture_filter = 4
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1

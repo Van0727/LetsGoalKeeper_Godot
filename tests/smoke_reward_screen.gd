@@ -151,6 +151,9 @@ func _run() -> void:
 		_assert_true(screen.item_icons[index].texture != null, "遗物阶段分配正式图片或安全占位图")
 		if screen.choices[index].icon != null:
 			_assert_equal(screen.item_icons[index].texture, screen.choices[index].icon, "奖励槽读取战利品定义中的正式图片")
+			# 128像素奖励图覆盖选中放大，Mipmap过滤用于缩小显示时平滑边缘。
+			_assert_equal(screen.item_icons[index].texture.get_size(), Vector2(128, 128), "奖励图缩小为128像素")
+			_assert_equal(screen.item_icons[index].texture_filter, CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS, "奖励图启用线性Mipmap过滤")
 			_assert_equal(screen.item_icons[index].stretch_mode, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "奖励槽保持正方形图片比例")
 		# 战利品沿用卡牌候选外框：放大图标、缩小摘要，仍不能按源图尺寸或内容高度撑破三选一布局。
 		_assert_equal(screen.item_icons[index].expand_mode, TextureRect.EXPAND_IGNORE_SIZE, "遗物图标忽略原图尺寸")

@@ -386,7 +386,18 @@ func _run() -> void:
 		item_press.pressed = true
 		var held_item_icon := battle_screen.owned_item_icons.get_child(0) as TextureRect
 		var golden_boot_item := REWARD_SERVICE.new().get_item_by_id(4011)
-		_assert_equal(held_item_icon.texture, golden_boot_item.icon, "底部持有栏读取金靴正式图片")
+		# 底栏独立低分辨率纹理，详情仍使用奖励图；覆盖尺寸和迷你图缺失回退。
+		_assert_equal(held_item_icon.texture, golden_boot_item.get_mini_icon(), "底部持有栏读取金靴迷你图片")
+		_assert_equal(held_item_icon.texture.get_size(), Vector2(32, 32), "迷你纹理为32像素")
+		_assert_equal(held_item_icon.custom_minimum_size, Vector2(32, 32), "底部显示尺寸扩大两倍")
+		# 不足一行时隐藏翻页箭头，浅色背景仅在持有遗物时显示。
+		_assert_true(battle_screen.owned_item_bar.visible, "持有遗物时显示背景底栏")
+		_assert_true(not battle_screen.item_next.visible, "不足一行隐藏箭头")
+		var missing_mini := preload("res://scripts/items/item_definition.gd").new()
+		missing_mini.icon = GradientTexture2D.new()
+		_assert_equal(missing_mini.get_mini_icon(), missing_mini.icon, "无对应迷你图时回退正式图")
+		missing_mini.icon = null
+		_assert_equal(missing_mini.get_mini_icon(), null, "无正式图时保留品级回退入口")
 		_assert_equal(held_item_icon.stretch_mode, TextureRect.STRETCH_KEEP_ASPECT_CENTERED, "底部正方形图标保持原比例")
 		battle_screen._on_owned_item_icon_gui_input(item_press, held_item_icon, REWARD_SERVICE.new().get_item_by_id(4011))
 		_assert_true(battle_screen.item_detail_popup.visible, "按住战利品图标显示详情")

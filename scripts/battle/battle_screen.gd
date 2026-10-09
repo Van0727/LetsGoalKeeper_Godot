@@ -73,7 +73,10 @@ const ITEM_ICON_SCALE_DURATION := 0.12
 @onready var strength_status_label: Label = %StrengthStatus
 @onready var bleed_status_label: Label = %BleedStatus
 @onready var block_status_label: Label = %BlockStatus
-@onready var owned_item_icons: HFlowContainer = %OwnedItemIcons
+@onready var owned_item_icons: HBoxContainer = %OwnedItemIcons
+@onready var owned_item_bar: Control = %OwnedItemBar
+@onready var item_previous: Button = %ItemPrevious
+@onready var item_next: Button = %ItemNext
 @onready var item_detail_popup: PanelContainer = %ItemDetailPopup
 @onready var item_detail_icon: TextureRect = %Icon
 @onready var item_detail_name: Label = %Name
@@ -145,6 +148,9 @@ var _reward_service := REWARD_SERVICE.new()
 var run_state: Node
 # 已显示的持有ID用于避免每次生命刷新都重复创建图标；GM即时增删和下一战切换仍会触发重建。
 var _displayed_owned_item_ids: Array[int] = []
+# 页码仅属于底栏表现，不写入本局状态；每次翻页按当前宽度推进一整行。
+var _owned_item_page := 0
+var _owned_items_per_page := 1
 # 当前悬停或按住的图标独占详情浮层；每个图标的 Tween 独立缓存，避免快速切换时缩放互相覆盖。
 var _selected_item_icon: TextureRect
 var _item_icon_scale_tweens: Dictionary = {}
@@ -198,6 +204,9 @@ const SKILL_TYPE_ICONS := [preload("res://assets/ui/battle/behavior_attack.png")
 
 # 初始化信号和一场固定种子的可玩战斗，便于复现输入与结算问题。
 func _ready() -> void:
+	item_previous.pressed.connect(_change_owned_item_page.bind(-1))
+	item_next.pressed.connect(_change_owned_item_page.bind(1))
+	owned_item_bar.resized.connect(_update_owned_item_page)
 	_skill_button_base_scale = skill_button.scale
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		_skill_button_default_styles[state] = skill_button.get_theme_stylebox(state).duplicate()
@@ -1180,7 +1189,7 @@ func _refresh_monster_info() -> void:
 	talking_text.tooltip_text = full_intent
 
 
-# 底部只显示战利品图片、不显示名称；正式图片缺失时按品级回退，容器按可用宽度自动换行。
+# 底部使用独立32像素迷你图；缺迷你图回退正式图，缺正式图按品级回退，在单行底栏按可用宽度分页，避免遮挡牌堆按钮。
 func _refresh_owned_item_icons() -> void:
 	var current_item_ids: Array[int] = []
 	if run_state != null:
@@ -1195,23 +1204,57 @@ func _refresh_owned_item_icons() -> void:
 	_item_icon_scale_tweens.clear()
 	_displayed_owned_item_ids = current_item_ids
 	if current_item_ids.is_empty():
+		owned_item_bar.hide()
 		owned_item_icons.hide()
+		_owned_item_page = 0
 		return
 	for item in _reward_service.get_items_by_ids(current_item_ids):
 		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(16.0, 16.0)
+		icon.custom_minimum_size = Vector2(32.0, 32.0)
 		icon.pivot_offset = icon.custom_minimum_size * 0.5
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.texture = _get_item_icon(item)
+		icon.texture = item.get_mini_icon() if item.icon != null else _get_item_icon(item)
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		# 正方形素材在固定槽位内保持原比例，避免奖励页、底栏和详情弹窗出现拉伸。
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		# 图标必须接收按住事件；它位于底部空白区，不会遮挡手牌拖拽输入。
+		# 图标接收按住事件；分页只改变可见性，不更改持有顺序或玩法状态。
 		icon.mouse_filter = Control.MOUSE_FILTER_STOP
 		icon.gui_input.connect(_on_owned_item_icon_gui_input.bind(icon, item))
 		icon.mouse_entered.connect(_on_owned_item_icon_mouse_entered.bind(icon, item))
 		icon.mouse_exited.connect(_on_owned_item_icon_mouse_exited.bind(icon))
 		owned_item_icons.add_child(icon)
-	owned_item_icons.visible = owned_item_icons.get_child_count() > 0
+	owned_item_bar.visible = owned_item_icons.get_child_count() > 0
+	owned_item_icons.visible = owned_item_bar.visible
+	_update_owned_item_page()
+
+
+# 先判断无箭头时是否放得下；溢出后两端固定预留按钮宽度，防止箭头显隐导致页容量抖动。
+func _update_owned_item_page() -> void:
+	var count := owned_item_icons.get_child_count()
+	var row_width := maxf(owned_item_bar.size.x - 8.0, 0.0)
+	var full_capacity := maxi(1, int((row_width + 2.0) / 34.0))
+	var needs_pages := count > full_capacity
+	_owned_items_per_page = maxi(1, int((row_width - (56.0 if needs_pages else 0.0) + 2.0) / 34.0))
+	var last_page := maxi(0, ceili(float(count) / _owned_items_per_page) - 1)
+	_owned_item_page = clampi(_owned_item_page, 0, last_page)
+	item_previous.visible = needs_pages
+	item_next.visible = needs_pages
+	item_previous.disabled = _owned_item_page == 0
+	item_next.disabled = _owned_item_page == last_page
+	var first := _owned_item_page * _owned_items_per_page
+	for index in range(count):
+		var icon := owned_item_icons.get_child(index) as TextureRect
+		icon.visible = index >= first and index < first + _owned_items_per_page
+	# 删除遗物或窗口变窄可能让原详情对应图标离开当前页，及时关闭悬浮信息。
+	if _selected_item_icon != null and not _selected_item_icon.visible:
+		_hide_owned_item_detail()
+
+
+# 首尾点击安全夹紧；翻页前关闭旧详情，避免上一行的悬停放大残留。
+func _change_owned_item_page(direction: int) -> void:
+	_hide_owned_item_detail()
+	_owned_item_page += direction
+	_update_owned_item_page()
 
 
 # 图标按住时显示完整战利品信息；鼠标与触屏都在松开时关闭，避免详情残留在战斗操作区。
@@ -1248,7 +1291,7 @@ func _input(event: InputEvent) -> void:
 		_hide_owned_item_detail()
 
 
-# 详情内容复用战利品选择页的品级色块；后续替换正式插画时只需在此替换纹理来源。
+# 详情使用128像素奖励图而非底栏迷你图，保证放大后清晰；缺图时沿用品级占位。
 func _select_owned_item_icon(icon: TextureRect, item: Resource) -> void:
 	if item == null:
 		_hide_owned_item_detail()
@@ -1264,7 +1307,7 @@ func _select_owned_item_icon(icon: TextureRect, item: Resource) -> void:
 	item_detail_popup.show()
 
 
-# 战斗内两个图标入口复用同一纹理选择，缺失图片不会影响旧档恢复或禁用战利品调试。
+# 详情与底栏缺图时共用品级回退，图片资源不会参与存档或玩法结算。
 func _get_item_icon(item: Resource) -> Texture2D:
 	if item != null and item.icon != null:
 		return item.icon
