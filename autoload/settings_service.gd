@@ -207,12 +207,14 @@ func _normalize_metronome_style(value: Variant) -> int:
 
 
 # Music 与 SFX 挂到 Master 下，当前及后续播放器可直接选择对应总线。
+# Godot 4.7 Web Sample 的 add_bus 追加路径会错误移动 JS 总线，导致 Master 断开输出。
+# 通过增加 bus_count 在尾部创建总线，保留已有索引与路由，也不改变音频模式和节奏延迟。
 func _ensure_audio_buses() -> void:
 	for bus_name in [BUS_MUSIC, BUS_SFX]:
 		if AudioServer.get_bus_index(bus_name) >= 0:
 			continue
-		AudioServer.add_bus()
-		var index := AudioServer.bus_count - 1
+		var index := AudioServer.bus_count
+		AudioServer.bus_count = index + 1
 		AudioServer.set_bus_name(index, bus_name)
 		AudioServer.set_bus_send(index, BUS_MASTER)
 

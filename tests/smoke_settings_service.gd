@@ -135,6 +135,18 @@ func _test_corrupt_config_fallback() -> void:
 
 # 音乐与战斗音效必须进入各自总线，否则设置页只能调节主音量，两个分类滑块不会产生实际效果。
 func _test_audio_bus_routing() -> void:
+	# 重复初始化必须保留已有总线索引、数量与 Master 路由，避免 Web 输出链被重排。
+	var service := SETTINGS_SERVICE_SCRIPT.new()
+	var bus_count_before := AudioServer.bus_count
+	service._ensure_audio_buses()
+	service._ensure_audio_buses()
+	_assert_equal(AudioServer.bus_count, bus_count_before, "重复初始化不新增总线")
+	_assert_equal(AudioServer.get_bus_name(0), &"Master", "主总线保持索引零")
+	for bus_name in [&"Music", &"SFX"]:
+		var bus_index := AudioServer.get_bus_index(bus_name)
+		_assert_true(bus_index > 0, "%s 总线存在" % bus_name)
+		_assert_equal(AudioServer.get_bus_send(bus_index), &"Master", "%s 路由至 Master" % bus_name)
+	service.free()
 	var rhythm_clock = RHYTHM_CLOCK_SCRIPT.new()
 	root.add_child(rhythm_clock)
 	var ball_flight = BALL_FLIGHT_SCENE.instantiate()
