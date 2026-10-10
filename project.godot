@@ -37,6 +37,11 @@ window/handheld/orientation=1
 
 theme/custom_font="res://assets/fonts/ui_font.tres"
 
+[internationalization]
+
+; 导出时携带中文分词与断行规则，避免试玩包长文案无法按本地规则折行。
+locale/include_text_server_data=true
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

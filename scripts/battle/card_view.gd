@@ -46,6 +46,8 @@ func _ready() -> void:
 	$Canvas.clip_contents = not editing
 	_create_outer_glow()
 	_create_type_tint()
+	# 优先按词折行，单个词超宽时按字素折行；Web 缺少断词数据也不会把整句缩成一行小字。
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description_label.resized.connect(_fit_description_font)
 	editor_reference.visible = editing
 	if editing:

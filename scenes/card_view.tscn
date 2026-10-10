@@ -127,7 +127,7 @@ theme_override_font_sizes/normal_font_size = 10
 bbcode_enabled = true
 text = "造成 [color=#df352f]5[/color] 点伤害，获得 [color=#247bd1]5[/color] 点护盾"
 scroll_active = false
-autowrap_mode = 2
+autowrap_mode = 3
 horizontal_alignment = 1
 
 [node name="EditorReference" type="Sprite2D" parent="." unique_id=1486124172]

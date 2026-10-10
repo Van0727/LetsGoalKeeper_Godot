@@ -20,6 +20,15 @@ func _run() -> void:
 	root.size = Vector2i(360, 640)
 	var card = CARD_SCENE.instantiate()
 	root.add_child(card)
+	# 连续无空格文本模拟导出端无法识别词边界：必须折行，不能靠缩成一行通过尺寸检查。
+	var unbroken = load("res://data/cards/card_attack_and_defend.tres").duplicate()
+	unbroken.description = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	card.configure(unbroken, 0)
+	await process_frame
+	await process_frame
+	if card.description_label.get_line_count() < 2 or card.description_label.get_theme_font_size("normal_font_size") < 8:
+		_failed = true
+		push_error("无词边界长文未正常折行，或被过度缩小")
 	# 三类蒙版颜色、透明度及未知类别回退一致；底色层必须位于文字和插画下方且不拦截输入。
 	for type_index in range(3):
 		var expected: Color = [Color(1.0, 0.45, 0.08, 0.18), Color(0.15, 0.55, 1.0, 0.18), Color(0.15, 0.85, 0.4, 0.18)][type_index]
