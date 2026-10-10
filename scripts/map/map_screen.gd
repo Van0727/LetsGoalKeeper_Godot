@@ -153,7 +153,7 @@ func _build_enemy_plan() -> Dictionary:
 		return {}
 	return ENCOUNTER_PLANNER.plan(run_state.map_state, load(pool_path), ENEMY_CATALOG, run_state.seed)
 
-# 返回按钮使用参考界面的深色舞台面板与暖橙描边；暂停按钮继续沿用通用图片样式。
+# 地图页统一使用深色舞台面板与暖橙描边；图标不依赖桌面系统字体回退。
 func _style_header() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.035, 0.045, 0.09, 0.98)
@@ -163,7 +163,8 @@ func _style_header() -> void:
 	style.shadow_color = Color(0, 0, 0, 0.4)
 	style.shadow_size = 3
 	var back: Button = $Header/BackButton
-	back.text = "❮ 返回"
+	# ASCII 箭头由项目字体覆盖，避免 Web 缺少特殊符号时显示缺字方框。
+	back.text = "< 返回"
 	back.add_theme_font_size_override("font_size", 13)
 	back.add_theme_color_override("font_color", Color(1.0, 0.93, 0.8))
 	back.add_theme_stylebox_override("normal", style)
@@ -172,11 +173,24 @@ func _style_header() -> void:
 	hover_style.border_color = Color(1.0, 0.62, 0.28)
 	back.add_theme_stylebox_override("hover", hover_style)
 	back.add_theme_stylebox_override("pressed", hover_style)
-	# 地图实例把通用暂停图片替换成同系列文字按钮，只影响本场景，不改变其他界面的暂停样式。
+	# 地图实例使用同系列面板与几何暂停条，只影响本场景；不依赖 ❚ 字形。
 	var pause: Button = $PauseOverlay/PauseButton
-	pause.text = "❚❚"
-	pause.add_theme_font_size_override("font_size", 23)
-	pause.add_theme_color_override("font_color", Color(1.0, 0.93, 0.8))
+	pause.text = ""
+	# 重复应用样式时复用节点；图标必须忽略输入，点击继续交给原暂停按钮。
+	for index in range(2):
+		var bar_name := "PauseBar%d" % index
+		var bar := pause.get_node_or_null(bar_name) as ColorRect
+		if bar == null:
+			bar = ColorRect.new()
+			bar.name = bar_name
+			pause.add_child(bar)
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bar.color = Color(1.0, 0.93, 0.8)
+		bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		bar.offset_left = -9.0 + index * 12.0
+		bar.offset_right = bar.offset_left + 6.0
+		bar.offset_top = -10.0
+		bar.offset_bottom = 10.0
 	for key in ["normal", "disabled"]:
 		pause.add_theme_stylebox_override(key, style)
 	pause.add_theme_stylebox_override("hover", hover_style)
