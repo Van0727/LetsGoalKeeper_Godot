@@ -1,4 +1,5 @@
 # 主菜单：提供本局入口，并让封面 Logo、怪物与足球平滑跟随主 BGM 拍点呼吸，足球同时持续旋转。
+# 开始、继续和测试入口由场景底部锚点定位，长屏下仍靠近底部，保持基准尺寸时的按钮间距。
 extends Control
 
 const CARD_DRAG_TEST_SCENE := preload("res://scenes/card_drag_test.tscn")
